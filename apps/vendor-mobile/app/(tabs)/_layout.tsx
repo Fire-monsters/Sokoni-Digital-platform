@@ -4,10 +4,16 @@ import React from 'react';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useProtectedRoute } from '@/hooks/use-auth-session';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { isAllowed } = useProtectedRoute('operations');
+
+  if (!isAllowed) {
+    return null;
+  }
 
   return (
     <Tabs

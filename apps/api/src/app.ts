@@ -7,6 +7,9 @@ import { pinoHttp } from "pino-http";
 import { errorHandler } from "./middleware/error-handler.js";
 import { notFound } from "./middleware/not-found.js";
 import { requestContext } from "./middleware/request-context.js";
+import { adminRouter } from "./modules/admin/index.js";
+import { authRouter } from "./modules/auth/index.js";
+import { meRouter } from "./modules/me/index.js";
 
 export function createApp(): express.Express {
   const app = express();
@@ -37,6 +40,10 @@ export function createApp(): express.Express {
       }
     });
   });
+
+  app.use("/v1/auth", authRouter);
+  app.use("/v1/me", meRouter);
+  app.use("/v1/admin", adminRouter);
 
   app.use(notFound);
   app.use(errorHandler);

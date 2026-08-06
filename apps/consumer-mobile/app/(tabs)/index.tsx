@@ -1,98 +1,126 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  InfoCard,
+  OnboardingSlide,
+  colors,
+  spacing,
+} from '@sokoni-digital/ui';
+import { useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  if (!hasSeenOnboarding) {
+    if (slideIndex === 0) {
+      return (
+        <AppScreen>
+          <OnboardingSlide
+            currentStep={1}
+            headline={`Kitooro Market,\ncloser to you`}
+            illustration="market"
+            supportingText="Find fresh produce, ready-to-cook food and household essentials from trusted local vendors."
+            totalSteps={2}
+            primaryActionLabel="Next"
+            onPrimaryAction={() => {
+              setSlideIndex(1);
+            }}
+          />
+        </AppScreen>
+      );
+    }
+
+    return (
+      <AppScreen>
+        <OnboardingSlide
+          currentStep={2}
+          headline="Delivery or market pickup"
+          illustration="delivery"
+          supportingText="Choose affordable delivery by a registered rider, schedule your order or collect it from the market."
+          totalSteps={2}
+          primaryActionLabel="Explore the market"
+          secondaryActionLabel="Sign in"
+          onPrimaryAction={() => {
+            setHasSeenOnboarding(true);
+          }}
+          onSecondaryAction={() => {
+            Alert.alert('Sign in', 'Google authentication will be added in the next consumer auth slice.');
+          }}
+        />
+      </AppScreen>
+    );
+  }
+
+  return (
+    <AppScreen scroll>
+      <View style={styles.header}>
+        <AppText variant="heading1">Browse Kitooro Market</AppText>
+        <AppText color="secondary" variant="bodyLarge">
+          Continue as a guest and discover fresh produce before signing in at checkout.
+        </AppText>
+      </View>
+
+      <View style={styles.searchStub}>
+        <AppText color="secondary">Search produce, prepared food or essentials</AppText>
+      </View>
+
+      <View style={styles.section}>
+        <AppText variant="heading3">{"Today's market picks"}</AppText>
+        <InfoCard
+          title="Fresh produce"
+          description="Matooke, tomatoes, onions and greens from verified market stalls."
+          aside={<AppText style={styles.price}>UGX 2k+</AppText>}
+        />
+        <InfoCard
+          title="Ready-to-cook"
+          description="Cleaned vegetables and meal bundles prepared for faster home cooking."
+          aside={<AppText style={styles.price}>UGX 8k+</AppText>}
+        />
+        <InfoCard
+          title="Market pickup"
+          description="Reserve items now and collect them from Kitooro Market later."
+          aside={<AppText style={styles.price}>Free</AppText>}
+        />
+      </View>
+
+      <View style={styles.footer}>
+        <AppButton
+          label="Continue browsing"
+          onPress={() => {
+            Alert.alert('Guest browsing', 'Catalogue data will connect in a later marketplace slice.');
+          }}
+        />
+      </View>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  header: {
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  searchStub: {
+    minHeight: 48,
+    justifyContent: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  section: {
+    gap: spacing.sm,
+  },
+  price: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  footer: {
+    marginTop: spacing.lg,
   },
 });

@@ -17,6 +17,9 @@
     "test:ci": "vitest run --passWithNoTests",
     "clean": "rimraf dist coverage"
   },
+  "dependencies": {
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@sokoni-digital/typescript-config": "workspace:*",
     "@sokoni-digital/eslint-config": "workspace:*",

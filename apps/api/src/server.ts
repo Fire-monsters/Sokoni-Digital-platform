@@ -6,7 +6,7 @@ const port = Number(process.env.PORT ?? 4000);
 const app = createApp();
 
 const server = app.listen(port, () => {
-  console.log(`E-Katale API listening on http://localhost:${port}`);
+  console.log(`E-Katale API listening on http://localhost:${String(port)}`);
 });
 
 function shutdown(signal: string): void {
@@ -22,7 +22,10 @@ function shutdown(signal: string): void {
   });
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
-
+process.on("SIGTERM", () => {
+  shutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  shutdown("SIGINT");
+});
 

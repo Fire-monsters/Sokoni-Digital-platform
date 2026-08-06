@@ -1,3 +1,3 @@
-import config from "@ekatale/eslint-config";
+import config from "@sokoni-digital/eslint-config";
 
 export default config;

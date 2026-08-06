@@ -1,1 +1,3 @@
-export async function retryNotifications(): Promise<void> {}
+export async function retryNotifications(): Promise<void> {
+  await Promise.resolve();
+}

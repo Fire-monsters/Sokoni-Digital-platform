@@ -1,1 +1,3 @@
-export async function expireRiderOffers(): Promise<void> {}
+export async function expireRiderOffers(): Promise<void> {
+  await Promise.resolve();
+}

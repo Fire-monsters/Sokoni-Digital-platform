@@ -21,6 +21,7 @@
   "private": true,
   "dependencies": {
     "@sokoni-digital/config": "workspace:*",
+    "@sokoni-digital/domain": "workspace:*",
     "@supabase/server": "^1.4.1",
     "@supabase/supabase-js": "^2.112.0",
     "cors": "^2.8.6",
@@ -32,6 +33,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@sokoni-digital/eslint-config": "workspace:*",
     "@sokoni-digital/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
