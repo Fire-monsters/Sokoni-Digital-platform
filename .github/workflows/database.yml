@@ -1,0 +1,74 @@
+name: Database
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "packages/database-types/**"
+      - ".github/workflows/database.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/**"
+      - "packages/database-types/**"
+      - ".github/workflows/database.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+concurrency:
+  group: database-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  database:
+    name: Recreate database and verify generated types
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local Supabase
+        run: pnpm db:start
+
+      - name: Recreate database from migrations
+        run: pnpm db:reset
+
+      - name: Run database tests
+        run: pnpm db:test
+
+      - name: Generate database types
+        run: pnpm db:types
+
+      - name: Verify generated types are committed
+        run: |
+          git diff --exit-code \
+            packages/database-types/src/database.types.ts
+
+      - name: Show Supabase status on failure
+        if: failure()
+        run: pnpm db:status
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm db:stop

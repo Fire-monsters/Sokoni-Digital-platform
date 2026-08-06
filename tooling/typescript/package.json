@@ -1,0 +1,17 @@
+{
+  "name": "@sokoni-digital/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "base.json",
+    "node.json",
+    "react.json",
+    "react-native.json"
+  ],
+  "exports": {
+    "./base": "./base.json",
+    "./node": "./node.json",
+    "./react": "./react.json",
+    "./react-native": "./react-native.json"
+  }
+}
