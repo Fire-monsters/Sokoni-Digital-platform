@@ -21,7 +21,9 @@
   "private": true,
   "dependencies": {
     "@sokoni-digital/config": "workspace:*",
+    "@sokoni-digital/database-types": "workspace:*",
     "@sokoni-digital/domain": "workspace:*",
+    "@sokoni-digital/validation": "workspace:*",
     "@supabase/server": "^1.4.1",
     "@supabase/supabase-js": "^2.112.0",
     "cors": "^2.8.6",

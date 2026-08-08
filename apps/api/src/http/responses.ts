@@ -1,4 +1,9 @@
-import type { ApiErrorCode, ApiErrorDetail, ApiErrorResponse, ApiSuccessResponse } from "@sokoni-digital/domain";
+import type {
+  ApiErrorCode,
+  ApiErrorDetail,
+  ApiErrorResponse,
+  ApiSuccessResponse,
+} from "@sokoni-digital/domain";
 import type { Request, Response } from "express";
 import type { z } from "zod";
 
@@ -6,14 +11,16 @@ export function sendSuccess(
   request: Request,
   response: Response,
   statusCode: number,
-  data: unknown
+  data: unknown,
+  meta: Record<string, unknown> = {},
 ): void {
   const payload: ApiSuccessResponse<unknown> = {
     success: true,
     data,
     meta: {
-      requestId: request.requestId
-    }
+      requestId: request.requestId,
+      ...meta,
+    },
   };
 
   response.status(statusCode).json(payload);
@@ -25,7 +32,7 @@ export function sendError(
   statusCode: number,
   code: ApiErrorCode,
   message: string,
-  details?: ApiErrorDetail[]
+  details?: ApiErrorDetail[],
 ): void {
   const payload: ApiErrorResponse = {
     success: false,
@@ -33,8 +40,8 @@ export function sendError(
       code,
       message,
       requestId: request.requestId,
-      ...(details && details.length > 0 ? { details } : {})
-    }
+      ...(details && details.length > 0 ? { details } : {}),
+    },
   };
 
   response.status(statusCode).json(payload);
@@ -43,7 +50,7 @@ export function sendError(
 export function sendZodValidationError(
   request: Request,
   response: Response,
-  issues: z.core.$ZodIssue[]
+  issues: z.core.$ZodIssue[],
 ): void {
   sendError(
     request,
@@ -53,7 +60,7 @@ export function sendZodValidationError(
     "Request validation failed.",
     issues.map((issue) => ({
       field: issue.path.join("."),
-      issue: issue.message
-    }))
+      issue: issue.message,
+    })),
   );
 }

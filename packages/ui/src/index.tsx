@@ -84,6 +84,7 @@ interface AppTextProps {
   color?: "primary" | "secondary" | "inverse";
   align?: TextStyle["textAlign"];
   style?: StyleProp<TextStyle>;
+  numberOfLines?: number;
 }
 
 export function AppText({
@@ -92,9 +93,18 @@ export function AppText({
   color = "primary",
   align,
   style,
+  numberOfLines,
 }: AppTextProps) {
   return (
-    <Text style={[typography[variant], textColorStyles[color], align ? { textAlign: align } : null, style]}>
+    <Text
+      numberOfLines={numberOfLines}
+      style={[
+        typography[variant],
+        textColorStyles[color],
+        align ? { textAlign: align } : null,
+        style,
+      ]}
+    >
       {children}
     </Text>
   );
@@ -152,7 +162,11 @@ export function AppTextField({
         placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
         secureTextEntry={secureTextEntry}
-        style={[styles.textInput, error ? styles.textInputError : null, disabled ? styles.textInputDisabled : null]}
+        style={[
+          styles.textInput,
+          error ? styles.textInputError : null,
+          disabled ? styles.textInputDisabled : null,
+        ]}
         textContentType={textContentType}
         value={value}
       />
@@ -172,7 +186,12 @@ interface PhoneNumberFieldProps {
   disabled?: boolean;
 }
 
-export function PhoneNumberField({ value, onChangeText, error, disabled = false }: PhoneNumberFieldProps) {
+export function PhoneNumberField({
+  value,
+  onChangeText,
+  error,
+  disabled = false,
+}: PhoneNumberFieldProps) {
   return (
     <AppTextField
       autoComplete="tel"
@@ -210,7 +229,13 @@ export function PasswordField({
   return (
     <View style={styles.field}>
       <AppText variant="label">{label}</AppText>
-      <View style={[styles.passwordInputShell, error ? styles.textInputError : null, disabled ? styles.textInputDisabled : null]}>
+      <View
+        style={[
+          styles.passwordInputShell,
+          error ? styles.textInputError : null,
+          disabled ? styles.textInputDisabled : null,
+        ]}
+      >
         <TextInput
           accessibilityLabel={label}
           autoCapitalize="none"
@@ -231,7 +256,8 @@ export function PasswordField({
           onPress={() => {
             setIsVisible((currentValue) => !currentValue);
           }}
-          style={styles.passwordToggle}>
+          style={styles.passwordToggle}
+        >
           <AppText color="secondary" variant="label">
             {isVisible ? "Hide" : "Show"}
           </AppText>
@@ -254,7 +280,13 @@ interface OtpInputProps {
   length?: number;
 }
 
-export function OtpInput({ value, onChangeText, error, disabled = false, length = 6 }: OtpInputProps) {
+export function OtpInput({
+  value,
+  onChangeText,
+  error,
+  disabled = false,
+  length = 6,
+}: OtpInputProps) {
   const inputRef = useRef<TextInput>(null);
   const sanitizedValue = value.replace(/\D/g, "").slice(0, length);
 
@@ -273,7 +305,11 @@ export function OtpInput({ value, onChangeText, error, disabled = false, length 
         }}
         placeholder="000000"
         placeholderTextColor={colors.textSecondary}
-        style={[styles.otpInput, error ? styles.textInputError : null, disabled ? styles.textInputDisabled : null]}
+        style={[
+          styles.otpInput,
+          error ? styles.textInputError : null,
+          disabled ? styles.textInputDisabled : null,
+        ]}
         textContentType="oneTimeCode"
         value={sanitizedValue}
       />
@@ -284,9 +320,13 @@ export function OtpInput({ value, onChangeText, error, disabled = false, length 
         onPress={() => {
           inputRef.current?.focus();
         }}
-        style={styles.otpSlots}>
+        style={styles.otpSlots}
+      >
         {Array.from({ length }, (_, index) => (
-          <View key={index} style={[styles.otpSlot, sanitizedValue[index] ? styles.otpSlotFilled : null]}>
+          <View
+            key={index}
+            style={[styles.otpSlot, sanitizedValue[index] ? styles.otpSlotFilled : null]}
+          >
             <AppText variant="heading3">{sanitizedValue[index] ?? ""}</AppText>
           </View>
         ))}
@@ -329,7 +369,8 @@ export function UploadCard({
         status === "error" ? styles.uploadCardError : null,
         pressed && !disabled ? styles.buttonPressed : null,
         disabled ? styles.buttonDisabled : null,
-      ]}>
+      ]}
+    >
       <View style={styles.uploadCardCopy}>
         <AppText variant="label">{title}</AppText>
         <AppText color="secondary" variant="caption">
@@ -366,14 +407,16 @@ export function AppButton({
         pressed && !isDisabled ? styles.buttonPressed : null,
         isDisabled ? styles.buttonDisabled : null,
         style,
-      ]}>
+      ]}
+    >
       {loading ? (
         <ActivityIndicator color={variant === "primary" ? colors.surface : colors.primary} />
       ) : (
         <AppText
           variant="label"
           color={variant === "primary" ? "inverse" : "primary"}
-          style={variant === "ghost" ? styles.ghostButtonText : styles.buttonText}>
+          style={variant === "ghost" ? styles.ghostButtonText : styles.buttonText}
+        >
           {label}
         </AppText>
       )}
@@ -395,7 +438,8 @@ export function OnboardingIllustration({ variant }: OnboardingIllustrationProps)
       style={[
         styles.illustration,
         variant === "market" ? styles.marketIllustration : styles.deliveryIllustration,
-      ]}>
+      ]}
+    >
       <View style={styles.sun} />
       <View style={styles.stallRoof} />
       <View style={styles.stallBody}>
@@ -443,7 +487,10 @@ export function OnboardingSlide({
           {Array.from({ length: totalSteps }, (_, index) => (
             <View
               key={index}
-              style={[styles.progressDot, index + 1 === currentStep ? styles.progressDotActive : null]}
+              style={[
+                styles.progressDot,
+                index + 1 === currentStep ? styles.progressDotActive : null,
+              ]}
             />
           ))}
         </View>
@@ -459,17 +506,10 @@ export function OnboardingSlide({
       {primaryActionLabel || secondaryActionLabel ? (
         <View style={styles.slideActions}>
           {primaryActionLabel ? (
-            <AppButton
-              label={primaryActionLabel}
-              onPress={onPrimaryAction}
-            />
+            <AppButton label={primaryActionLabel} onPress={onPrimaryAction} />
           ) : null}
           {secondaryActionLabel ? (
-            <AppButton
-              label={secondaryActionLabel}
-              onPress={onSecondaryAction}
-              variant="ghost"
-            />
+            <AppButton label={secondaryActionLabel} onPress={onSecondaryAction} variant="ghost" />
           ) : null}
         </View>
       ) : null}

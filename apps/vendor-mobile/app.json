@@ -28,6 +28,15 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Sokoni Vendor to select product photos for your listings.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-secure-store",
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",

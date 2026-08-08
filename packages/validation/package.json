@@ -6,7 +6,11 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./catalogue-search": "./src/catalogue-search.ts",
+    "./listing": "./src/listing.ts",
+    "./listing-image": "./src/listing-image.ts",
+    "./listing-approval": "./src/listing-approval.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -18,6 +22,7 @@
     "clean": "rimraf dist coverage"
   },
   "dependencies": {
+    "@sokoni-digital/domain": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

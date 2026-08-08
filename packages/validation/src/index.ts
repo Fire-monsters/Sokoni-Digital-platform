@@ -15,9 +15,9 @@ export function normalizeUgandanPhoneNumber(phoneNumber: string): string {
   return trimmed;
 }
 
-export function parseUgandanPhoneNumber(phoneNumber: string):
-  | { success: true; phoneNumber: string }
-  | { success: false; message: string } {
+export function parseUgandanPhoneNumber(
+  phoneNumber: string,
+): { success: true; phoneNumber: string } | { success: false; message: string } {
   const normalized = normalizeUgandanPhoneNumber(phoneNumber);
   const result = ugandanPhoneNumberSchema.safeParse(normalized);
 
@@ -39,9 +39,9 @@ export const otpCodeSchema = z
   .trim()
   .regex(/^[0-9]{6}$/, "Enter the 6-digit verification code.");
 
-export function parseOtpCode(otpCode: string):
-  | { success: true; otpCode: string }
-  | { success: false; message: string } {
+export function parseOtpCode(
+  otpCode: string,
+): { success: true; otpCode: string } | { success: false; message: string } {
   const normalized = otpCode.trim().replace(/\s+/g, "");
   const result = otpCodeSchema.safeParse(normalized);
 
@@ -68,9 +68,7 @@ export const passwordSchema = z
 export function parsePasswordPair(
   password: string,
   passwordConfirmation: string,
-):
-  | { success: true; password: string }
-  | { success: false; message: string } {
+): { success: true; password: string } | { success: false; message: string } {
   const result = passwordSchema.safeParse(password);
 
   if (!result.success) {
@@ -136,7 +134,9 @@ export function parsePersonalIdentityDetails(input: {
 export const vendorStallDetailsSchema = z.object({
   businessName: z.string().trim().min(2, "Enter your business or stall name."),
   stallNumber: z.string().trim().min(1, "Enter your Kitooro stall number."),
-  productCategories: z.array(z.string().trim().min(1)).min(1, "Choose at least one product category."),
+  productCategories: z
+    .array(z.string().trim().min(1))
+    .min(1, "Choose at least one product category."),
   marketIdentificationNumber: z.string().trim().min(3, "Enter your market identification number."),
 });
 

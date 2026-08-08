@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sokoni-digital/api-client": "workspace:*",
+    "@sokoni-digital/domain": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

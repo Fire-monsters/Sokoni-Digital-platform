@@ -9,7 +9,10 @@ import { notFound } from "./middleware/not-found.js";
 import { requestContext } from "./middleware/request-context.js";
 import { adminRouter } from "./modules/admin/index.js";
 import { authRouter } from "./modules/auth/index.js";
+import { createCatalogueRouter } from "./modules/catalogue/index.js";
 import { meRouter } from "./modules/me/index.js";
+import { createListingsRouter } from "./modules/listings/index.js";
+import { createListingApprovalRouter } from "./modules/listing-approval/index.js";
 
 export function createApp(): express.Express {
   const app = express();
@@ -20,9 +23,9 @@ export function createApp(): express.Express {
   app.use(
     pinoHttp({
       customProps: (request: Request) => ({
-        requestId: request.requestId
-      })
-    })
+        requestId: request.requestId,
+      }),
+    }),
   );
   app.use(helmet());
   app.use(cors());
@@ -33,16 +36,19 @@ export function createApp(): express.Express {
       success: true,
       data: {
         service: "ekatale-api",
-        status: "healthy"
+        status: "healthy",
       },
       meta: {
-        requestId: request.requestId
-      }
+        requestId: request.requestId,
+      },
     });
   });
 
   app.use("/v1/auth", authRouter);
+  app.use("/v1/catalogue", createCatalogueRouter());
   app.use("/v1/me", meRouter);
+  app.use("/v1/vendor/listings", createListingsRouter());
+  app.use("/v1/admin", createListingApprovalRouter());
   app.use("/v1/admin", adminRouter);
 
   app.use(notFound);

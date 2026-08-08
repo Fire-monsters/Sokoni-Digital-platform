@@ -4,17 +4,22 @@ export function errorHandler(
   error: unknown,
   request: Request,
   response: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void {
-  const message =
-    error instanceof Error ? error.message : "An unexpected error occurred";
+  const typedError = error as {
+    statusCode?: number;
+    code?: string;
+    message?: string;
+  };
+  const statusCode = typedError.statusCode ?? 500;
+  const message = error instanceof Error ? error.message : "An unexpected error occurred";
 
-  response.status(500).json({
+  response.status(statusCode).json({
     success: false,
     error: {
-      code: "INTERNAL_ERROR",
+      code: typedError.code ?? "INTERNAL_ERROR",
       message,
-      requestId: request.requestId
-    }
+      requestId: request.requestId,
+    },
   });
 }
