@@ -30,8 +30,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Sokoni Vendor to select product photos for your listings.",
-          "cameraPermission": false,
+          "photosPermission": "Allow Sokoni Vendor to select listing and packed-order photos.",
+          "cameraPermission": "Allow Sokoni Vendor to photograph packed orders for quality checks.",
           "microphonePermission": false
         }
       ],

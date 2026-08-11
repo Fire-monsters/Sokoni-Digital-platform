@@ -1,7 +1,7 @@
 import { AppScreen, AppText, OnboardingSlide, colors, spacing } from "@sokoni-digital/ui";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import {
   CatalogueLoading,
@@ -180,9 +180,7 @@ export default function HomeScreen() {
           primaryActionLabel="Explore the market"
           secondaryActionLabel="Sign in"
           onPrimaryAction={() => setHasSeenOnboarding(true)}
-          onSecondaryAction={() =>
-            Alert.alert("Sign in", "Consumer authentication will be added before checkout.")
-          }
+          onSecondaryAction={() => router.push("/sign-in")}
         />
       </AppScreen>
     );

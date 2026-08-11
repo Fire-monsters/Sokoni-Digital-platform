@@ -1,112 +1,135 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import type { VendorFulfilmentStatus, VendorOrderSummary } from "@sokoni-digital/domain";
+import { AppButton, AppScreen, AppText, colors, spacing } from "@sokoni-digital/ui";
+import { router, type Href } from "expo-router";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { useVendorOrders } from "@/features/orders/hooks";
 
-export default function TabTwoScreen() {
+const sections: { status: VendorFulfilmentStatus; title: string }[] = [
+  { status: "awaiting_vendor_acceptance", title: "New orders" },
+  { status: "accepted", title: "Accepted" },
+  { status: "preparing", title: "Preparing" },
+  { status: "quality_verified", title: "Quality checked" },
+  { status: "ready_for_pickup", title: "Ready" },
+  { status: "issue_reported", title: "Needs attention" },
+];
+
+const statusLabels: Record<VendorFulfilmentStatus, string> = {
+  awaiting_vendor_acceptance: "NEW",
+  accepted: "ACCEPTED",
+  preparing: "PREPARING",
+  quality_verified: "QUALITY CHECKED",
+  ready_for_pickup: "READY",
+  cancelled: "CANCELLED",
+  issue_reported: "NEEDS ATTENTION",
+};
+
+function OrderCard({ order }: { order: VendorOrderSummary }) {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(`/orders/${order.id}` as Href)}
+      style={styles.card}
+    >
+      <View style={styles.cardHeader}>
+        <AppText variant="heading3">{order.reference}</AppText>
+        <View style={styles.badge}>
+          <AppText variant="caption" style={styles.badgeText}>
+            {statusLabels[order.status]}
+          </AppText>
+        </View>
+      </View>
+      <AppText color="secondary">
+        {order.itemCount} {order.itemCount === 1 ? "item" : "items"} · UGX{" "}
+        {order.subtotalUgx.toLocaleString()}
+      </AppText>
+      <AppText color="secondary" variant="caption">
+        {order.fulfilment.type === "delivery" ? "Delivery" : "Market pickup"} · v{order.version}
+      </AppText>
+    </Pressable>
+  );
+}
+
+export default function VendorOrdersScreen() {
+  const query = useVendorOrders();
+  const orders = query.data?.pages.flatMap((page) => page.items) ?? [];
+
+  return (
+    <AppScreen scroll contentStyle={styles.content}>
+      <View style={styles.header}>
+        <View style={styles.headerCopy}>
+          <AppText variant="heading1">Seller orders</AppText>
+          <AppText color="secondary">Accept, pack, verify and hand off paid orders.</AppText>
+        </View>
+        <AppButton label="Refresh" variant="secondary" onPress={() => void query.refetch()} />
+      </View>
+
+      {query.isPending ? <ActivityIndicator color={colors.primary} size="large" /> : null}
+      {query.isError && orders.length === 0 ? (
+        <View style={styles.empty}>
+          <AppText variant="heading3">Orders unavailable</AppText>
+          <AppText color="secondary">Check your connection and try again.</AppText>
+        </View>
+      ) : null}
+      {query.fetchStatus === "paused" ? (
+        <View style={styles.offline}>
+          <AppText variant="caption">Offline · showing the last saved queue</AppText>
+        </View>
+      ) : null}
+
+      {sections.map((section) => {
+        const matching = orders.filter((order) => order.status === section.status);
+        if (matching.length === 0) return null;
+        return (
+          <View key={section.status} style={styles.section}>
+            <AppText variant="heading2">{section.title}</AppText>
+            {matching.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))}
+          </View>
+        );
+      })}
+
+      {!query.isPending && !query.isError && orders.length === 0 ? (
+        <View style={styles.empty}>
+          <AppText variant="heading3">No seller orders yet</AppText>
+          <AppText color="secondary">New paid orders will appear here.</AppText>
+        </View>
+      ) : null}
+      {query.hasNextPage ? (
+        <AppButton
+          label="Load more orders"
+          variant="secondary"
+          loading={query.isFetchingNextPage}
+          onPress={() => void query.fetchNextPage()}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+      ) : null}
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  content: { gap: spacing.lg },
+  header: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  headerCopy: { flex: 1, gap: spacing.xs },
+  section: { gap: spacing.sm },
+  card: {
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  badge: {
+    marginLeft: "auto",
+    borderRadius: 999,
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
   },
+  badgeText: { color: colors.primaryDark },
+  empty: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl },
+  offline: { backgroundColor: "#FFF2D8", borderRadius: 8, padding: spacing.sm },
 });

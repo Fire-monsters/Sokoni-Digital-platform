@@ -16,6 +16,16 @@ import type {
   OnboardingSnapshot,
   VendorListing,
   VendorListingImage,
+  VendorFulfilmentStatus,
+  VendorOrderDetails,
+  VendorOrderPage,
+  VendorOrderTransitionResult,
+  VendorOrderTransitionTarget,
+  QualityCheckCompletionResult,
+  QualityImageUploadIntent,
+  QualityImageUploadResult,
+  ConsumerCheckoutProgress,
+  ConsumerQualityProof,
 } from "@sokoni-digital/domain";
 
 export const apiQueryKeys = {
@@ -28,6 +38,11 @@ export const apiQueryKeys = {
   catalogueProducts: ["catalogue", "products"] as const,
   vendorListings: ["vendor", "listings"] as const,
   vendorListing: (listingId: string) => ["vendor", "listings", listingId] as const,
+  vendorOrders: (statuses: readonly VendorFulfilmentStatus[] = []) =>
+    ["vendor", "orders", ...statuses] as const,
+  vendorOrder: (orderId: string) => ["vendor", "orders", orderId] as const,
+  checkoutProgress: (checkoutId: string) => ["checkout", checkoutId, "progress"] as const,
+  qualityProof: (orderId: string) => ["orders", orderId, "quality-proof"] as const,
   adminListingQueue: ["admin", "listing-queue"] as const,
   me: ["me"] as const,
   onboarding: ["me", "onboarding"] as const,
@@ -181,8 +196,11 @@ export function updateVendorListing(
   });
 }
 
-export function archiveVendorListing(options: ApiClientOptions, listingId: string): Promise<void> {
-  return requestApi<void>(options, `/v1/vendor/listings/${listingId}`, { method: "DELETE" });
+export function archiveVendorListing(
+  options: ApiClientOptions,
+  listingId: string,
+): Promise<undefined> {
+  return requestApi<undefined>(options, `/v1/vendor/listings/${listingId}`, { method: "DELETE" });
 }
 
 export function submitVendorListing(
@@ -244,6 +262,121 @@ export function completeListingUpload(
       method: "POST",
       body: JSON.stringify(input),
     },
+  );
+}
+
+export interface VendorOrdersQuery {
+  status?: VendorFulfilmentStatus[];
+  cursor?: string;
+  limit?: number;
+}
+
+export function fetchVendorOrders(
+  options: ApiClientOptions,
+  query: VendorOrdersQuery = {},
+): Promise<VendorOrderPage> {
+  const params = new URLSearchParams();
+  if (query.status && query.status.length > 0) params.set("status", query.status.join(","));
+  if (query.cursor) params.set("cursor", query.cursor);
+  if (query.limit) params.set("limit", String(query.limit));
+  const search = params.toString();
+  return requestApi<VendorOrderPage>(options, `/v1/vendor/orders${search ? `?${search}` : ""}`);
+}
+
+export function fetchVendorOrder(
+  options: ApiClientOptions,
+  orderId: string,
+): Promise<VendorOrderDetails> {
+  return requestApi<VendorOrderDetails>(
+    options,
+    `/v1/vendor/orders/${encodeURIComponent(orderId)}`,
+  );
+}
+
+export function transitionVendorOrder(
+  options: ApiClientOptions,
+  orderId: string,
+  input: {
+    toStatus: VendorOrderTransitionTarget;
+    expectedVersion: number;
+    operationId: string;
+  },
+): Promise<VendorOrderTransitionResult> {
+  return requestApi<VendorOrderTransitionResult>(
+    options,
+    `/v1/vendor/orders/${encodeURIComponent(orderId)}/transitions`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function createQualityImageUploadIntent(
+  options: ApiClientOptions,
+  orderId: string,
+  input: {
+    operationId: string;
+    mimeType: "image/jpeg";
+    byteSize: number;
+    width: number;
+    height: number;
+  },
+): Promise<QualityImageUploadIntent> {
+  return requestApi<QualityImageUploadIntent>(
+    options,
+    `/v1/vendor/orders/${encodeURIComponent(orderId)}/quality-check/images/upload-intent`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function fetchCheckoutProgress(
+  options: ApiClientOptions,
+  checkoutId: string,
+): Promise<ConsumerCheckoutProgress> {
+  return requestApi<ConsumerCheckoutProgress>(
+    options,
+    `/v1/checkouts/${encodeURIComponent(checkoutId)}/progress`,
+  );
+}
+
+export function fetchConsumerQualityProof(
+  options: ApiClientOptions,
+  orderId: string,
+): Promise<ConsumerQualityProof> {
+  return requestApi<ConsumerQualityProof>(
+    options,
+    `/v1/orders/${encodeURIComponent(orderId)}/quality-proof`,
+  );
+}
+
+export function completeQualityImageUpload(
+  options: ApiClientOptions,
+  orderId: string,
+  imageId: string,
+  input: unknown,
+): Promise<QualityImageUploadResult> {
+  return requestApi<QualityImageUploadResult>(
+    options,
+    `/v1/vendor/orders/${encodeURIComponent(orderId)}/quality-check/images/${encodeURIComponent(imageId)}/complete`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function completeQualityCheck(
+  options: ApiClientOptions,
+  orderId: string,
+  input: {
+    checklist: {
+      itemsChecked: true;
+      quantitiesChecked: true;
+      packagingSecure: true;
+    };
+    notes?: string | null;
+    operationId: string;
+  },
+): Promise<QualityCheckCompletionResult> {
+  return requestApi<QualityCheckCompletionResult>(
+    options,
+    `/v1/vendor/orders/${encodeURIComponent(orderId)}/quality-check/complete`,
+    { method: "POST", body: JSON.stringify(input) },
   );
 }
 

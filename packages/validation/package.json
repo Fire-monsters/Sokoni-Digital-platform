@@ -10,7 +10,9 @@
     "./catalogue-search": "./src/catalogue-search.ts",
     "./listing": "./src/listing.ts",
     "./listing-image": "./src/listing-image.ts",
-    "./listing-approval": "./src/listing-approval.ts"
+    "./listing-approval": "./src/listing-approval.ts",
+    "./vendor-order": "./src/vendor-order.ts",
+    "./quality-check": "./src/quality-check.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

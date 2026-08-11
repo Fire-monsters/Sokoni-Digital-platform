@@ -22,6 +22,7 @@ function card(id: string, updatedAt: string, price = 5000): CatalogueListingCard
     productName: "Tomatoes",
     productSlug: "tomatoes",
     category,
+    sellerId: "40000000-0000-4000-8000-000000000001",
     vendorName: "Approved Stall",
     market: {
       id: "10000000-0000-4000-8000-000000000001",

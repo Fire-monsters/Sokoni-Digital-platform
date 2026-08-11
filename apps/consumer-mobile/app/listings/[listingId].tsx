@@ -1,7 +1,7 @@
-import { AppScreen, AppText, colors, spacing } from "@sokoni-digital/ui";
+import { AppButton, AppScreen, AppText, colors, spacing } from "@sokoni-digital/ui";
 import { Image } from "expo-image";
 import { useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import {
   AvailabilityBadge,
@@ -12,11 +12,13 @@ import {
 } from "@/features/catalogue/components";
 import { useCatalogueListing } from "@/features/catalogue/hooks";
 import { useCatalogueInterface } from "@/features/catalogue/catalogue-store";
+import { useCartActions } from "@/features/cart/use-cart";
 
 export default function ListingDetailsScreen() {
   const { listingId = "" } = useLocalSearchParams<{ listingId: string }>();
   const query = useCatalogueListing(listingId);
   const reducedData = useCatalogueInterface((state) => state.reducedData);
+  const cart = useCartActions();
 
   if (query.isPending) {
     return (
@@ -92,6 +94,26 @@ export default function ListingDetailsScreen() {
           {listing.description ?? "The vendor has not added a description yet."}
         </AppText>
       </View>
+      <AppButton
+        disabled={listing.availability === "unavailable" || !listing.market}
+        label={
+          listing.availability === "unavailable" ? "Currently unavailable" : "Add package to cart"
+        }
+        onPress={() => {
+          if (!listing.market) return;
+          cart.add({
+            listingId: listing.id,
+            productName: listing.productName,
+            packageLabel: `${listing.packageQuantity} ${listing.packageUnit}`,
+            sellerId: listing.sellerId,
+            sellerName: listing.vendorName,
+            marketId: listing.market.id,
+            unitPriceUgx: listing.approvedPriceUgx,
+            thumbnailUrl: listing.images[0]?.thumbnailUrl ?? listing.images[0]?.url ?? null,
+          });
+          Alert.alert("Added to cart", `${listing.productName} is in your cart.`);
+        }}
+      />
     </AppScreen>
   );
 }

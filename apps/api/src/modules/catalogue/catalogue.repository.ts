@@ -66,6 +66,7 @@ function mapCard(row: CatalogueCardRow): CatalogueListingCard {
       name: row.category_name,
       slug: row.category_slug,
     },
+    sellerId: row.seller_id,
     vendorName: row.vendor_name,
     market: row.market_id && row.market_name ? { id: row.market_id, name: row.market_name } : null,
     packageQuantity: Number(row.package_quantity),

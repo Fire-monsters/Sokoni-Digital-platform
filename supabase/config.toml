@@ -20,9 +20,20 @@ api_url = "http://127.0.0.1:54321"
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:8081"]
+additional_redirect_urls = ["http://localhost:8081", "consumermobile://auth/callback"]
 jwt_expiry = 3600
 enable_signup = true
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+
+# Uncomment after adding the three SUPABASE_AUTH_SMS_TWILIO_* values to .env.
+# [auth.sms.twilio]
+# enabled = true
+# account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
+# message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
+# auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
 [storage]
 enabled = true

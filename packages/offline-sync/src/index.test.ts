@@ -38,6 +38,40 @@ describe("PersistentOperationQueue", () => {
       lastError: "offline",
     });
   });
+
+  it("preserves offline capture URIs and uploads after reconnect", async () => {
+    const queue = new PersistentOperationQueue(memoryStorage(), "quality");
+    await queue.hydrate();
+    await queue.enqueue({
+      id: "photo-operation",
+      kind: "quality-image-upload",
+      payload: {
+        orderId: "order",
+        originalUri: "file:///offline.jpg",
+        thumbnailUri: "file:///thumb.jpg",
+      },
+    });
+    const now = Date.now();
+    await queue.flush(() => Promise.reject(new Error("offline")), now);
+    expect(queue.snapshot()[0]?.payload).toMatchObject({ originalUri: "file:///offline.jpg" });
+    const upload = vi.fn(() => Promise.resolve());
+    await queue.flush(upload, now + 1_000);
+    expect(upload).toHaveBeenCalledOnce();
+    expect(queue.snapshot()).toHaveLength(0);
+  });
+
+  it("deduplicates repeated offline photo operations", async () => {
+    const queue = new PersistentOperationQueue(memoryStorage(), "quality");
+    await queue.hydrate();
+    const operation = {
+      id: "stable-photo-id",
+      kind: "quality-image-upload",
+      payload: { orderId: "order" },
+    };
+    await queue.enqueue(operation);
+    await queue.enqueue(operation);
+    expect(queue.snapshot()).toHaveLength(1);
+  });
 });
 
 describe("retryDelay", () => {

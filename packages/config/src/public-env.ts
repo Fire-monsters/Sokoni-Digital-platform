@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 const publicEnvSchema = z.object({
-  supabaseUrl: z.string().url(),
+  supabaseUrl: z.url(),
   supabaseAnonKey: z.string().min(1),
-  apiUrl: z.string().url()
+  apiUrl: z.url(),
 });
 
 export type PublicEnvironment = z.infer<typeof publicEnvSchema>;

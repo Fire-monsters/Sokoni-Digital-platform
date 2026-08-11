@@ -34,6 +34,7 @@ export interface CatalogueListingCard {
   productName: string;
   productSlug: string;
   category: CatalogueCategory;
+  sellerId: string;
   vendorName: string;
   market: { id: string; name: string } | null;
   packageQuantity: number;
