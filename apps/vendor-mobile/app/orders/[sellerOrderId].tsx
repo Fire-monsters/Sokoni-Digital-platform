@@ -8,6 +8,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-nat
 
 import {
   useCompleteQualityCheck,
+  useConfirmVendorPickup,
   useVendorOrder,
   useVendorOrderTransition,
 } from "@/features/orders/hooks";
@@ -33,6 +34,7 @@ export default function VendorOrderDetailsScreen() {
   const query = useVendorOrder(sellerOrderId);
   const transition = useVendorOrderTransition(sellerOrderId);
   const completeCheck = useCompleteQualityCheck(sellerOrderId);
+  const confirmPickup = useConfirmVendorPickup(sellerOrderId);
   const { options } = useVendorApiOptions();
   const apiBaseUrl = options.baseUrl;
   const accessToken = options.accessToken;
@@ -161,6 +163,44 @@ export default function VendorOrderDetailsScreen() {
           <AppText variant="heading3">UGX {order.subtotalUgx.toLocaleString()}</AppText>
         </View>
       </View>
+
+      {order.deliveryPickup ? (
+        <View style={styles.actionCard}>
+          <AppText variant="heading3">Rider handover</AppText>
+          <AppText color="secondary">
+            Delivery {order.deliveryPickup.deliveryReference} ·{" "}
+            {order.deliveryPickup.deliveryStatus.replaceAll("_", " ")}
+          </AppText>
+          <AppText variant="caption">
+            Seller {order.deliveryPickup.vendorConfirmed ? "confirmed" : "not confirmed"} · Rider{" "}
+            {order.deliveryPickup.riderConfirmed ? "confirmed" : "not confirmed"}
+          </AppText>
+          {!order.deliveryPickup.vendorConfirmed ? (
+            <AppButton
+              label="Confirm order handed to rider"
+              loading={confirmPickup.isPending}
+              disabled={order.deliveryPickup.deliveryStatus !== "arrived_at_market"}
+              onPress={() =>
+                void confirmPickup
+                  .mutateAsync({ operationId: createOperationId() })
+                  .then(() => query.refetch())
+                  .catch((error) =>
+                    Alert.alert(
+                      "Handover not confirmed",
+                      error instanceof Error ? error.message : "Try again.",
+                    ),
+                  )
+              }
+            />
+          ) : (
+            <AppText style={styles.success}>
+              {order.deliveryPickup.riderConfirmed
+                ? "Custody transferred to the rider."
+                : "Your confirmation is saved. Waiting for the rider."}
+            </AppText>
+          )}
+        </View>
+      ) : null}
 
       <View style={styles.card}>
         <AppText variant="heading3">Fulfilment</AppText>

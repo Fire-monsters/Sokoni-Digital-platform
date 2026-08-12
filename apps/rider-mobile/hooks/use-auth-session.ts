@@ -1,15 +1,29 @@
-import { apiQueryKeys, fetchMe, fetchOnboarding } from '@sokoni-digital/api-client';
-import { decideProtectedRoute, reduceAuthSession } from '@sokoni-digital/auth';
-import type { AuthSessionState, ProtectedRouteArea } from '@sokoni-digital/domain';
-import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import type { Href } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { apiQueryKeys, fetchMe, fetchOnboarding } from "@sokoni-digital/api-client";
+import { decideProtectedRoute, reduceAuthSession } from "@sokoni-digital/auth";
+import type { AuthSessionState, ProtectedRouteArea } from "@sokoni-digital/domain";
+import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
+import type { Href } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 
-const apiBaseUrl = 'http://localhost:4000';
+import { mobileSupabase } from "@/lib/supabase";
 
-function useAccessToken(): string | undefined {
-  return undefined;
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000";
+
+export function useAccessToken(): string | undefined {
+  const [accessToken, setAccessToken] = useState<string>();
+
+  useEffect(() => {
+    void mobileSupabase.auth.getSession().then(({ data }) => {
+      setAccessToken(data.session?.access_token);
+    });
+    const { data } = mobileSupabase.auth.onAuthStateChange((_event, session) => {
+      setAccessToken(session?.access_token);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  return accessToken;
 }
 
 export function useMeQuery() {
@@ -19,7 +33,7 @@ export function useMeQuery() {
     queryKey: apiQueryKeys.me,
     queryFn: () => fetchMe({ baseUrl: apiBaseUrl, accessToken }),
     enabled: Boolean(accessToken),
-    networkMode: 'offlineFirst',
+    networkMode: "offlineFirst",
     staleTime: 30_000,
   });
 }
@@ -31,7 +45,7 @@ export function useOnboardingQuery() {
     queryKey: apiQueryKeys.onboarding,
     queryFn: () => fetchOnboarding({ baseUrl: apiBaseUrl, accessToken }),
     enabled: Boolean(accessToken),
-    networkMode: 'offlineFirst',
+    networkMode: "offlineFirst",
     staleTime: 30_000,
   });
 }
@@ -43,28 +57,28 @@ export function useAuthSession(): AuthSessionState {
 
   return useMemo(() => {
     if (!accessToken) {
-      return reduceAuthSession({ status: 'loading' }, { type: 'session_missing' });
+      return reduceAuthSession({ status: "loading" }, { type: "session_missing" });
     }
 
     if (meQuery.isPending || onboardingQuery.isPending) {
-      return reduceAuthSession({ status: 'guest' }, { type: 'session_loading' });
+      return reduceAuthSession({ status: "guest" }, { type: "session_loading" });
     }
 
     if (meQuery.isError) {
       return reduceAuthSession(
-        { status: 'loading' },
-        { type: 'session_failed', message: meQuery.error.message },
+        { status: "loading" },
+        { type: "session_failed", message: meQuery.error.message },
       );
     }
 
     if (!meQuery.data) {
-      return reduceAuthSession({ status: 'loading' }, { type: 'session_missing' });
+      return reduceAuthSession({ status: "loading" }, { type: "session_missing" });
     }
 
     return reduceAuthSession(
-      { status: 'loading' },
+      { status: "loading" },
       {
-        type: 'profile_loaded',
+        type: "profile_loaded",
         profile: meQuery.data,
         ...(onboardingQuery.data ? { onboarding: onboardingQuery.data } : {}),
       },
@@ -85,7 +99,7 @@ export function useProtectedRoute(area: ProtectedRouteArea) {
   const decision = decideProtectedRoute(session, area);
 
   useEffect(() => {
-    if (decision.action === 'redirect') {
+    if (decision.action === "redirect") {
       router.replace(decision.pathname as Href);
     }
   }, [decision]);
@@ -93,6 +107,6 @@ export function useProtectedRoute(area: ProtectedRouteArea) {
   return {
     session,
     decision,
-    isAllowed: decision.action === 'allow',
+    isAllowed: decision.action === "allow",
   };
 }

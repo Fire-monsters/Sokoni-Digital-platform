@@ -1,13 +1,13 @@
-import { parsePasswordPair } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, PasswordField, colors, spacing } from '@sokoni-digital/ui';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { parsePasswordPair } from "@sokoni-digital/validation";
+import { AppButton, AppScreen, AppText, PasswordField, colors, spacing } from "@sokoni-digital/ui";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderCreatePasswordScreen() {
   const { phoneNumber } = useLocalSearchParams<{ phoneNumber?: string }>();
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [error, setError] = useState<string | undefined>();
 
   function continueToRegistration() {
@@ -20,9 +20,9 @@ export default function RiderCreatePasswordScreen() {
 
     setError(undefined);
     router.push({
-      pathname: '../(registration)/personal-details',
+      pathname: "../(registration)/personal-details",
       params: {
-        phoneNumber: phoneNumber ?? '',
+        phoneNumber: phoneNumber ?? "",
       },
     });
   }
@@ -33,7 +33,7 @@ export default function RiderCreatePasswordScreen() {
         <View style={styles.copy}>
           <AppText variant="heading1">Create your password</AppText>
           <AppText color="secondary" variant="bodyLarge">
-            Protect the rider account for {phoneNumber ?? 'your verified phone number'}.
+            Protect the rider account for {phoneNumber ?? "your verified phone number"}.
           </AppText>
         </View>
 
@@ -60,7 +60,8 @@ export default function RiderCreatePasswordScreen() {
           />
           <View style={styles.notice}>
             <AppText color="secondary" variant="caption">
-              Use at least 8 characters with uppercase, lowercase and a number. Password storage will remain inside Supabase Auth.
+              Use at least 8 characters with uppercase, lowercase and a number. Password storage
+              will remain inside Supabase Auth.
             </AppText>
           </View>
         </View>

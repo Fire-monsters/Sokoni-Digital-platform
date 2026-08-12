@@ -29,6 +29,13 @@ const serverEnvSchema = z
     NOTIFICATION_RETRY_BASE_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
     NOTIFICATION_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).max(300000).default(15000),
     EXPO_ACCESS_TOKEN: z.string().min(1).optional(),
+    RIDER_OFFER_EXPIRY_BATCH_SIZE: z.coerce.number().int().min(1).max(1000).default(100),
+    RIDER_OFFER_EXPIRY_POLL_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(300000)
+      .default(15000),
     TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
     TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
     TWILIO_MESSAGING_SERVICE_SID: z.string().min(1).optional(),

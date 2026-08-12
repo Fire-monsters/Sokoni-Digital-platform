@@ -6,6 +6,9 @@ export type ApiErrorCode =
   | "CONFLICT"
   | "VALIDATION_ERROR"
   | "RATE_LIMITED"
+  | "OFFER_EXPIRED"
+  | "OFFER_UNAVAILABLE"
+  | "DELIVERY_ALREADY_ASSIGNED"
   | "INTERNAL_ERROR";
 
 export interface ApiErrorDetail {
@@ -22,5 +25,3 @@ export interface ApiErrorResponse {
     requestId: string;
   };
 }
-
-

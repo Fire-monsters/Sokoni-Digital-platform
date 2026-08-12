@@ -565,6 +565,992 @@ export type Database = {
           },
         ]
       }
+      deliveries: {
+        Row: {
+          assigned_at: string | null
+          assigned_transporter_id: string | null
+          completed_at: string | null
+          created_at: string
+          delivery_group_id: string
+          fee_ugx: number
+          id: string
+          reference: string
+          status: Database["public"]["Enums"]["delivery_status"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_transporter_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          delivery_group_id: string
+          fee_ugx: number
+          id?: string
+          reference?: string
+          status?: Database["public"]["Enums"]["delivery_status"]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_transporter_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          delivery_group_id?: string
+          fee_ugx?: number
+          id?: string
+          reference?: string
+          status?: Database["public"]["Enums"]["delivery_status"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_assigned_transporter_id_fkey"
+            columns: ["assigned_transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_delivery_group_id_fkey"
+            columns: ["delivery_group_id"]
+            isOneToOne: true
+            referencedRelation: "delivery_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_audit_events: {
+        Row: {
+          action: string
+          actor_type: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id: string | null
+          created_at: string
+          delivery_id: string
+          details: Json
+          id: number
+          next_status: Database["public"]["Enums"]["delivery_status"] | null
+          operation_id: string
+          previous_status: Database["public"]["Enums"]["delivery_status"] | null
+        }
+        Insert: {
+          action: string
+          actor_type: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_id: string
+          details?: Json
+          id?: never
+          next_status?: Database["public"]["Enums"]["delivery_status"] | null
+          operation_id: string
+          previous_status?:
+            | Database["public"]["Enums"]["delivery_status"]
+            | null
+        }
+        Update: {
+          action?: string
+          actor_type?: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_id?: string
+          details?: Json
+          id?: never
+          next_status?: Database["public"]["Enums"]["delivery_status"] | null
+          operation_id?: string
+          previous_status?:
+            | Database["public"]["Enums"]["delivery_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_audit_events_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_audit_events_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_operations"
+            referencedColumns: ["operation_id"]
+          },
+        ]
+      }
+      delivery_confirmations: {
+        Row: {
+          confirmation_method:
+            | Database["public"]["Enums"]["delivery_confirmation_method"]
+            | null
+          confirmed_at: string | null
+          delivery_id: string
+          expires_at: string
+          failed_attempts: number
+          locked_at: string | null
+          pin_hash: string
+          updated_at: string
+        }
+        Insert: {
+          confirmation_method?:
+            | Database["public"]["Enums"]["delivery_confirmation_method"]
+            | null
+          confirmed_at?: string | null
+          delivery_id: string
+          expires_at: string
+          failed_attempts?: number
+          locked_at?: string | null
+          pin_hash: string
+          updated_at?: string
+        }
+        Update: {
+          confirmation_method?:
+            | Database["public"]["Enums"]["delivery_confirmation_method"]
+            | null
+          confirmed_at?: string | null
+          delivery_id?: string
+          expires_at?: string
+          failed_attempts?: number
+          locked_at?: string | null
+          pin_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_confirmations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: true
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_group_orders: {
+        Row: {
+          created_at: string
+          delivery_group_id: string
+          seller_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_group_id: string
+          seller_order_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_group_id?: string
+          seller_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_group_orders_delivery_group_id_fkey"
+            columns: ["delivery_group_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_group_orders_seller_order_id_fkey"
+            columns: ["seller_order_id"]
+            isOneToOne: true
+            referencedRelation: "vendor_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_groups: {
+        Row: {
+          address_label: string
+          address_summary: string
+          checkout_id: string
+          consumer_id: string
+          created_at: string
+          delivery_address_id: string
+          delivery_zone_id: string
+          delivery_zone_name: string
+          id: string
+          market_id: string
+          phone_number: string
+          scheduled_for: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_label: string
+          address_summary: string
+          checkout_id: string
+          consumer_id: string
+          created_at?: string
+          delivery_address_id: string
+          delivery_zone_id: string
+          delivery_zone_name: string
+          id?: string
+          market_id: string
+          phone_number: string
+          scheduled_for?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_label?: string
+          address_summary?: string
+          checkout_id?: string
+          consumer_id?: string
+          created_at?: string
+          delivery_address_id?: string
+          delivery_zone_id?: string
+          delivery_zone_name?: string
+          id?: string
+          market_id?: string
+          phone_number?: string
+          scheduled_for?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_groups_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: true
+            referencedRelation: "customer_checkouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_groups_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "consumer_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_groups_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_groups_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_listing_cards"
+            referencedColumns: ["market_id"]
+          },
+          {
+            foreignKeyName: "delivery_groups_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_listing_details"
+            referencedColumns: ["market_id"]
+          },
+          {
+            foreignKeyName: "delivery_groups_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_issue_operations: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          delivery_issue_id: string
+          operation_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          created_at?: string
+          delivery_issue_id: string
+          operation_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          delivery_issue_id?: string
+          operation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_issue_operations_delivery_issue_id_fkey"
+            columns: ["delivery_issue_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_issues: {
+        Row: {
+          created_at: string
+          delivery_id: string
+          id: string
+          note: string | null
+          reason: Database["public"]["Enums"]["delivery_issue_reason"]
+          reported_by_user_id: string
+          reported_delivery_status: Database["public"]["Enums"]["delivery_status"]
+          reported_delivery_version: number
+          resolution_code: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          status: Database["public"]["Enums"]["delivery_issue_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_id: string
+          id?: string
+          note?: string | null
+          reason: Database["public"]["Enums"]["delivery_issue_reason"]
+          reported_by_user_id: string
+          reported_delivery_status: Database["public"]["Enums"]["delivery_status"]
+          reported_delivery_version: number
+          resolution_code?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          status?: Database["public"]["Enums"]["delivery_issue_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          note?: string | null
+          reason?: Database["public"]["Enums"]["delivery_issue_reason"]
+          reported_by_user_id?: string
+          reported_delivery_status?: Database["public"]["Enums"]["delivery_status"]
+          reported_delivery_version?: number
+          resolution_code?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          status?: Database["public"]["Enums"]["delivery_issue_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_issues_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_offer_acceptance_operations: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          delivery_id: string
+          expected_delivery_version: number
+          offer_id: string
+          operation_id: string
+          result_delivery_version: number
+          transporter_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          delivery_id: string
+          expected_delivery_version: number
+          offer_id: string
+          operation_id: string
+          result_delivery_version: number
+          transporter_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          delivery_id?: string
+          expected_delivery_version?: number
+          offer_id?: string
+          operation_id?: string
+          result_delivery_version?: number
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_offer_acceptance_ope_offer_id_delivery_id_transpo_fkey"
+            columns: ["offer_id", "delivery_id", "transporter_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_offers"
+            referencedColumns: ["id", "delivery_id", "transporter_id"]
+          },
+        ]
+      }
+      delivery_offer_rejection_operations: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          offer_id: string
+          operation_id: string
+          transporter_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          offer_id: string
+          operation_id: string
+          transporter_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          offer_id?: string
+          operation_id?: string
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_offer_rejection_operations_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_offer_rejection_operations_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_offer_waves: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          delivery_id: string
+          expires_at: string
+          id: string
+          max_distance_km: number
+          max_offers: number
+          offer_ttl_seconds: number
+          offered_count: number
+          operation_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["delivery_offer_wave_status"]
+          wave_number: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          delivery_id: string
+          expires_at: string
+          id?: string
+          max_distance_km: number
+          max_offers: number
+          offer_ttl_seconds: number
+          offered_count?: number
+          operation_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["delivery_offer_wave_status"]
+          wave_number: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          delivery_id?: string
+          expires_at?: string
+          id?: string
+          max_distance_km?: number
+          max_offers?: number
+          offer_ttl_seconds?: number
+          offered_count?: number
+          operation_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["delivery_offer_wave_status"]
+          wave_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_offer_waves_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_offers: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          delivery_id: string
+          distance_km: number
+          expires_at: string
+          id: string
+          offered_at: string
+          rejected_at: string | null
+          status: Database["public"]["Enums"]["delivery_offer_status"]
+          transporter_id: string
+          wave_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          delivery_id: string
+          distance_km: number
+          expires_at: string
+          id?: string
+          offered_at?: string
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["delivery_offer_status"]
+          transporter_id: string
+          wave_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          delivery_id?: string
+          distance_km?: number
+          expires_at?: string
+          id?: string
+          offered_at?: string
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["delivery_offer_status"]
+          transporter_id?: string
+          wave_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_offers_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_offers_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_offers_wave_id_fkey"
+            columns: ["wave_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_offer_waves"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_operations: {
+        Row: {
+          actor_type: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id: string | null
+          created_at: string
+          delivery_id: string
+          expected_version: number
+          metadata: Json
+          operation_id: string
+          reason: string | null
+          requested_status: Database["public"]["Enums"]["delivery_status"]
+          result_status: Database["public"]["Enums"]["delivery_status"]
+          result_version: number
+        }
+        Insert: {
+          actor_type: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_id: string
+          expected_version: number
+          metadata?: Json
+          operation_id: string
+          reason?: string | null
+          requested_status: Database["public"]["Enums"]["delivery_status"]
+          result_status: Database["public"]["Enums"]["delivery_status"]
+          result_version: number
+        }
+        Update: {
+          actor_type?: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_id?: string
+          expected_version?: number
+          metadata?: Json
+          operation_id?: string
+          reason?: string | null
+          requested_status?: Database["public"]["Enums"]["delivery_status"]
+          result_status?: Database["public"]["Enums"]["delivery_status"]
+          result_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_operations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_pickup_audit_events: {
+        Row: {
+          action: string
+          actor_type: Database["public"]["Enums"]["delivery_pickup_actor_type"]
+          actor_user_id: string
+          created_at: string
+          id: number
+          operation_id: string
+          pickup_id: string
+        }
+        Insert: {
+          action: string
+          actor_type: Database["public"]["Enums"]["delivery_pickup_actor_type"]
+          actor_user_id: string
+          created_at?: string
+          id?: never
+          operation_id: string
+          pickup_id: string
+        }
+        Update: {
+          action?: string
+          actor_type?: Database["public"]["Enums"]["delivery_pickup_actor_type"]
+          actor_user_id?: string
+          created_at?: string
+          id?: never
+          operation_id?: string
+          pickup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pickup_audit_events_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: true
+            referencedRelation: "delivery_pickup_operations"
+            referencedColumns: ["operation_id"]
+          },
+          {
+            foreignKeyName: "delivery_pickup_audit_events_pickup_id_fkey"
+            columns: ["pickup_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_pickups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_pickup_operations: {
+        Row: {
+          actor_type: Database["public"]["Enums"]["delivery_pickup_actor_type"]
+          actor_user_id: string
+          created_at: string
+          operation_id: string
+          pickup_id: string
+          result_status: Database["public"]["Enums"]["delivery_pickup_status"]
+        }
+        Insert: {
+          actor_type: Database["public"]["Enums"]["delivery_pickup_actor_type"]
+          actor_user_id: string
+          created_at?: string
+          operation_id: string
+          pickup_id: string
+          result_status: Database["public"]["Enums"]["delivery_pickup_status"]
+        }
+        Update: {
+          actor_type?: Database["public"]["Enums"]["delivery_pickup_actor_type"]
+          actor_user_id?: string
+          created_at?: string
+          operation_id?: string
+          pickup_id?: string
+          result_status?: Database["public"]["Enums"]["delivery_pickup_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pickup_operations_pickup_id_fkey"
+            columns: ["pickup_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_pickups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_pickups: {
+        Row: {
+          collected_at: string | null
+          created_at: string
+          delivery_id: string
+          id: string
+          rider_confirmed_at: string | null
+          rider_confirmed_by: string | null
+          seller_order_id: string
+          status: Database["public"]["Enums"]["delivery_pickup_status"]
+          updated_at: string
+          vendor_confirmed_at: string | null
+          vendor_confirmed_by: string | null
+        }
+        Insert: {
+          collected_at?: string | null
+          created_at?: string
+          delivery_id: string
+          id?: string
+          rider_confirmed_at?: string | null
+          rider_confirmed_by?: string | null
+          seller_order_id: string
+          status?: Database["public"]["Enums"]["delivery_pickup_status"]
+          updated_at?: string
+          vendor_confirmed_at?: string | null
+          vendor_confirmed_by?: string | null
+        }
+        Update: {
+          collected_at?: string | null
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          rider_confirmed_at?: string | null
+          rider_confirmed_by?: string | null
+          seller_order_id?: string
+          status?: Database["public"]["Enums"]["delivery_pickup_status"]
+          updated_at?: string
+          vendor_confirmed_at?: string | null
+          vendor_confirmed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pickups_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_pickups_seller_order_id_fkey"
+            columns: ["seller_order_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_pin_confirmation_operations: {
+        Row: {
+          actor_user_id: string
+          confirmed: boolean
+          created_at: string
+          delivery_id: string
+          operation_id: string
+          remaining_attempts: number
+        }
+        Insert: {
+          actor_user_id: string
+          confirmed: boolean
+          created_at?: string
+          delivery_id: string
+          operation_id: string
+          remaining_attempts: number
+        }
+        Update: {
+          actor_user_id?: string
+          confirmed?: boolean
+          created_at?: string
+          delivery_id?: string
+          operation_id?: string
+          remaining_attempts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pin_confirmation_operations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_proof_images: {
+        Row: {
+          accuracy_meters: number | null
+          byte_size: number
+          captured_at: string
+          created_at: string
+          delivery_id: string
+          delivery_proof_id: string
+          finalized_at: string | null
+          height: number
+          id: string
+          latitude: number | null
+          longitude: number | null
+          mime_type: string
+          storage_path: string
+          thumbnail_path: string
+          transporter_id: string
+          upload_expires_at: string
+          upload_status: Database["public"]["Enums"]["delivery_proof_upload_status"]
+          width: number
+        }
+        Insert: {
+          accuracy_meters?: number | null
+          byte_size: number
+          captured_at: string
+          created_at?: string
+          delivery_id: string
+          delivery_proof_id: string
+          finalized_at?: string | null
+          height: number
+          id: string
+          latitude?: number | null
+          longitude?: number | null
+          mime_type: string
+          storage_path: string
+          thumbnail_path: string
+          transporter_id: string
+          upload_expires_at: string
+          upload_status?: Database["public"]["Enums"]["delivery_proof_upload_status"]
+          width: number
+        }
+        Update: {
+          accuracy_meters?: number | null
+          byte_size?: number
+          captured_at?: string
+          created_at?: string
+          delivery_id?: string
+          delivery_proof_id?: string
+          finalized_at?: string | null
+          height?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mime_type?: string
+          storage_path?: string
+          thumbnail_path?: string
+          transporter_id?: string
+          upload_expires_at?: string
+          upload_status?: Database["public"]["Enums"]["delivery_proof_upload_status"]
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_proof_images_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_proof_images_delivery_proof_id_fkey"
+            columns: ["delivery_proof_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_proofs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_proof_images_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_proofs: {
+        Row: {
+          created_at: string
+          delivery_id: string
+          id: string
+          proof_completed_at: string | null
+          transporter_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_id: string
+          id?: string
+          proof_completed_at?: string | null
+          transporter_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          proof_completed_at?: string | null
+          transporter_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_proofs_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: true
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_proofs_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_status_history: {
+        Row: {
+          actor_type: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id: string | null
+          created_at: string
+          delivery_id: string
+          from_status: Database["public"]["Enums"]["delivery_status"]
+          from_version: number
+          id: number
+          operation_id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["delivery_status"]
+          to_version: number
+        }
+        Insert: {
+          actor_type: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_id: string
+          from_status: Database["public"]["Enums"]["delivery_status"]
+          from_version: number
+          id?: never
+          operation_id: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["delivery_status"]
+          to_version: number
+        }
+        Update: {
+          actor_type?: Database["public"]["Enums"]["delivery_actor_type"]
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_id?: string
+          from_status?: Database["public"]["Enums"]["delivery_status"]
+          from_version?: number
+          id?: never
+          operation_id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["delivery_status"]
+          to_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_status_history_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_status_history_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_operations"
+            referencedColumns: ["operation_id"]
+          },
+        ]
+      }
       delivery_zones: {
         Row: {
           created_at: string
@@ -1110,6 +2096,8 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          latitude: number | null
+          longitude: number | null
           name: string
           slug: string
           updated_at: string
@@ -1118,6 +2106,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
           name: string
           slug: string
           updated_at?: string
@@ -1126,6 +2116,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           slug?: string
           updated_at?: string
@@ -1831,6 +2823,189 @@ export type Database = {
           },
         ]
       }
+      transporter_availability_history: {
+        Row: {
+          created_at: string
+          from_availability: Database["public"]["Enums"]["rider_availability"]
+          id: number
+          operation_id: string
+          to_availability: Database["public"]["Enums"]["rider_availability"]
+          transporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_availability: Database["public"]["Enums"]["rider_availability"]
+          id?: never
+          operation_id: string
+          to_availability: Database["public"]["Enums"]["rider_availability"]
+          transporter_id: string
+        }
+        Update: {
+          created_at?: string
+          from_availability?: Database["public"]["Enums"]["rider_availability"]
+          id?: never
+          operation_id?: string
+          to_availability?: Database["public"]["Enums"]["rider_availability"]
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporter_availability_history_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: true
+            referencedRelation: "transporter_availability_operations"
+            referencedColumns: ["operation_id"]
+          },
+          {
+            foreignKeyName: "transporter_availability_history_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporter_availability_operations: {
+        Row: {
+          created_at: string
+          operation_id: string
+          previous_availability: Database["public"]["Enums"]["rider_availability"]
+          requested_availability: Database["public"]["Enums"]["rider_availability"]
+          result_availability: Database["public"]["Enums"]["rider_availability"]
+          transporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          operation_id: string
+          previous_availability: Database["public"]["Enums"]["rider_availability"]
+          requested_availability: Database["public"]["Enums"]["rider_availability"]
+          result_availability: Database["public"]["Enums"]["rider_availability"]
+          transporter_id: string
+        }
+        Update: {
+          created_at?: string
+          operation_id?: string
+          previous_availability?: Database["public"]["Enums"]["rider_availability"]
+          requested_availability?: Database["public"]["Enums"]["rider_availability"]
+          result_availability?: Database["public"]["Enums"]["rider_availability"]
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporter_availability_operations_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporter_location_operations: {
+        Row: {
+          accuracy_meters: number
+          captured_at: string
+          latitude: number
+          longitude: number
+          operation_id: string
+          received_at: string
+          transporter_id: string
+        }
+        Insert: {
+          accuracy_meters: number
+          captured_at: string
+          latitude: number
+          longitude: number
+          operation_id: string
+          received_at?: string
+          transporter_id: string
+        }
+        Update: {
+          accuracy_meters?: number
+          captured_at?: string
+          latitude?: number
+          longitude?: number
+          operation_id?: string
+          received_at?: string
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporter_location_operations_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporter_locations_current: {
+        Row: {
+          accuracy_meters: number
+          captured_at: string
+          latitude: number
+          longitude: number
+          received_at: string
+          transporter_id: string
+        }
+        Insert: {
+          accuracy_meters: number
+          captured_at: string
+          latitude: number
+          longitude: number
+          received_at?: string
+          transporter_id: string
+        }
+        Update: {
+          accuracy_meters?: number
+          captured_at?: string
+          latitude?: number
+          longitude?: number
+          received_at?: string
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporter_locations_current_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: true
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporter_profiles: {
+        Row: {
+          availability: Database["public"]["Enums"]["rider_availability"]
+          availability_updated_at: string
+          created_at: string
+          display_name: string
+          id: string
+          updated_at: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["transporter_verification_status"]
+        }
+        Insert: {
+          availability?: Database["public"]["Enums"]["rider_availability"]
+          availability_updated_at?: string
+          created_at?: string
+          display_name: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          verification_status?: Database["public"]["Enums"]["transporter_verification_status"]
+        }
+        Update: {
+          availability?: Database["public"]["Enums"]["rider_availability"]
+          availability_updated_at?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: Database["public"]["Enums"]["transporter_verification_status"]
+        }
+        Relationships: []
+      }
       vendor_order_audit_events: {
         Row: {
           action: string
@@ -2274,6 +3449,15 @@ export type Database = {
       }
     }
     Functions: {
+      accept_delivery_offer: {
+        Args: {
+          p_expected_delivery_version: number
+          p_offer_id: string
+          p_operation_id: string
+          p_transporter_user_id: string
+        }
+        Returns: Json
+      }
       approve_listing_and_price: {
         Args: {
           requested_admin_id: string
@@ -2390,6 +3574,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      complete_delivery: {
+        Args: {
+          p_delivery_id: string
+          p_expected_version: number
+          p_operation_id: string
+          p_rider_user_id: string
+        }
+        Returns: Json
+      }
       complete_idempotency_record: {
         Args: {
           p_record_id: string
@@ -2418,6 +3611,24 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_delivery_consumer_pin: {
+        Args: {
+          p_delivery_id: string
+          p_operation_id: string
+          p_pin: string
+          p_rider_user_id: string
+        }
+        Returns: Json
+      }
+      confirm_delivery_pickup: {
+        Args: {
+          p_actor_type: string
+          p_actor_user_id: string
+          p_operation_id: string
+          p_seller_order_id: string
+        }
+        Returns: Json
+      }
       create_checkout_from_cart: {
         Args: {
           p_address_id?: string
@@ -2430,6 +3641,25 @@ export type Database = {
           p_requested_for?: string
           p_reservation_minutes?: number
           p_schedule_type?: string
+        }
+        Returns: Json
+      }
+      create_delivery_proof_image_intent: {
+        Args: {
+          p_accuracy_meters?: number
+          p_byte_size: number
+          p_captured_at: string
+          p_delivery_id: string
+          p_height: number
+          p_image_id: string
+          p_latitude?: number
+          p_longitude?: number
+          p_mime_type: string
+          p_proof_id: string
+          p_rider_user_id: string
+          p_storage_path: string
+          p_thumbnail_path: string
+          p_width: number
         }
         Returns: Json
       }
@@ -2462,6 +3692,37 @@ export type Database = {
         }
         Returns: Json
       }
+      dispatcher_assign_delivery: {
+        Args: {
+          p_delivery_id: string
+          p_dispatcher_user_id: string
+          p_expected_version: number
+          p_operation_id: string
+          p_reason: string
+          p_reassign?: boolean
+          p_transporter_id: string
+        }
+        Returns: Json
+      }
+      dispatcher_delivery_action: {
+        Args: {
+          p_action: string
+          p_delivery_id: string
+          p_dispatcher_user_id: string
+          p_expected_version: number
+          p_operation_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      ensure_delivery_proof: {
+        Args: {
+          p_delivery_id: string
+          p_rider_user_id: string
+          p_suggested_proof_id: string
+        }
+        Returns: Json
+      }
       ensure_quality_check: {
         Args: {
           p_actor_user_id: string
@@ -2469,6 +3730,10 @@ export type Database = {
           p_suggested_check_id: string
         }
         Returns: Json
+      }
+      expire_delivery_offers: {
+        Args: { p_batch_size?: number }
+        Returns: number
       }
       expire_inventory_reservations: {
         Args: { p_batch_size?: number }
@@ -2488,6 +3753,20 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["notification_delivery_status"]
       }
+      finalize_delivery_proof_image: {
+        Args: {
+          p_byte_size: number
+          p_delivery_id: string
+          p_height: number
+          p_image_id: string
+          p_mime_type: string
+          p_rider_user_id: string
+          p_storage_path: string
+          p_thumbnail_path: string
+          p_width: number
+        }
+        Returns: Json
+      }
       finalize_quality_image: {
         Args: {
           p_actor_user_id: string
@@ -2502,6 +3781,26 @@ export type Database = {
         }
         Returns: Json
       }
+      find_nearby_transporters: {
+        Args: {
+          p_delivery_id: string
+          p_limit?: number
+          p_max_distance_km?: number
+        }
+        Returns: {
+          distance_km: number
+          location_received_at: string
+          transporter_id: string
+        }[]
+      }
+      get_current_delivery_offer: { Args: { p_user_id: string }; Returns: Json }
+      get_current_rider_delivery: { Args: { p_user_id: string }; Returns: Json }
+      get_dispatcher_delivery_board: { Args: never; Returns: Json }
+      get_dispatcher_nearby_riders: {
+        Args: { p_delivery_id: string; p_radius_km?: number }
+        Returns: Json
+      }
+      get_dispatcher_riders: { Args: never; Returns: Json }
       get_or_create_cart: {
         Args: {
           requested_consumer_id?: string
@@ -2510,6 +3809,19 @@ export type Database = {
           requested_market_id: string
         }
         Returns: string
+      }
+      get_transporter_operational_state: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      haversine_distance_km: {
+        Args: {
+          p_latitude_a: number
+          p_latitude_b: number
+          p_longitude_a: number
+          p_longitude_b: number
+        }
+        Returns: number
       }
       listing_price_request_seller_matches: {
         Args: { requested_listing_id: string; requested_seller_id: string }
@@ -2562,6 +3874,16 @@ export type Database = {
         }
         Returns: string
       }
+      offer_delivery_to_nearby_transporters: {
+        Args: {
+          p_delivery_id: string
+          p_max_distance_km?: number
+          p_max_offers?: number
+          p_offer_ttl_seconds?: number
+          p_operation_id: string
+        }
+        Returns: Json
+      }
       owns_seller: { Args: { requested_seller_id: string }; Returns: boolean }
       process_payment_result: {
         Args: {
@@ -2592,9 +3914,28 @@ export type Database = {
         }
         Returns: Json
       }
+      reject_delivery_offer: {
+        Args: {
+          p_offer_id: string
+          p_operation_id: string
+          p_transporter_user_id: string
+        }
+        Returns: Json
+      }
       release_payment_reconciliation_claim: {
         Args: { p_next_seconds?: number; p_payment_attempt_id: string }
         Returns: undefined
+      }
+      report_delivery_issue: {
+        Args: {
+          p_delivery_id: string
+          p_expected_version: number
+          p_note: string
+          p_operation_id: string
+          p_reason: string
+          p_rider_user_id: string
+        }
+        Returns: Json
       }
       request_listing_changes: {
         Args: {
@@ -2627,6 +3968,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolve_delivery_issue: {
+        Args: {
+          p_dispatcher_user_id: string
+          p_issue_id: string
+          p_operation_id: string
+          p_resolution_code: string
+          p_resolution_note: string
+        }
+        Returns: Json
+      }
       review_price_request: {
         Args: {
           requested_admin_id: string
@@ -2653,6 +4004,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      rotate_delivery_pin: {
+        Args: { p_consumer_user_id: string; p_delivery_id: string }
+        Returns: Json
+      }
+      set_transporter_availability: {
+        Args: {
+          p_availability: string
+          p_operation_id: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       submit_listing_for_approval: {
         Args: { requested_listing_id: string; requested_user_id: string }
@@ -2681,6 +4044,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      transition_delivery: {
+        Args: {
+          p_actor_type: string
+          p_actor_user_id: string
+          p_delivery_id: string
+          p_expected_version: number
+          p_metadata?: Json
+          p_operation_id: string
+          p_reason?: string
+          p_to_status: string
+        }
+        Returns: Json
+      }
       transition_vendor_order: {
         Args: {
           p_actor_user_id: string
@@ -2688,6 +4064,17 @@ export type Database = {
           p_operation_id: string
           p_order_id: string
           p_to_status: string
+        }
+        Returns: Json
+      }
+      update_transporter_location: {
+        Args: {
+          p_accuracy_meters: number
+          p_captured_at: string
+          p_latitude: number
+          p_longitude: number
+          p_operation_id: string
+          p_user_id: string
         }
         Returns: Json
       }
@@ -2701,6 +4088,43 @@ export type Database = {
         | "confirmed_unpaid"
         | "expired"
         | "cancelled"
+      delivery_actor_type: "system" | "rider" | "dispatcher"
+      delivery_confirmation_method: "pin"
+      delivery_issue_reason:
+        | "CUSTOMER_UNAVAILABLE"
+        | "CUSTOMER_REJECTED_ORDER"
+        | "INCORRECT_ADDRESS"
+        | "PRODUCT_DAMAGED"
+        | "VEHICLE_PROBLEM"
+        | "SELLER_ORDER_MISSING"
+        | "UNSAFE_DELIVERY_LOCATION"
+        | "OTHER"
+      delivery_issue_status: "open" | "resolved"
+      delivery_offer_status:
+        | "pending"
+        | "accepted"
+        | "rejected"
+        | "expired"
+        | "withdrawn"
+      delivery_offer_wave_status: "open" | "accepted" | "expired" | "exhausted"
+      delivery_pickup_actor_type: "vendor" | "rider"
+      delivery_pickup_status: "pending" | "collected"
+      delivery_proof_upload_status: "pending" | "ready" | "invalidated"
+      delivery_status:
+        | "unassigned"
+        | "offering"
+        | "assigned"
+        | "arrived_at_market"
+        | "picked_up"
+        | "in_transit"
+        | "arrived_at_customer"
+        | "delivered"
+        | "assignment_cancelled"
+        | "pickup_failed"
+        | "delivery_failed"
+        | "customer_unavailable"
+        | "issue_reported"
+        | "returned"
       fulfilment_type: "delivery" | "market_pickup"
       idempotency_status: "processing" | "completed" | "failed"
       inventory_reservation_status:
@@ -2766,8 +4190,19 @@ export type Database = {
         | "provider_not_found"
         | "manual_review_required"
         | "no_change"
+      rider_availability:
+        | "offline"
+        | "available"
+        | "offer_pending"
+        | "assigned"
+        | "busy"
       schedule_type: "immediate" | "scheduled"
       seller_verification_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "suspended"
+      transporter_verification_status:
         | "pending"
         | "approved"
         | "rejected"
@@ -2919,6 +4354,46 @@ export const Constants = {
         "expired",
         "cancelled",
       ],
+      delivery_actor_type: ["system", "rider", "dispatcher"],
+      delivery_confirmation_method: ["pin"],
+      delivery_issue_reason: [
+        "CUSTOMER_UNAVAILABLE",
+        "CUSTOMER_REJECTED_ORDER",
+        "INCORRECT_ADDRESS",
+        "PRODUCT_DAMAGED",
+        "VEHICLE_PROBLEM",
+        "SELLER_ORDER_MISSING",
+        "UNSAFE_DELIVERY_LOCATION",
+        "OTHER",
+      ],
+      delivery_issue_status: ["open", "resolved"],
+      delivery_offer_status: [
+        "pending",
+        "accepted",
+        "rejected",
+        "expired",
+        "withdrawn",
+      ],
+      delivery_offer_wave_status: ["open", "accepted", "expired", "exhausted"],
+      delivery_pickup_actor_type: ["vendor", "rider"],
+      delivery_pickup_status: ["pending", "collected"],
+      delivery_proof_upload_status: ["pending", "ready", "invalidated"],
+      delivery_status: [
+        "unassigned",
+        "offering",
+        "assigned",
+        "arrived_at_market",
+        "picked_up",
+        "in_transit",
+        "arrived_at_customer",
+        "delivered",
+        "assignment_cancelled",
+        "pickup_failed",
+        "delivery_failed",
+        "customer_unavailable",
+        "issue_reported",
+        "returned",
+      ],
       fulfilment_type: ["delivery", "market_pickup"],
       idempotency_status: ["processing", "completed", "failed"],
       inventory_reservation_status: [
@@ -2992,8 +4467,21 @@ export const Constants = {
         "manual_review_required",
         "no_change",
       ],
+      rider_availability: [
+        "offline",
+        "available",
+        "offer_pending",
+        "assigned",
+        "busy",
+      ],
       schedule_type: ["immediate", "scheduled"],
       seller_verification_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended",
+      ],
+      transporter_verification_status: [
         "pending",
         "approved",
         "rejected",
@@ -3014,3 +4502,4 @@ export const Constants = {
     },
   },
 } as const
+

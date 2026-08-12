@@ -1,33 +1,37 @@
-import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 const reviewSections = [
   {
-    title: 'Account',
-    description: 'Phone number, OTP verification, password and preferred language are ready for submission.',
+    title: "Account",
+    description:
+      "Phone number, OTP verification, password and preferred language are ready for submission.",
   },
   {
-    title: 'Personal details',
-    description: 'Full name, National ID number, rider photograph and National ID images are included.',
+    title: "Personal details",
+    description:
+      "Full name, National ID number, rider photograph and National ID images are included.",
   },
   {
-    title: 'Motorcycle details',
-    description: 'Number plate, vehicle type, motorcycle photograph and operating area are included.',
+    title: "Motorcycle details",
+    description:
+      "Number plate, vehicle type, motorcycle photograph and operating area are included.",
   },
   {
-    title: 'Association and next-of-kin',
-    description: 'Rider association, association ID and emergency contact details are included.',
+    title: "Association and next-of-kin",
+    description: "Rider association, association ID and emergency contact details are included.",
   },
   {
-    title: 'Verification',
-    description: 'Association confirmation, delivery readiness evidence and rider terms confirmations are included.',
+    title: "Verification",
+    description:
+      "Association confirmation, delivery readiness evidence and rider terms confirmations are included.",
   },
 ];
 
 export default function RiderReviewScreen() {
   function submitApplication() {
-    router.replace('../(approval)/pending');
+    router.replace("../(approval)/pending");
   }
 
   return (
@@ -58,7 +62,8 @@ export default function RiderReviewScreen() {
 
       <View style={styles.notice}>
         <AppText color="secondary" variant="caption">
-          After submission, identity and role details can only be changed through a controlled correction workflow.
+          After submission, identity and role details can only be changed through a controlled
+          correction workflow.
         </AppText>
       </View>
 
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
   },
   statusPill: {
     minHeight: 28,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
     backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,

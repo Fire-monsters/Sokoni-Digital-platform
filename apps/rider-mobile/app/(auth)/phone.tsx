@@ -1,11 +1,18 @@
-import { parseUgandanPhoneNumber } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, PhoneNumberField, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { parseUgandanPhoneNumber } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  PhoneNumberField,
+  colors,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderPhoneScreen() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState<string | undefined>();
 
   function continueToOtp() {
@@ -18,7 +25,7 @@ export default function RiderPhoneScreen() {
 
     setError(undefined);
     router.push({
-      pathname: './verify-otp',
+      pathname: "./verify-otp",
       params: {
         phoneNumber: result.phoneNumber,
       },
@@ -31,7 +38,8 @@ export default function RiderPhoneScreen() {
         <View style={styles.copy}>
           <AppText variant="heading1">Register as a rider</AppText>
           <AppText color="secondary" variant="bodyLarge">
-            Enter the phone number you will use for delivery requests, OTP verification and account recovery.
+            Enter the phone number you will use for delivery requests, OTP verification and account
+            recovery.
           </AppText>
         </View>
 

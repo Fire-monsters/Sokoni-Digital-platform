@@ -5,8 +5,8 @@ import { PersistentOperationQueue, retryDelay, type QueueStorage } from "./index
 function memoryStorage(): QueueStorage {
   let value: string | null = null;
   return {
-    getItem: vi.fn(() => Promise.resolve(value)),
-    setItem: vi.fn((_key, nextValue) => {
+    getItem: vi.fn((_key: string) => Promise.resolve(value)),
+    setItem: vi.fn((_key: string, nextValue: string) => {
       value = nextValue;
       return Promise.resolve();
     }),

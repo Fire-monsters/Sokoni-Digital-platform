@@ -40,4 +40,8 @@ export class VendorOrdersService {
   ): Promise<VendorOrderTransitionResult> {
     return this.repository.transition(userId, orderId, toStatus, expectedVersion, operationId);
   }
+
+  confirmPickup(userId: string, orderId: string, operationId: string) {
+    return this.repository.confirmPickup(userId, orderId, operationId);
+  }
 }

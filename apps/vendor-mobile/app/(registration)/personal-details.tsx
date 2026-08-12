@@ -1,14 +1,24 @@
-import { parsePersonalIdentityDetails } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, AppTextField, UploadCard, colors, spacing } from '@sokoni-digital/ui';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { parsePersonalIdentityDetails } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  AppTextField,
+  UploadCard,
+  colors,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
 
 export default function VendorPersonalDetailsScreen() {
   const { phoneNumber } = useLocalSearchParams<{ phoneNumber?: string }>();
-  const [fullName, setFullName] = useState('');
-  const [nationalIdNumber, setNationalIdNumber] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{ fullName?: string; nationalIdNumber?: string }>({});
+  const [fullName, setFullName] = useState("");
+  const [nationalIdNumber, setNationalIdNumber] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ fullName?: string; nationalIdNumber?: string }>(
+    {},
+  );
 
   function continueToStallDetails() {
     const result = parsePersonalIdentityDetails({ fullName, nationalIdNumber });
@@ -19,7 +29,7 @@ export default function VendorPersonalDetailsScreen() {
     }
 
     setFieldErrors({});
-    router.push('./stall-details');
+    router.push("./stall-details");
   }
 
   return (
@@ -27,7 +37,7 @@ export default function VendorPersonalDetailsScreen() {
       <View style={styles.header}>
         <AppText variant="heading1">Personal details</AppText>
         <AppText color="secondary" variant="bodyLarge">
-          Add the identity information linked to {phoneNumber ?? 'your verified phone number'}.
+          Add the identity information linked to {phoneNumber ?? "your verified phone number"}.
         </AppText>
       </View>
 
@@ -53,7 +63,10 @@ export default function VendorPersonalDetailsScreen() {
           onChangeText={(value) => {
             setNationalIdNumber(value);
             if (fieldErrors.nationalIdNumber) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, nationalIdNumber: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                nationalIdNumber: undefined,
+              }));
             }
           }}
           placeholder="CM..."
@@ -65,21 +78,30 @@ export default function VendorPersonalDetailsScreen() {
             title="Profile photograph"
             description="A clear photo of the stall owner."
             onPress={() => {
-              Alert.alert('Upload photo', 'Camera capture and compression will be connected in the document upload slice.');
+              Alert.alert(
+                "Upload photo",
+                "Camera capture and compression will be connected in the document upload slice.",
+              );
             }}
           />
           <UploadCard
             title="National ID front"
             description="Upload the front side of your National ID."
             onPress={() => {
-              Alert.alert('Upload ID front', 'Private document upload will be connected in the document upload slice.');
+              Alert.alert(
+                "Upload ID front",
+                "Private document upload will be connected in the document upload slice.",
+              );
             }}
           />
           <UploadCard
             title="National ID back"
             description="Upload the back side of your National ID."
             onPress={() => {
-              Alert.alert('Upload ID back', 'Private document upload will be connected in the document upload slice.');
+              Alert.alert(
+                "Upload ID back",
+                "Private document upload will be connected in the document upload slice.",
+              );
             }}
           />
         </View>

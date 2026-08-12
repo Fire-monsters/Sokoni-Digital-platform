@@ -26,6 +26,29 @@ import type {
   QualityImageUploadResult,
   ConsumerCheckoutProgress,
   ConsumerQualityProof,
+  RiderAvailabilityResult,
+  RiderLocationUpdateResult,
+  RiderOperationalState,
+  RiderSelectedAvailability,
+  DeliveryOfferAcceptanceResult,
+  DeliveryOfferRejectionResult,
+  DeliveryPickupConfirmationResult,
+  DeliveryTransitionResult,
+  RiderCurrentDelivery,
+  RiderDeliveryOffer,
+  DeliveryPin,
+  DeliveryPinConfirmationResult,
+  DeliveryProofUploadIntent,
+  DeliveryProofUploadResult,
+  DeliveryEvidence,
+  DeliveryIssueReason,
+  DeliveryIssueResult,
+  DispatcherDeliveryBoard,
+  DispatcherRider,
+  DispatcherAssignmentResult,
+  DeliveryIssueResolutionCode,
+  DispatcherDeliveryAction,
+  DispatcherDeliveryActionResult,
 } from "@sokoni-digital/domain";
 
 export const apiQueryKeys = {
@@ -46,6 +69,12 @@ export const apiQueryKeys = {
   adminListingQueue: ["admin", "listing-queue"] as const,
   me: ["me"] as const,
   onboarding: ["me", "onboarding"] as const,
+  riderStatus: ["rider", "status"] as const,
+  riderOffer: ["rider", "offer"] as const,
+  riderDelivery: ["rider", "delivery"] as const,
+  dispatcherDeliveries: ["admin", "deliveries"] as const,
+  dispatcherRiders: ["admin", "delivery-riders"] as const,
+  deliveryEvidence: (deliveryId: string) => ["delivery", deliveryId, "evidence"] as const,
 };
 
 export interface ApiClientOptions {
@@ -153,6 +182,276 @@ export function fetchMe(options: ApiClientOptions): Promise<AuthenticatedProfile
 
 export function fetchOnboarding(options: ApiClientOptions): Promise<OnboardingSnapshot> {
   return requestApi<OnboardingSnapshot>(options, "/v1/me/onboarding");
+}
+
+export function fetchRiderStatus(options: ApiClientOptions): Promise<RiderOperationalState> {
+  return requestApi<RiderOperationalState>(options, "/v1/rider/status");
+}
+
+export function changeRiderAvailability(
+  options: ApiClientOptions,
+  input: { availability: RiderSelectedAvailability; operationId: string },
+): Promise<RiderAvailabilityResult> {
+  return requestApi<RiderAvailabilityResult>(options, "/v1/rider/availability", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateRiderLocation(
+  options: ApiClientOptions,
+  input: {
+    latitude: number;
+    longitude: number;
+    accuracyMeters: number;
+    capturedAt: string;
+    operationId: string;
+  },
+): Promise<RiderLocationUpdateResult> {
+  return requestApi<RiderLocationUpdateResult>(options, "/v1/rider/location", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function acceptDeliveryOffer(
+  options: ApiClientOptions,
+  offerId: string,
+  input: { expectedDeliveryVersion: number; operationId: string },
+): Promise<DeliveryOfferAcceptanceResult> {
+  return requestApi<DeliveryOfferAcceptanceResult>(
+    options,
+    `/v1/rider/offers/${encodeURIComponent(offerId)}/accept`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function fetchCurrentDeliveryOffer(
+  options: ApiClientOptions,
+): Promise<RiderDeliveryOffer | null> {
+  return requestApi<RiderDeliveryOffer | null>(options, "/v1/rider/offers/current");
+}
+
+export function rejectDeliveryOffer(
+  options: ApiClientOptions,
+  offerId: string,
+  input: { operationId: string },
+): Promise<DeliveryOfferRejectionResult> {
+  return requestApi<DeliveryOfferRejectionResult>(
+    options,
+    `/v1/rider/offers/${encodeURIComponent(offerId)}/reject`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function fetchCurrentRiderDelivery(
+  options: ApiClientOptions,
+): Promise<RiderCurrentDelivery | null> {
+  return requestApi<RiderCurrentDelivery | null>(options, "/v1/rider/deliveries/current");
+}
+
+export function confirmRiderDeliveryPickup(
+  options: ApiClientOptions,
+  deliveryId: string,
+  sellerOrderId: string,
+  input: { operationId: string },
+): Promise<DeliveryPickupConfirmationResult> {
+  return requestApi<DeliveryPickupConfirmationResult>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/pickups/${encodeURIComponent(sellerOrderId)}/confirm`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function transitionRiderDelivery(
+  options: ApiClientOptions,
+  deliveryId: string,
+  input: {
+    toStatus: "arrived_at_market" | "picked_up" | "in_transit" | "arrived_at_customer";
+    expectedVersion: number;
+    operationId: string;
+  },
+): Promise<DeliveryTransitionResult> {
+  return requestApi<DeliveryTransitionResult>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/transitions`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function rotateConsumerDeliveryPin(
+  options: ApiClientOptions,
+  deliveryId: string,
+): Promise<DeliveryPin> {
+  return requestApi<DeliveryPin>(
+    options,
+    `/v1/orders/deliveries/${encodeURIComponent(deliveryId)}/pin`,
+    { method: "POST" },
+  );
+}
+
+export function confirmConsumerDeliveryPin(
+  options: ApiClientOptions,
+  deliveryId: string,
+  input: { pin: string; operationId: string },
+): Promise<DeliveryPinConfirmationResult> {
+  return requestApi<DeliveryPinConfirmationResult>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/confirm-consumer`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function createDeliveryProofUploadIntent(
+  options: ApiClientOptions,
+  deliveryId: string,
+  input: {
+    operationId: string;
+    mimeType: "image/jpeg";
+    byteSize: number;
+    width: number;
+    height: number;
+    capturedAt: string;
+    location?: { latitude: number; longitude: number; accuracyMeters: number } | null;
+  },
+): Promise<DeliveryProofUploadIntent> {
+  return requestApi<DeliveryProofUploadIntent>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/proof/images/upload-intent`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function completeDeliveryProofUpload(
+  options: ApiClientOptions,
+  deliveryId: string,
+  imageId: string,
+  input: { mimeType: "image/jpeg"; byteSize: number; width: number; height: number },
+): Promise<DeliveryProofUploadResult> {
+  return requestApi<DeliveryProofUploadResult>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/proof/images/${encodeURIComponent(imageId)}/complete`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function completeRiderDelivery(
+  options: ApiClientOptions,
+  deliveryId: string,
+  input: { expectedVersion: number; operationId: string },
+): Promise<DeliveryTransitionResult> {
+  return requestApi<DeliveryTransitionResult>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/complete`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function reportRiderDeliveryIssue(
+  options: ApiClientOptions,
+  deliveryId: string,
+  input: {
+    reason: DeliveryIssueReason;
+    note: string;
+    expectedVersion: number;
+    operationId: string;
+  },
+): Promise<DeliveryIssueResult> {
+  return requestApi<DeliveryIssueResult>(
+    options,
+    `/v1/rider/deliveries/${encodeURIComponent(deliveryId)}/issues`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function fetchConsumerDeliveryEvidence(
+  options: ApiClientOptions,
+  deliveryId: string,
+): Promise<DeliveryEvidence> {
+  return requestApi<DeliveryEvidence>(
+    options,
+    `/v1/orders/deliveries/${encodeURIComponent(deliveryId)}/evidence`,
+  );
+}
+
+export function fetchDispatcherDeliveryBoard(
+  options: ApiClientOptions,
+): Promise<DispatcherDeliveryBoard> {
+  return requestApi<DispatcherDeliveryBoard>(options, "/v1/admin/deliveries");
+}
+
+export function fetchDispatcherRiders(options: ApiClientOptions): Promise<DispatcherRider[]> {
+  return requestApi<DispatcherRider[]>(options, "/v1/admin/delivery-riders");
+}
+
+export function fetchDispatcherNearbyRiders(
+  options: ApiClientOptions,
+  deliveryId: string,
+  radiusKm = 10,
+): Promise<DispatcherRider[]> {
+  return requestApi<DispatcherRider[]>(
+    options,
+    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}/nearby-riders?radiusKm=${encodeURIComponent(String(radiusKm))}`,
+  );
+}
+
+export function assignDispatcherDelivery(
+  options: ApiClientOptions,
+  deliveryId: string,
+  reassign: boolean,
+  input: { transporterId: string; reason: string; expectedVersion: number; operationId: string },
+): Promise<DispatcherAssignmentResult> {
+  return requestApi<DispatcherAssignmentResult>(
+    options,
+    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}/${reassign ? "reassign" : "assign"}`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function resolveDispatcherDeliveryIssue(
+  options: ApiClientOptions,
+  issueId: string,
+  input: {
+    resolutionCode: DeliveryIssueResolutionCode;
+    resolutionNote: string;
+    operationId: string;
+  },
+): Promise<DeliveryIssueResult> {
+  return requestApi<DeliveryIssueResult>(
+    options,
+    `/v1/admin/delivery-issues/${encodeURIComponent(issueId)}/resolve`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function fetchDispatcherDeliveryEvidence(
+  options: ApiClientOptions,
+  deliveryId: string,
+): Promise<DeliveryEvidence> {
+  return requestApi<DeliveryEvidence>(
+    options,
+    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}/evidence`,
+  );
+}
+
+export function performDispatcherDeliveryAction(
+  options: ApiClientOptions,
+  deliveryId: string,
+  input: {
+    action: DispatcherDeliveryAction;
+    reason: string;
+    expectedVersion: number;
+    operationId: string;
+  },
+): Promise<DispatcherDeliveryActionResult> {
+  return requestApi<DispatcherDeliveryActionResult>(
+    options,
+    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}/actions`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
 }
 
 export interface CreateVendorListingInput {
@@ -305,6 +604,18 @@ export function transitionVendorOrder(
   return requestApi<VendorOrderTransitionResult>(
     options,
     `/v1/vendor/orders/${encodeURIComponent(orderId)}/transitions`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function confirmVendorDeliveryPickup(
+  options: ApiClientOptions,
+  orderId: string,
+  input: { operationId: string },
+): Promise<DeliveryPickupConfirmationResult> {
+  return requestApi<DeliveryPickupConfirmationResult>(
+    options,
+    `/v1/vendor/orders/${encodeURIComponent(orderId)}/pickup/confirm`,
     { method: "POST", body: JSON.stringify(input) },
   );
 }

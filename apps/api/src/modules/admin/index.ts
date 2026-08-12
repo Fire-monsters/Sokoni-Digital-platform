@@ -11,7 +11,7 @@ const applicationStatusSchema = z.enum([
   "changes_requested",
   "approved",
   "rejected",
-  "suspended"
+  "suspended",
 ]);
 
 const applicationListQuerySchema = z.object({
@@ -19,32 +19,32 @@ const applicationListQuerySchema = z.object({
   role: z.enum(["vendor", "rider"]).optional(),
   market: z.string().min(1).optional(),
   submittedFrom: z.iso.datetime().optional(),
-  submittedTo: z.iso.datetime().optional()
+  submittedTo: z.iso.datetime().optional(),
 });
 
 const applicationParamsSchema = z.object({
-  applicationId: z.uuid()
+  applicationId: z.uuid(),
 });
 
 const deviceRequestParamsSchema = z.object({
-  requestId: z.uuid()
+  requestId: z.uuid(),
 });
 
 const trustedDeviceParamsSchema = z.object({
-  deviceId: z.uuid()
+  deviceId: z.uuid(),
 });
 
 const userParamsSchema = z.object({
-  userId: z.uuid()
+  userId: z.uuid(),
 });
 
 const decisionReasonSchema = z.object({
   reason: z.string().trim().min(3, "A reason is required."),
-  internalNotes: z.string().trim().optional()
+  internalNotes: z.string().trim().optional(),
 });
 
 const optionalNotesSchema = z.object({
-  internalNotes: z.string().trim().optional()
+  internalNotes: z.string().trim().optional(),
 });
 
 export const adminRouter = Router();
@@ -63,7 +63,7 @@ adminRouter.get("/applications", (request, response) => {
   sendSuccess(request, response, 200, {
     filters: result.data,
     applications: [],
-    nextCursor: null
+    nextCursor: null,
   });
 });
 
@@ -80,7 +80,7 @@ adminRouter.get("/applications/:applicationId", (request, response) => {
     status: "submitted",
     applicant: null,
     documents: [],
-    timeline: []
+    timeline: [],
   });
 });
 
@@ -101,7 +101,7 @@ adminRouter.post("/applications/:applicationId/start-review", (request, response
   sendSuccess(request, response, 200, {
     applicationId: params.data.applicationId,
     status: "under_review",
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
@@ -122,7 +122,7 @@ adminRouter.post("/applications/:applicationId/approve", (request, response) => 
   sendSuccess(request, response, 200, {
     applicationId: params.data.applicationId,
     status: "approved",
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
@@ -144,7 +144,7 @@ adminRouter.post("/applications/:applicationId/request-changes", (request, respo
     applicationId: params.data.applicationId,
     status: "changes_requested",
     reason: body.data.reason,
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
@@ -166,7 +166,7 @@ adminRouter.post("/applications/:applicationId/reject", (request, response) => {
     applicationId: params.data.applicationId,
     status: "rejected",
     reason: body.data.reason,
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
@@ -188,14 +188,14 @@ adminRouter.post("/users/:userId/suspend", (request, response) => {
     userId: params.data.userId,
     status: "suspended",
     reason: body.data.reason,
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
 adminRouter.get("/device-requests", (request, response) => {
   sendSuccess(request, response, 200, {
     requests: [],
-    nextCursor: null
+    nextCursor: null,
   });
 });
 
@@ -210,7 +210,7 @@ adminRouter.post("/device-requests/:requestId/approve", (request, response) => {
   sendSuccess(request, response, 200, {
     requestId: result.data.requestId,
     status: "approved",
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
@@ -232,7 +232,7 @@ adminRouter.post("/device-requests/:requestId/reject", (request, response) => {
     requestId: params.data.requestId,
     status: "rejected",
     reason: body.data.reason,
-    auditRecorded: true
+    auditRecorded: true,
   });
 });
 
@@ -254,6 +254,6 @@ adminRouter.post("/trusted-devices/:deviceId/revoke", (request, response) => {
     deviceId: params.data.deviceId,
     revoked: true,
     reason: body.data.reason,
-    auditRecorded: true
+    auditRecorded: true,
   });
 });

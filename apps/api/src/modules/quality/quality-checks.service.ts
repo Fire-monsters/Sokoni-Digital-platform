@@ -71,7 +71,9 @@ export class QualityChecksService {
         .from("quality_check_images")
         .update({ upload_status: "invalidated" })
         .eq("id", imageId);
-      throw new Error((original.error ?? thumbnail.error)?.message ?? "Signed upload creation failed.");
+      throw new Error(
+        (original.error ?? thumbnail.error)?.message ?? "Signed upload creation failed.",
+      );
     }
 
     return {

@@ -10,19 +10,19 @@ describe("quality image paths", () => {
   });
 
   it("accepts only the exact original and thumbnail paths", () => {
-    expect(() =>
-      { assertQualityImagePaths(
+    expect(() => {
+      assertQualityImagePaths(
         "seller/order/check/image",
         "seller/order/check/image/original.jpg",
         "seller/order/check/image/thumbnail.jpg",
-      ); },
-    ).not.toThrow();
-    expect(() =>
-      { assertQualityImagePaths(
+      );
+    }).not.toThrow();
+    expect(() => {
+      assertQualityImagePaths(
         "seller/order/check/image",
         "seller/another-order/check/image/original.jpg",
         "seller/order/check/image/thumbnail.jpg",
-      ); },
-    ).toThrow("do not belong");
+      );
+    }).toThrow("do not belong");
   });
 });

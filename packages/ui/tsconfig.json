@@ -1,4 +1,3 @@
-
 {
   "extends": "@sokoni-digital/typescript-config/react-native",
   "include": ["src/**/*.ts", "src/**/*.tsx"]

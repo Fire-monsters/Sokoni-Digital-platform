@@ -3,6 +3,7 @@ import type {
   VendorOrderSummary,
   VendorOrderTransitionResult,
   VendorOrderTransitionTarget,
+  DeliveryPickupConfirmationResult,
 } from "@sokoni-digital/domain";
 import { describe, expect, it } from "vitest";
 
@@ -59,6 +60,7 @@ class FakeVendorOrderRepository implements VendorOrderRepository {
       updatedAt: order.createdAt,
       timeline: [],
       packingProofThumbnailUrl: null,
+      deliveryPickup: null,
     });
   }
 
@@ -74,6 +76,23 @@ class FakeVendorOrderRepository implements VendorOrderRepository {
       orderId,
       status: toStatus,
       version: expectedVersion + 1,
+      operationId,
+      duplicate: false,
+    });
+  }
+
+  confirmPickup(
+    _userId: string,
+    orderId: string,
+    operationId: string,
+  ): Promise<DeliveryPickupConfirmationResult> {
+    return Promise.resolve({
+      pickupId: "d5000000-0000-4000-8000-000000000099",
+      deliveryId: "d5000000-0000-4000-8000-000000000098",
+      sellerOrderId: orderId,
+      status: "pending",
+      vendorConfirmed: true,
+      riderConfirmed: false,
       operationId,
       duplicate: false,
     });

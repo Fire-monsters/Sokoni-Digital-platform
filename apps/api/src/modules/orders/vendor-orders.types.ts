@@ -4,6 +4,7 @@ import type {
   VendorOrderSummary,
   VendorOrderTransitionResult,
   VendorOrderTransitionTarget,
+  DeliveryPickupConfirmationResult,
 } from "@sokoni-digital/domain";
 
 export interface VendorOrderCursor {
@@ -30,4 +31,9 @@ export interface VendorOrderRepository {
     expectedVersion: number,
     operationId: string,
   ): Promise<VendorOrderTransitionResult>;
+  confirmPickup(
+    userId: string,
+    orderId: string,
+    operationId: string,
+  ): Promise<DeliveryPickupConfirmationResult>;
 }

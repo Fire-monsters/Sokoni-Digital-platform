@@ -1,8 +1,8 @@
-import { parseVendorVerificationDetails } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, UploadCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { parseVendorVerificationDetails } from "@sokoni-digital/validation";
+import { AppButton, AppScreen, AppText, UploadCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 export default function VendorVerificationScreen() {
   const [hasMarketLeadershipApproval, setHasMarketLeadershipApproval] = useState(false);
@@ -27,7 +27,7 @@ export default function VendorVerificationScreen() {
     }
 
     setFieldErrors({});
-    router.push('./review');
+    router.push("./review");
   }
 
   return (
@@ -35,7 +35,8 @@ export default function VendorVerificationScreen() {
       <View style={styles.header}>
         <AppText variant="heading1">Verification</AppText>
         <AppText color="secondary" variant="bodyLarge">
-          Add the approval and stall evidence needed before an administrator reviews your application.
+          Add the approval and stall evidence needed before an administrator reviews your
+          application.
         </AppText>
       </View>
 
@@ -44,14 +45,20 @@ export default function VendorVerificationScreen() {
           title="Market leadership approval"
           description="Upload an approval letter, stamp, or signed confirmation from market leadership."
           onPress={() => {
-            Alert.alert('Upload approval', 'Private verification upload will be connected in the document upload slice.');
+            Alert.alert(
+              "Upload approval",
+              "Private verification upload will be connected in the document upload slice.",
+            );
           }}
         />
         <UploadCard
           title="Stall photograph"
           description="Upload a clear photo showing your stall and selling area."
           onPress={() => {
-            Alert.alert('Upload stall photo', 'Camera capture and compression will be connected in the document upload slice.');
+            Alert.alert(
+              "Upload stall photo",
+              "Camera capture and compression will be connected in the document upload slice.",
+            );
           }}
         />
 
@@ -63,7 +70,10 @@ export default function VendorVerificationScreen() {
             onPress={() => {
               setHasMarketLeadershipApproval((currentValue) => !currentValue);
               if (fieldErrors.hasMarketLeadershipApproval) {
-                setFieldErrors((currentErrors) => ({ ...currentErrors, hasMarketLeadershipApproval: undefined }));
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  hasMarketLeadershipApproval: undefined,
+                }));
               }
             }}
           />
@@ -74,7 +84,10 @@ export default function VendorVerificationScreen() {
             onPress={() => {
               setHasAcceptedPlatformTerms((currentValue) => !currentValue);
               if (fieldErrors.hasAcceptedPlatformTerms) {
-                setFieldErrors((currentErrors) => ({ ...currentErrors, hasAcceptedPlatformTerms: undefined }));
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  hasAcceptedPlatformTerms: undefined,
+                }));
               }
             }}
           />
@@ -85,7 +98,10 @@ export default function VendorVerificationScreen() {
             onPress={() => {
               setHasAcceptedCommissionTerms((currentValue) => !currentValue);
               if (fieldErrors.hasAcceptedCommissionTerms) {
-                setFieldErrors((currentErrors) => ({ ...currentErrors, hasAcceptedCommissionTerms: undefined }));
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  hasAcceptedCommissionTerms: undefined,
+                }));
               }
             }}
           />
@@ -121,7 +137,11 @@ function ConfirmationRow({ label, isChecked, onPress, error }: ConfirmationRowPr
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isChecked }}
         onPress={onPress}
-        style={({ pressed }) => [styles.confirmationRow, pressed ? styles.confirmationPressed : null]}>
+        style={({ pressed }) => [
+          styles.confirmationRow,
+          pressed ? styles.confirmationPressed : null,
+        ]}
+      >
         <View style={[styles.checkbox, isChecked ? styles.checkboxChecked : null]}>
           {isChecked ? <View style={styles.checkboxInnerMark} /> : null}
         </View>
@@ -152,8 +172,8 @@ const styles = StyleSheet.create({
   },
   confirmationRow: {
     minHeight: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     borderRadius: 8,
     borderWidth: 1,
@@ -167,8 +187,8 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,

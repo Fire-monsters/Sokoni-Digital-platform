@@ -1,3 +1,5 @@
+import type { DeliveryStatus } from "./delivery.js";
+
 export const vendorFulfilmentStatuses = [
   "awaiting_vendor_acceptance",
   "accepted",
@@ -90,6 +92,14 @@ export interface VendorOrderDetails extends VendorOrderSummary {
   updatedAt: string;
   timeline: VendorOrderTimelineEntry[];
   packingProofThumbnailUrl: string | null;
+  deliveryPickup: {
+    deliveryId: string;
+    deliveryReference: string;
+    deliveryStatus: DeliveryStatus;
+    vendorConfirmed: boolean;
+    riderConfirmed: boolean;
+    collectedAt: string | null;
+  } | null;
 }
 
 export interface VendorOrderPage {
@@ -161,6 +171,31 @@ export interface ConsumerCheckoutProgress {
   reference: string;
   status: string;
   sellerOrders: ConsumerSellerOrderProgress[];
+  delivery: {
+    id: string;
+    reference: string;
+    status: DeliveryStatus;
+    version: number;
+    riderName: string | null;
+    riderLocation: {
+      latitude: number;
+      longitude: number;
+      accuracyMeters: number;
+      capturedAt: string;
+      receivedAt: string;
+      isFresh: boolean;
+    } | null;
+    destinationLabel: string;
+    destinationSummary: string;
+    updatedAt: string;
+    timeline: {
+      status: DeliveryStatus;
+      label: string;
+      completed: boolean;
+      current: boolean;
+      at: string | null;
+    }[];
+  } | null;
 }
 
 export interface ConsumerQualityProof {

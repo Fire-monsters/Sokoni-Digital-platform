@@ -3,6 +3,7 @@ import "dotenv/config";
 import { createApp } from "./app.js";
 import { startPaymentReconciliationScheduler } from "./jobs/reconcile-pending-payments.js";
 import { startNotificationScheduler } from "./jobs/retry-notifications.js";
+import { startRiderOfferExpiryScheduler } from "./jobs/expire-rider-offers.js";
 
 const port = Number(process.env.PORT ?? 4000);
 const app = createApp();
@@ -12,12 +13,14 @@ const server = app.listen(port, () => {
 });
 const stopPaymentReconciliation = startPaymentReconciliationScheduler();
 const stopNotifications = startNotificationScheduler();
+const stopRiderOfferExpiry = startRiderOfferExpiryScheduler();
 
 function shutdown(signal: string): void {
   console.log(`${signal} received. Closing HTTP server.`);
 
   stopPaymentReconciliation();
   stopNotifications();
+  stopRiderOfferExpiry();
   server.close((error) => {
     if (error) {
       console.error("HTTP server shutdown failed", error);

@@ -1,15 +1,22 @@
-import { parseRiderAssociationDetails } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, AppTextField, PhoneNumberField, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { parseRiderAssociationDetails } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  AppTextField,
+  PhoneNumberField,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderAssociationAndNextOfKinScreen() {
-  const [riderAssociation, setRiderAssociation] = useState('');
-  const [associationIdentifier, setAssociationIdentifier] = useState('');
-  const [nextOfKinName, setNextOfKinName] = useState('');
-  const [nextOfKinPhone, setNextOfKinPhone] = useState('');
-  const [nextOfKinRelationship, setNextOfKinRelationship] = useState('');
+  const [riderAssociation, setRiderAssociation] = useState("");
+  const [associationIdentifier, setAssociationIdentifier] = useState("");
+  const [nextOfKinName, setNextOfKinName] = useState("");
+  const [nextOfKinPhone, setNextOfKinPhone] = useState("");
+  const [nextOfKinRelationship, setNextOfKinRelationship] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{
     riderAssociation?: string;
     associationIdentifier?: string;
@@ -33,7 +40,7 @@ export default function RiderAssociationAndNextOfKinScreen() {
     }
 
     setFieldErrors({});
-    router.push('./verification');
+    router.push("./verification");
   }
 
   return (
@@ -53,7 +60,10 @@ export default function RiderAssociationAndNextOfKinScreen() {
           onChangeText={(value) => {
             setRiderAssociation(value);
             if (fieldErrors.riderAssociation) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, riderAssociation: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                riderAssociation: undefined,
+              }));
             }
           }}
           placeholder="Kitooro Riders Association"
@@ -67,7 +77,10 @@ export default function RiderAssociationAndNextOfKinScreen() {
           onChangeText={(value) => {
             setAssociationIdentifier(value);
             if (fieldErrors.associationIdentifier) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, associationIdentifier: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                associationIdentifier: undefined,
+              }));
             }
           }}
           placeholder="KRA-001"
@@ -104,7 +117,10 @@ export default function RiderAssociationAndNextOfKinScreen() {
           onChangeText={(value) => {
             setNextOfKinRelationship(value);
             if (fieldErrors.nextOfKinRelationship) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, nextOfKinRelationship: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                nextOfKinRelationship: undefined,
+              }));
             }
           }}
           placeholder="Sibling, spouse, parent"

@@ -8,13 +8,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [
-        "dist/**",
-        "build/**",
-        ".expo/**",
-        "web-build/**",
-        "coverage/**"
-      ]
+      "outputs": ["dist/**", "build/**", ".expo/**", "web-build/**", "coverage/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]

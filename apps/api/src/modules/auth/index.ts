@@ -9,7 +9,7 @@ const ugandanPhoneNumberSchema = z
   .transform((value) => value.replace(/\s+/g, ""))
   .transform((value) => (value.startsWith("0") ? `+256${value.slice(1)}` : value))
   .refine((value) => /^(?:\+256)(?:7[0-9]|3[0-9])[0-9]{7}$/.test(value), {
-    message: "Enter a valid Ugandan phone number."
+    message: "Enter a valid Ugandan phone number.",
   });
 
 const passwordSchema = z
@@ -24,7 +24,7 @@ const otpCodeSchema = z
   .trim()
   .transform((value) => value.replace(/\s+/g, ""))
   .refine((value) => /^[0-9]{6}$/.test(value), {
-    message: "Enter the 6-digit verification code."
+    message: "Enter the 6-digit verification code.",
   });
 
 const roleSchema = z.enum(["vendor", "rider"]);
@@ -34,44 +34,44 @@ const registerSchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
   password: passwordSchema,
   preferredLanguage: z.enum(["en", "lg"]).default("en"),
-  installationId: z.uuid().optional()
+  installationId: z.uuid().optional(),
 });
 
 const sendOtpSchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
   purpose: otpPurposeSchema,
-  role: roleSchema.optional()
+  role: roleSchema.optional(),
 });
 
 const verifyOtpSchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
   otpCode: otpCodeSchema,
   purpose: otpPurposeSchema,
-  role: roleSchema.optional()
+  role: roleSchema.optional(),
 });
 
 const signInSchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
   password: z.string().min(1, "Enter your password."),
-  installationId: z.uuid().optional()
+  installationId: z.uuid().optional(),
 });
 
 const recoveryRequestSchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
-  role: roleSchema
+  role: roleSchema,
 });
 
 const recoveryVerifySchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
   role: roleSchema,
-  otpCode: otpCodeSchema
+  otpCode: otpCodeSchema,
 });
 
 const recoveryResetPasswordSchema = z.object({
   phoneNumber: ugandanPhoneNumberSchema,
   role: roleSchema,
   recoveryToken: z.string().min(16, "Recovery token is required."),
-  password: passwordSchema
+  password: passwordSchema,
 });
 
 export const authRouter = Router();
@@ -90,7 +90,7 @@ authRouter.post("/vendor/register", (request, response) => {
     preferredLanguage: result.data.preferredLanguage,
     phoneVerificationRequired: true,
     applicationStatus: "draft",
-    providerAction: "supabase_registration_pending"
+    providerAction: "supabase_registration_pending",
   });
 });
 
@@ -108,7 +108,7 @@ authRouter.post("/rider/register", (request, response) => {
     preferredLanguage: result.data.preferredLanguage,
     phoneVerificationRequired: true,
     applicationStatus: "draft",
-    providerAction: "supabase_registration_pending"
+    providerAction: "supabase_registration_pending",
   });
 });
 
@@ -125,7 +125,7 @@ authRouter.post("/send-otp", (request, response) => {
     purpose: result.data.purpose,
     deliveryChannel: "sms",
     resendCooldownSeconds: 60,
-    providerAction: "otp_delivery_pending"
+    providerAction: "otp_delivery_pending",
   });
 });
 
@@ -141,7 +141,7 @@ authRouter.post("/verify-otp", (request, response) => {
     phoneNumber: result.data.phoneNumber,
     purpose: result.data.purpose,
     verified: true,
-    verificationToken: "otp-verification-token-pending-provider"
+    verificationToken: "otp-verification-token-pending-provider",
   });
 });
 
@@ -157,7 +157,7 @@ authRouter.post("/sign-in", (request, response) => {
     phoneNumber: result.data.phoneNumber,
     authenticated: false,
     trustedDeviceRequired: true,
-    providerAction: "supabase_password_sign_in_pending"
+    providerAction: "supabase_password_sign_in_pending",
   });
 });
 
@@ -174,7 +174,7 @@ authRouter.post("/recovery/request", (request, response) => {
     role: result.data.role,
     deliveryChannel: "sms",
     resendCooldownSeconds: 60,
-    message: "If the account can be recovered, a verification code will be sent."
+    message: "If the account can be recovered, a verification code will be sent.",
   });
 });
 
@@ -190,7 +190,7 @@ authRouter.post("/recovery/verify", (request, response) => {
     phoneNumber: result.data.phoneNumber,
     role: result.data.role,
     verified: true,
-    recoveryToken: "password-recovery-token-pending-provider"
+    recoveryToken: "password-recovery-token-pending-provider",
   });
 });
 
@@ -206,6 +206,6 @@ authRouter.post("/recovery/reset-password", (request, response) => {
     phoneNumber: result.data.phoneNumber,
     role: result.data.role,
     passwordUpdated: true,
-    providerAction: "supabase_password_update_pending"
+    providerAction: "supabase_password_update_pending",
   });
 });

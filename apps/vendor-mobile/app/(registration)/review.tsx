@@ -1,29 +1,33 @@
-import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 const reviewSections = [
   {
-    title: 'Account',
-    description: 'Phone number, OTP verification, password and preferred language are ready for submission.',
+    title: "Account",
+    description:
+      "Phone number, OTP verification, password and preferred language are ready for submission.",
   },
   {
-    title: 'Personal details',
-    description: 'Full name, National ID number, profile photograph and National ID images are included.',
+    title: "Personal details",
+    description:
+      "Full name, National ID number, profile photograph and National ID images are included.",
   },
   {
-    title: 'Stall details',
-    description: 'Business name, Kitooro stall number, product categories and market identification are included.',
+    title: "Stall details",
+    description:
+      "Business name, Kitooro stall number, product categories and market identification are included.",
   },
   {
-    title: 'Verification',
-    description: 'Market leadership approval, stall photograph and vendor terms confirmations are included.',
+    title: "Verification",
+    description:
+      "Market leadership approval, stall photograph and vendor terms confirmations are included.",
   },
 ];
 
 export default function VendorReviewScreen() {
   function submitApplication() {
-    router.replace('../(approval)/pending');
+    router.replace("../(approval)/pending");
   }
 
   return (
@@ -54,7 +58,8 @@ export default function VendorReviewScreen() {
 
       <View style={styles.notice}>
         <AppText color="secondary" variant="caption">
-          After submission, identity and role details can only be changed through a controlled correction workflow.
+          After submission, identity and role details can only be changed through a controlled
+          correction workflow.
         </AppText>
       </View>
 
@@ -82,7 +87,7 @@ const styles = StyleSheet.create({
   },
   statusPill: {
     minHeight: 28,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
     backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,

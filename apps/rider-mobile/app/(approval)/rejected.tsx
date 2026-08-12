@@ -1,6 +1,6 @@
-import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderRejectedScreen() {
   return (
@@ -13,7 +13,8 @@ export default function RiderRejectedScreen() {
         </View>
         <AppText variant="heading1">Application rejected</AppText>
         <AppText color="secondary" variant="bodyLarge">
-          Your rider application was not approved. The review reason will appear here when connected to the API.
+          Your rider application was not approved. The review reason will appear here when connected
+          to the API.
         </AppText>
       </View>
 
@@ -36,7 +37,7 @@ export default function RiderRejectedScreen() {
         <AppButton
           label="Go to sign in"
           onPress={() => {
-            router.replace('../(public)/sign-in');
+            router.replace("../(public)/sign-in");
           }}
         />
       </View>
@@ -50,11 +51,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   statusBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     minHeight: 28,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
-    backgroundColor: '#FBEAEA',
+    backgroundColor: "#FBEAEA",
     paddingHorizontal: spacing.sm,
   },
   statusBadgeText: {

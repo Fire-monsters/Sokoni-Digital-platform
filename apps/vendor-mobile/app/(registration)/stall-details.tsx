@@ -1,21 +1,29 @@
-import { parseVendorStallDetails } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, AppTextField, UploadCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { parseVendorStallDetails } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  AppTextField,
+  UploadCard,
+  colors,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 const productCategoryOptions = [
-  'Fresh produce',
-  'Ready-to-cook foods',
-  'Household essentials',
-  'Packaged groceries',
+  "Fresh produce",
+  "Ready-to-cook foods",
+  "Household essentials",
+  "Packaged groceries",
 ];
 
 export default function VendorStallDetailsScreen() {
-  const [businessName, setBusinessName] = useState('');
-  const [stallNumber, setStallNumber] = useState('');
+  const [businessName, setBusinessName] = useState("");
+  const [stallNumber, setStallNumber] = useState("");
   const [productCategories, setProductCategories] = useState<string[]>([]);
-  const [marketIdentificationNumber, setMarketIdentificationNumber] = useState('');
+  const [marketIdentificationNumber, setMarketIdentificationNumber] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{
     businessName?: string;
     stallNumber?: string;
@@ -49,7 +57,7 @@ export default function VendorStallDetailsScreen() {
     }
 
     setFieldErrors({});
-    router.push('./verification');
+    router.push("./verification");
   }
 
   return (
@@ -109,8 +117,9 @@ export default function VendorStallDetailsScreen() {
                     styles.categoryChip,
                     isSelected ? styles.categoryChipSelected : null,
                     pressed ? styles.categoryChipPressed : null,
-                  ]}>
-                  <AppText color={isSelected ? 'inverse' : 'primary'} variant="label">
+                  ]}
+                >
+                  <AppText color={isSelected ? "inverse" : "primary"} variant="label">
                     {category}
                   </AppText>
                 </Pressable>
@@ -131,7 +140,10 @@ export default function VendorStallDetailsScreen() {
           onChangeText={(value) => {
             setMarketIdentificationNumber(value);
             if (fieldErrors.marketIdentificationNumber) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, marketIdentificationNumber: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                marketIdentificationNumber: undefined,
+              }));
             }
           }}
           placeholder="KTM-2026-001"
@@ -142,7 +154,10 @@ export default function VendorStallDetailsScreen() {
           title="Market identification image"
           description="Upload a clear photo of your market ID or vendor card."
           onPress={() => {
-            Alert.alert('Upload market ID', 'Private document upload will be connected in the document upload slice.');
+            Alert.alert(
+              "Upload market ID",
+              "Private document upload will be connected in the document upload slice.",
+            );
           }}
         />
       </View>
@@ -173,13 +188,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   categoryChip: {
     minHeight: 40,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,

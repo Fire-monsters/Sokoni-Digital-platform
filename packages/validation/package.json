@@ -12,7 +12,8 @@
     "./listing-image": "./src/listing-image.ts",
     "./listing-approval": "./src/listing-approval.ts",
     "./vendor-order": "./src/vendor-order.ts",
-    "./quality-check": "./src/quality-check.ts"
+    "./quality-check": "./src/quality-check.ts",
+    "./delivery": "./src/delivery.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

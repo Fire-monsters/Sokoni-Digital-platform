@@ -1,13 +1,13 @@
-import { parsePasswordPair } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, PasswordField, colors, spacing } from '@sokoni-digital/ui';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { parsePasswordPair } from "@sokoni-digital/validation";
+import { AppButton, AppScreen, AppText, PasswordField, colors, spacing } from "@sokoni-digital/ui";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderCreateNewPasswordScreen() {
   const { phoneNumber } = useLocalSearchParams<{ phoneNumber?: string }>();
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [error, setError] = useState<string | undefined>();
 
   function saveNewPassword() {
@@ -20,9 +20,9 @@ export default function RiderCreateNewPasswordScreen() {
 
     setError(undefined);
     router.replace({
-      pathname: './password-reset-success',
+      pathname: "./password-reset-success",
       params: {
-        phoneNumber: phoneNumber ?? '',
+        phoneNumber: phoneNumber ?? "",
       },
     });
   }
@@ -33,7 +33,7 @@ export default function RiderCreateNewPasswordScreen() {
         <View style={styles.copy}>
           <AppText variant="heading1">Create new password</AppText>
           <AppText color="secondary" variant="bodyLarge">
-            Set a new password for {phoneNumber ?? 'your rider account'}.
+            Set a new password for {phoneNumber ?? "your rider account"}.
           </AppText>
         </View>
 
@@ -60,7 +60,8 @@ export default function RiderCreateNewPasswordScreen() {
           />
           <View style={styles.notice}>
             <AppText color="secondary" variant="caption">
-              Password updates will be committed through Supabase Auth in the backend authentication slice.
+              Password updates will be committed through Supabase Auth in the backend authentication
+              slice.
             </AppText>
           </View>
         </View>

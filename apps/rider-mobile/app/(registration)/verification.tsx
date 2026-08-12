@@ -1,8 +1,8 @@
-import { parseRiderVerificationDetails } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, UploadCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { parseRiderVerificationDetails } from "@sokoni-digital/validation";
+import { AppButton, AppScreen, AppText, UploadCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 export default function RiderVerificationScreen() {
   const [hasAssociationConfirmation, setHasAssociationConfirmation] = useState(false);
@@ -27,7 +27,7 @@ export default function RiderVerificationScreen() {
     }
 
     setFieldErrors({});
-    router.push('./review');
+    router.push("./review");
   }
 
   return (
@@ -44,14 +44,20 @@ export default function RiderVerificationScreen() {
           title="Association confirmation"
           description="Upload a rider association card, letter, or signed confirmation."
           onPress={() => {
-            Alert.alert('Upload association proof', 'Private verification upload will be connected in the document upload slice.');
+            Alert.alert(
+              "Upload association proof",
+              "Private verification upload will be connected in the document upload slice.",
+            );
           }}
         />
         <UploadCard
           title="Delivery readiness evidence"
           description="Upload any required rider permit, clearance, or delivery readiness document."
           onPress={() => {
-            Alert.alert('Upload readiness evidence', 'Private verification upload will be connected in the document upload slice.');
+            Alert.alert(
+              "Upload readiness evidence",
+              "Private verification upload will be connected in the document upload slice.",
+            );
           }}
         />
 
@@ -63,7 +69,10 @@ export default function RiderVerificationScreen() {
             onPress={() => {
               setHasAssociationConfirmation((currentValue) => !currentValue);
               if (fieldErrors.hasAssociationConfirmation) {
-                setFieldErrors((currentErrors) => ({ ...currentErrors, hasAssociationConfirmation: undefined }));
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  hasAssociationConfirmation: undefined,
+                }));
               }
             }}
           />
@@ -74,7 +83,10 @@ export default function RiderVerificationScreen() {
             onPress={() => {
               setHasAcceptedPlatformTerms((currentValue) => !currentValue);
               if (fieldErrors.hasAcceptedPlatformTerms) {
-                setFieldErrors((currentErrors) => ({ ...currentErrors, hasAcceptedPlatformTerms: undefined }));
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  hasAcceptedPlatformTerms: undefined,
+                }));
               }
             }}
           />
@@ -85,7 +97,10 @@ export default function RiderVerificationScreen() {
             onPress={() => {
               setHasAcceptedSafetyTerms((currentValue) => !currentValue);
               if (fieldErrors.hasAcceptedSafetyTerms) {
-                setFieldErrors((currentErrors) => ({ ...currentErrors, hasAcceptedSafetyTerms: undefined }));
+                setFieldErrors((currentErrors) => ({
+                  ...currentErrors,
+                  hasAcceptedSafetyTerms: undefined,
+                }));
               }
             }}
           />
@@ -121,7 +136,11 @@ function ConfirmationRow({ label, isChecked, onPress, error }: ConfirmationRowPr
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isChecked }}
         onPress={onPress}
-        style={({ pressed }) => [styles.confirmationRow, pressed ? styles.confirmationPressed : null]}>
+        style={({ pressed }) => [
+          styles.confirmationRow,
+          pressed ? styles.confirmationPressed : null,
+        ]}
+      >
         <View style={[styles.checkbox, isChecked ? styles.checkboxChecked : null]}>
           {isChecked ? <View style={styles.checkboxInnerMark} /> : null}
         </View>
@@ -152,8 +171,8 @@ const styles = StyleSheet.create({
   },
   confirmationRow: {
     minHeight: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     borderRadius: 8,
     borderWidth: 1,
@@ -167,8 +186,8 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,

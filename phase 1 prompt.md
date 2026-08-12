@@ -13,31 +13,30 @@ Do not rebuild the repository from scratch. First inspect the existing codebase,
 Use the existing stack:
 
 - Monorepo: pnpm workspaces and Turborepo
-    
+
 - Mobile: Expo and React Native
-    
+
 - Routing: Expo Router
-    
+
 - Operations dashboard: React, Vite and TypeScript
-    
+
 - Backend: Express.js and TypeScript
-    
+
 - Database: Supabase PostgreSQL
-    
+
 - Authentication: Supabase Auth
-    
+
 - Storage: Supabase Storage
-    
+
 - Server-state management: TanStack Query
-    
+
 - Local workflow state: Zustand
-    
+
 - Validation: Zod
-    
+
 - Testing: Vitest, Jest or the testing tools already configured in each workspace
-    
+
 - Styling: use the existing styling approach in the repository; do not introduce a second styling framework unnecessarily
-    
 
 Applications:
 
@@ -74,48 +73,46 @@ packages/
 Implement the complete authentication and onboarding foundation for:
 
 1. Consumers
-    
+
 2. Vendors
-    
+
 3. Riders
-    
+
 4. E-Katale administrators and agents
-    
 
 The system must support:
 
 - Guest browsing for consumers
-    
+
 - Google authentication for consumers
-    
+
 - Phone number and password authentication for vendors and riders
-    
+
 - Phone OTP verification
-    
+
 - OTP password recovery
-    
+
 - Exactly one operational role per account
-    
+
 - Vendor onboarding and document submission
-    
+
 - Rider onboarding and document submission
-    
+
 - Administrator review and approval
-    
+
 - Approval, rejection and changes-requested states
-    
+
 - Trusted-device registration
-    
+
 - One active approved device for vendors and riders
-    
+
 - Protected application routes
-    
+
 - Low-bandwidth-friendly interfaces
-    
+
 - Resumable onboarding
-    
+
 - Clear audit records for sensitive actions
-    
 
 ---
 
@@ -126,23 +123,22 @@ The system must support:
 Before writing code:
 
 1. Inspect the root `package.json`.
-    
+
 2. Inspect `pnpm-workspace.yaml`.
-    
+
 3. Inspect `turbo.json`.
-    
+
 4. Inspect all existing database migrations.
-    
+
 5. Inspect generated Supabase types.
-    
+
 6. Inspect the existing Express application structure.
-    
+
 7. Inspect shared UI, domain, auth, validation and API client packages.
-    
+
 8. Inspect the existing route structures in all applications.
-    
+
 9. Run the current lint, type-check and tests before changing anything.
-    
 
 Report any existing failures separately from failures introduced by your work.
 
@@ -151,42 +147,40 @@ Report any existing failures separately from failures introduced by your work.
 Use **TanStack Query** for all server-owned data, including:
 
 - Supabase session
-    
+
 - Authenticated profile
-    
+
 - Vendor application
-    
+
 - Rider application
-    
+
 - Approval status
-    
+
 - Verification documents
-    
+
 - Trusted devices
-    
+
 - Administrator queues
-    
+
 - Application review details
-    
 
 Use **Zustand only for temporary local workflow state**, including:
 
 - Current onboarding step
-    
+
 - Temporary unsaved form data
-    
+
 - Selected language
-    
+
 - Onboarding slides already viewed
-    
+
 - Local reduced-data preference
-    
+
 - Camera capture workflow
-    
+
 - Temporary upload progress
-    
+
 - Temporary UI filters
-    
 
 Do not copy full API responses into Zustand.
 
@@ -195,40 +189,38 @@ Do not copy full API responses into Zustand.
 Never:
 
 - Store passwords in public database tables
-    
+
 - Expose the Supabase service-role key to mobile or web clients
-    
+
 - Let the client assign administrator roles
-    
+
 - Let the client approve its own onboarding application
-    
+
 - Trust a role sent from an unvalidated client request
-    
+
 - Allow direct unrestricted writes to approval status
-    
+
 - Expose private verification documents through public URLs
-    
+
 - Treat a device model, IMEI or Android ID as the sole trusted-device identifier
-    
 
 Sensitive operations must go through Express.
 
 ### 3.4 Type safety
 
 - Use strict TypeScript.
-    
+
 - Avoid `any`.
-    
+
 - Use discriminated unions for authentication and approval states.
-    
+
 - Use generated Supabase database types.
-    
+
 - Use Zod schemas for every request body, route parameter and environment variable.
-    
+
 - Define shared response types in the domain package.
-    
+
 - Use exhaustive `switch` statements for state transitions.
-    
 
 ### 3.5 Error handling
 
@@ -481,25 +473,24 @@ offline
 Requirements:
 
 - Minimum accessible touch targets
-    
+
 - Visible focus states on web
-    
+
 - Proper labels for screen readers
-    
+
 - Correct keyboard configuration
-    
+
 - Password visibility toggle
-    
+
 - Loading and disabled protection against duplicate submissions
-    
+
 - Small-screen support
-    
+
 - Keyboard-safe forms
-    
+
 - Reduced-motion compatibility where practical
-    
+
 - No hardcoded application-specific strings in generic components
-    
 
 ---
 
@@ -692,21 +683,20 @@ Agreement to commission terms
 Support:
 
 - Draft saving
-    
+
 - Resume after application restart
-    
+
 - Validation per step
-    
+
 - Upload progress
-    
+
 - Image compression before upload
-    
+
 - Weak-network retry
-    
+
 - Review before final submission
-    
+
 - Changes-requested resubmission
-    
 
 Do not permit submitted identity or role data to be edited without a controlled correction workflow.
 
@@ -824,23 +814,22 @@ OTP password recovery
 Rules:
 
 - Normalize Ugandan phone numbers consistently.
-    
+
 - Prefer E.164 storage.
-    
+
 - Validate `+256` numbers.
-    
+
 - Never reveal whether a phone number exists during password recovery.
-    
+
 - Add cooldown handling for OTP resend.
-    
+
 - Handle expired OTPs.
-    
+
 - Handle invalid OTPs.
-    
+
 - Protect against duplicate submission.
-    
+
 - Map Supabase errors into user-friendly application errors.
-    
 
 ---
 
@@ -876,29 +865,28 @@ suspended
 Requirements:
 
 - RLS enabled
-    
+
 - Users can read their own application
-    
+
 - Users can update only draft or changes-requested applications
-    
+
 - Users cannot approve themselves
-    
+
 - Administrators can review applications
-    
+
 - Verification documents remain private
-    
+
 - Review actions are audited
-    
+
 - Role-changing operations are restricted
-    
+
 - Application submission is transactional
-    
+
 - Approval is transactional
-    
+
 - Device approval is transactional
-    
+
 - Every status change has a history record
-    
 
 Do not directly modify generated database types. Regenerate them after migrations.
 
@@ -917,27 +905,26 @@ verification-documents/{user_id}/{application_type}/{document_type}/{filename}
 Requirements:
 
 - Private bucket
-    
+
 - No public URLs
-    
+
 - Upload only to the authenticated user’s own path
-    
+
 - User can read their own documents
-    
+
 - Authorized administrators can read review documents
-    
+
 - Signed URLs issued by the backend when needed
-    
+
 - Image size and MIME type validation
-    
+
 - On-device compression
-    
+
 - Filename sanitization
-    
+
 - No service-role key in the client
-    
+
 - Rejected documents remain auditable instead of being silently overwritten
-    
 
 ---
 
@@ -1012,23 +999,22 @@ Enter phone number
 Requirements:
 
 - Generic response whether or not account exists
-    
+
 - OTP resend cooldown
-    
+
 - Failed-attempt handling
-    
+
 - Expired-code handling
-    
+
 - New-password validation
-    
+
 - Password confirmation
-    
+
 - Audit event
-    
+
 - Trusted-device reassessment after reset
-    
+
 - Clear success screen
-    
 
 ---
 
@@ -1081,17 +1067,16 @@ Suspend action
 Sensitive actions must:
 
 - Use confirmation dialogs
-    
+
 - Require a reason when rejecting or requesting changes
-    
+
 - Go through Express
-    
+
 - Write audit records
-    
+
 - Invalidate TanStack Query caches
-    
+
 - Surface success and failure states clearly
-    
 
 ---
 
@@ -1170,17 +1155,16 @@ apps/api/src/modules/
 Responsibilities:
 
 - Controllers: HTTP concerns only
-    
+
 - Services: business logic
-    
+
 - Repositories: database access
-    
+
 - Schemas: Zod input validation
-    
+
 - Routes: route definitions and middleware
-    
+
 - Errors: typed domain errors
-    
 
 Do not place all Phase 1 logic in one file.
 
@@ -1193,23 +1177,22 @@ Implement typed API methods in `packages/api-client`.
 Requirements:
 
 - Shared request wrapper
-    
+
 - Authorization header handling
-    
+
 - Request ID propagation
-    
+
 - Timeout handling
-    
+
 - Abort signal support
-    
+
 - Typed success responses
-    
+
 - Typed API errors
-    
+
 - No duplicated fetch logic in screens
-    
+
 - TanStack Query hooks should use shared client methods
-    
 
 Organize by domain:
 
@@ -1245,19 +1228,18 @@ packages/validation/src/
 Requirements:
 
 - Ugandan phone normalization
-    
+
 - Strong but usable password validation
-    
+
 - Exact error messages
-    
+
 - Validation per onboarding step
-    
+
 - Full validation before submission
-    
+
 - Server revalidation
-    
+
 - No reliance on client validation alone
-    
 
 ---
 
@@ -1268,31 +1250,30 @@ Phase 1 must work reasonably on weak networks.
 Implement:
 
 - Text-first screens
-    
+
 - Small image assets
-    
+
 - Compressed uploads
-    
+
 - Upload retry
-    
+
 - Visible offline banner
-    
+
 - Cached current onboarding state
-    
+
 - Resumable uploads where practical
-    
+
 - No unnecessary background requests
-    
+
 - Appropriate TanStack Query stale times
-    
+
 - Avoid refetch-on-focus for stable onboarding reference data
-    
+
 - Skeletons instead of blocking spinners where suitable
-    
+
 - Clear “saved locally” and “synced” indicators
-    
+
 - Do not claim server submission succeeded until confirmed
-    
 
 Do not cache passwords or OTP codes.
 
@@ -1328,82 +1309,78 @@ Add meaningful tests.
 Test:
 
 - Phone normalization
-    
+
 - Role validation
-    
+
 - Application status transitions
-    
+
 - Approval authorization
-    
+
 - Changes-requested resubmission
-    
+
 - Trusted-device limits
-    
+
 - Recovery flows
-    
+
 - Error mapping
-    
 
 ### Backend integration tests
 
 Test:
 
 - Vendor registration
-    
+
 - Rider registration
-    
+
 - OTP verification behavior
-    
+
 - Application submission
-    
+
 - Administrator approval
-    
+
 - Rejection and requested changes
-    
+
 - Unauthorized approval attempt
-    
+
 - Trusted-device replacement
-    
+
 - Suspended-user access
-    
 
 ### Mobile component tests
 
 Test:
 
 - Onboarding navigation
-    
+
 - Form validation
-    
+
 - OTP input
-    
+
 - Loading states
-    
+
 - Error states
-    
+
 - Approval-state rendering
-    
+
 - Protected route decisions
-    
 
 ### Database tests
 
 Test:
 
 - RLS ownership
-    
+
 - Administrative access
-    
+
 - Self-approval denial
-    
+
 - Document privacy
-    
+
 - Application transition restrictions
-    
+
 - Trusted-device uniqueness
-    
+
 - Audit-event creation
-    
 
 All new tests must run in CI.
 
@@ -1464,166 +1441,154 @@ Work in this order.
 ### Step 1 — Repository analysis
 
 - Inspect the codebase.
-    
+
 - Identify reusable structures.
-    
+
 - Document required migrations.
-    
+
 - Run baseline checks.
-    
 
 ### Step 2 — Shared design system
 
 - Add tokens.
-    
+
 - Build foundational components.
-    
+
 - Add Storybook only if already supported; do not introduce it unless justified.
-    
+
 - Add component tests.
-    
 
 ### Step 3 — Domain and validation contracts
 
 - Authentication states
-    
+
 - Application status types
-    
+
 - Request and response schemas
-    
+
 - Phone and password validation
-    
+
 - Shared API contracts
-    
 
 ### Step 4 — Database migration
 
 - Missing application tables
-    
+
 - Verification documents
-    
+
 - Trusted devices
-    
+
 - Review history
-    
+
 - Audit events
-    
+
 - RLS and indexes
-    
+
 - Database tests
-    
+
 - Regenerate database types
-    
 
 ### Step 5 — Backend authentication
 
 - Registration
-    
+
 - OTP verification
-    
+
 - Sign-in
-    
+
 - Recovery
-    
+
 - Profile bootstrap
-    
+
 - Auth middleware
-    
 
 ### Step 6 — Backend onboarding
 
 - Draft application updates
-    
+
 - Submission
-    
+
 - Document registration
-    
+
 - Application state retrieval
-    
+
 - Resume support
-    
 
 ### Step 7 — Admin approval backend
 
 - Queue
-    
+
 - Review
-    
+
 - Approval
-    
+
 - Request changes
-    
+
 - Rejection
-    
+
 - Suspension
-    
+
 - Audit events
-    
 
 ### Step 8 — Trusted-device backend
 
 - Challenge
-    
+
 - OTP confirmation
-    
+
 - Registration
-    
+
 - Replacement request
-    
+
 - Approval and revocation
-    
 
 ### Step 9 — Mobile product onboarding
 
 - Two screens per role
-    
+
 - Guest consumer entry
-    
+
 - Vendor and rider registration entry
-    
+
 - Local completion flag
-    
 
 ### Step 10 — Mobile authentication
 
 - Phone and password
-    
+
 - OTP
-    
+
 - Recovery
-    
+
 - Session restoration
-    
+
 - Protected routes
-    
 
 ### Step 11 — Role onboarding forms
 
 - Vendor
-    
+
 - Rider
-    
+
 - Draft saving
-    
+
 - Uploads
-    
+
 - Review
-    
+
 - Submission
-    
+
 - Approval states
-    
 
 ### Step 12 — Operations web
 
 - Queues
-    
+
 - Review
-    
+
 - Actions
-    
+
 - Trusted-device requests
-    
 
 ### Step 13 — Verification
 
@@ -1651,35 +1616,34 @@ Do not attempt to implement the entire phase as one unreviewable change.
 For each work cycle:
 
 1. State the selected subtask.
-    
+
 2. List files inspected.
-    
+
 3. Explain important architectural decisions.
-    
+
 4. Implement the smallest coherent production-ready slice.
-    
+
 5. Add or update tests.
-    
+
 6. Run relevant validation commands.
-    
+
 7. Report:
-    
-    - Files created
-        
-    - Files changed
-        
-    - Migrations added
-        
-    - Tests added
-        
-    - Commands run
-        
-    - Results
-        
-    - Remaining work
-        
-    - Risks or assumptions
-        
+
+   - Files created
+
+   - Files changed
+
+   - Migrations added
+
+   - Tests added
+
+   - Commands run
+
+   - Results
+
+   - Remaining work
+
+   - Risks or assumptions
 
 Do not claim a command passed unless it was actually executed successfully.
 
@@ -1690,54 +1654,52 @@ Do not claim a command passed unless it was actually executed successfully.
 The implementation must be:
 
 - Modular
-    
+
 - Typed
-    
+
 - Testable
-    
+
 - Secure
-    
+
 - Accessible
-    
+
 - Consistent across applications
-    
+
 - Appropriate for low-bandwidth conditions
-    
+
 - Easy for another engineer to understand
-    
+
 - Free of unnecessary abstraction
-    
+
 - Free of duplicated business logic
-    
+
 - Free of giant components and giant service files
-    
+
 - Free of placeholder production logic
-    
 
 Avoid:
 
 - Premature microservices
-    
+
 - Redux
-    
+
 - Duplicated server data in Zustand
-    
+
 - Hardcoded roles throughout components
-    
+
 - Direct Supabase administrative writes from clients
-    
+
 - One universal onboarding form for all roles
-    
+
 - Massive shared components with many unrelated props
-    
+
 - Silent error swallowing
-    
+
 - Optimistic approval or authentication status changes
-    
+
 - UI-only authorization
-    
+
 - Untracked schema changes
-    
 
 ---
 
@@ -1746,61 +1708,60 @@ Avoid:
 Phase 1 is complete only when:
 
 - Consumers can browse as guests.
-    
+
 - Consumer Google authentication works.
-    
+
 - Consumer guest carts survive authentication.
-    
+
 - Vendor phone/password registration works.
-    
+
 - Rider phone/password registration works.
-    
+
 - OTP verification works.
-    
+
 - OTP recovery works.
-    
+
 - Each account has one role.
-    
+
 - Vendor onboarding is resumable.
-    
+
 - Rider onboarding is resumable.
-    
+
 - Verification documents are private.
-    
+
 - Applications can be submitted.
-    
+
 - Administrators can review applications.
-    
+
 - Administrators can approve, reject and request changes.
-    
+
 - Unapproved users cannot access operational routes.
-    
+
 - Suspended users cannot access operational routes.
-    
+
 - Trusted-device registration works.
-    
+
 - Second-device requests require approval.
-    
+
 - Revoked devices lose access.
-    
+
 - Product onboarding contains two screens per role.
-    
+
 - UI components are shared and consistent.
-    
+
 - TanStack Query owns server state.
-    
+
 - Zustand owns local workflow state only.
-    
+
 - RLS and API authorization are tested.
-    
+
 - Audit events are recorded.
-    
+
 - CI passes.
-    
+
 - Local Supabase can be rebuilt from migrations.
-    
+
 - Database types are regenerated and committed.
-    
 
 ---
 
@@ -1813,19 +1774,19 @@ Do not immediately implement every Phase 1 feature.
 First:
 
 1. Inspect the existing repository.
-    
+
 2. Run baseline validation.
-    
+
 3. Identify the current UI and routing conventions.
-    
+
 4. Propose the exact files to create or modify.
-    
+
 5. Implement design tokens and the first reusable components.
-    
+
 6. Implement the two vendor onboarding introduction screens as the first vertical slice.
-    
+
 7. Add tests.
-    
+
 8. Run lint, type-check, tests and the relevant application build.
-    
+
 9. Report the results and the recommended next slice.

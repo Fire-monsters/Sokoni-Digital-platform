@@ -33,8 +33,15 @@ export default function EditListingScreen() {
   return (
     <AppScreen scroll contentStyle={styles.content}>
       <AppText variant="heading1">Edit package</AppText>
-      <AppText color="secondary">Changes-requested listings return to draft while you edit.</AppText>
-      <AppTextField label="Quantity" keyboardType="decimal-pad" value={quantity} onChangeText={setQuantity} />
+      <AppText color="secondary">
+        Changes-requested listings return to draft while you edit.
+      </AppText>
+      <AppTextField
+        label="Quantity"
+        keyboardType="decimal-pad"
+        value={quantity}
+        onChangeText={setQuantity}
+      />
       <AppTextField label="Unit" value={unit} onChangeText={setUnit} />
       <AppTextField label="Description" value={description} onChangeText={setDescription} />
       {update.isError ? <AppText>{update.error.message}</AppText> : null}

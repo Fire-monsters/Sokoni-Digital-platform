@@ -1,11 +1,18 @@
-import { parseUgandanPhoneNumber } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, PhoneNumberField, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { parseUgandanPhoneNumber } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  PhoneNumberField,
+  colors,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function VendorPhoneScreen() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState<string | undefined>();
 
   function continueToOtp() {
@@ -18,7 +25,7 @@ export default function VendorPhoneScreen() {
 
     setError(undefined);
     router.push({
-      pathname: './verify-otp',
+      pathname: "./verify-otp",
       params: {
         phoneNumber: result.phoneNumber,
       },

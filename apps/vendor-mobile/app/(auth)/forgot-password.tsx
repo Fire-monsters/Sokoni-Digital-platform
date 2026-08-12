@@ -1,11 +1,18 @@
-import { parseUgandanPhoneNumber } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, PhoneNumberField, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { parseUgandanPhoneNumber } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  PhoneNumberField,
+  colors,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function VendorForgotPasswordScreen() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState<string | undefined>();
 
   function requestRecoveryCode() {
@@ -18,7 +25,7 @@ export default function VendorForgotPasswordScreen() {
 
     setError(undefined);
     router.push({
-      pathname: './verify-recovery-otp',
+      pathname: "./verify-recovery-otp",
       params: {
         phoneNumber: result.phoneNumber,
       },
@@ -31,7 +38,8 @@ export default function VendorForgotPasswordScreen() {
         <View style={styles.copy}>
           <AppText variant="heading1">Reset password</AppText>
           <AppText color="secondary" variant="bodyLarge">
-            Enter your vendor phone number. If the account can be recovered, we will send a verification code.
+            Enter your vendor phone number. If the account can be recovered, we will send a
+            verification code.
           </AppText>
         </View>
 

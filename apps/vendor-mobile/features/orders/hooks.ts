@@ -1,6 +1,7 @@
 import {
   apiQueryKeys,
   completeQualityCheck,
+  confirmVendorDeliveryPickup,
   fetchVendorOrder,
   fetchVendorOrders,
   transitionVendorOrder,
@@ -67,5 +68,15 @@ export function useCompleteQualityCheck(orderId: string) {
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: apiQueryKeys.vendorOrder(orderId) });
     },
+  });
+}
+
+export function useConfirmVendorPickup(orderId: string) {
+  const { options } = useVendorApiOptions();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { operationId: string }) =>
+      confirmVendorDeliveryPickup(options, orderId, input),
+    onSuccess: () => void client.invalidateQueries({ queryKey: apiQueryKeys.vendorOrder(orderId) }),
   });
 }

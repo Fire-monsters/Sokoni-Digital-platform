@@ -4,10 +4,18 @@ import {
   fetchAdminPriceQueue,
   requestAdminListingChanges,
   reviewAdminPrice,
+  fetchDispatcherDeliveryBoard,
+  fetchDispatcherRiders,
 } from "@sokoni-digital/api-client";
-import type { AdminListingReview, AdminPriceReview } from "@sokoni-digital/domain";
-import { useCallback, useState } from "react";
+import type {
+  AdminListingReview,
+  AdminPriceReview,
+  DispatcherDeliveryBoard,
+  DispatcherRider,
+} from "@sokoni-digital/domain";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
+import { DeliveryBoard } from "./DeliveryBoard";
 
 const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
@@ -19,6 +27,11 @@ function App() {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deliveryBoard, setDeliveryBoard] = useState<DispatcherDeliveryBoard>({
+    deliveries: [],
+    issues: [],
+  });
+  const [riders, setRiders] = useState<DispatcherRider[]>([]);
 
   const loadQueue = useCallback(async () => {
     if (!token) return;
@@ -26,12 +39,16 @@ function App() {
     setMessage("");
     try {
       sessionStorage.setItem("operations-token", token);
-      const [result, priceResult] = await Promise.all([
+      const [result, priceResult, boardResult, riderResult] = await Promise.all([
         fetchAdminListingQueue({ baseUrl, accessToken: token }),
         fetchAdminPriceQueue({ baseUrl, accessToken: token }),
+        fetchDispatcherDeliveryBoard({ baseUrl, accessToken: token }),
+        fetchDispatcherRiders({ baseUrl, accessToken: token }),
       ]);
       setListings(result.listings);
       setPrices(priceResult.requests);
+      setDeliveryBoard(boardResult);
+      setRiders(riderResult);
       setSelected(
         (current) => result.listings.find((item) => item.id === current?.id) ?? result.listings[0],
       );
@@ -41,6 +58,16 @@ function App() {
       setLoading(false);
     }
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    const initialLoad = window.setTimeout(() => void loadQueue(), 0);
+    const interval = window.setInterval(() => void loadQueue(), 15_000);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(interval);
+    };
+  }, [loadQueue, token]);
 
   const decide = async (decision: "approve" | "changes") => {
     if (!selected) return;
@@ -86,7 +113,7 @@ function App() {
     <main className="operations-shell">
       <header>
         <p className="eyebrow">Sokoni operations</p>
-        <h1>Listing approval queue</h1>
+        <h1>Operations control room</h1>
         <div className="token-row">
           <input
             aria-label="Administrator access token"
@@ -102,6 +129,21 @@ function App() {
       </header>
 
       {message ? <p className="message">{message}</p> : null}
+      <DeliveryBoard
+        token={token}
+        board={deliveryBoard}
+        riders={riders}
+        busy={loading}
+        onBusy={setLoading}
+        onMessage={setMessage}
+        onReload={loadQueue}
+      />
+      <div className="section-heading listings-heading">
+        <div>
+          <p className="eyebrow">Catalogue governance</p>
+          <h2>Listing approval queue</h2>
+        </div>
+      </div>
       <div className="review-layout">
         <aside>
           <h2>Pending ({listings.length})</h2>

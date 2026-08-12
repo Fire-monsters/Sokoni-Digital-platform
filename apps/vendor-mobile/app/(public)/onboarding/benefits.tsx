@@ -1,5 +1,5 @@
-import { AppScreen, OnboardingSlide } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
+import { AppScreen, OnboardingSlide } from "@sokoni-digital/ui";
+import { router } from "expo-router";
 
 export default function VendorBenefitsScreen() {
   return (
@@ -13,10 +13,10 @@ export default function VendorBenefitsScreen() {
         primaryActionLabel="Register my stall"
         secondaryActionLabel="I already have an account"
         onPrimaryAction={() => {
-          router.push('/(auth)/phone');
+          router.push("/(auth)/phone");
         }}
         onSecondaryAction={() => {
-          router.push('/(public)/sign-in');
+          router.push("/(public)/sign-in");
         }}
       />
     </AppScreen>

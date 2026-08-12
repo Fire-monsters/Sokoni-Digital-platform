@@ -1,21 +1,29 @@
-import { parseRiderMotorcycleDetails } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, AppTextField, UploadCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { parseRiderMotorcycleDetails } from "@sokoni-digital/validation";
+import {
+  AppButton,
+  AppScreen,
+  AppText,
+  AppTextField,
+  UploadCard,
+  colors,
+  spacing,
+} from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 const vehicleTypeOptions = [
-  { label: 'Motorcycle', value: 'motorcycle' },
-  { label: 'Bicycle', value: 'bicycle' },
-  { label: 'Tuk-tuk', value: 'tuk-tuk' },
+  { label: "Motorcycle", value: "motorcycle" },
+  { label: "Bicycle", value: "bicycle" },
+  { label: "Tuk-tuk", value: "tuk-tuk" },
 ] as const;
 
-type VehicleType = (typeof vehicleTypeOptions)[number]['value'];
+type VehicleType = (typeof vehicleTypeOptions)[number]["value"];
 
 export default function RiderMotorcycleDetailsScreen() {
-  const [motorcycleNumberPlate, setMotorcycleNumberPlate] = useState('');
-  const [vehicleType, setVehicleType] = useState<VehicleType | ''>('');
-  const [primaryOperatingArea, setPrimaryOperatingArea] = useState('');
+  const [motorcycleNumberPlate, setMotorcycleNumberPlate] = useState("");
+  const [vehicleType, setVehicleType] = useState<VehicleType | "">("");
+  const [primaryOperatingArea, setPrimaryOperatingArea] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{
     motorcycleNumberPlate?: string;
     vehicleType?: string;
@@ -35,7 +43,7 @@ export default function RiderMotorcycleDetailsScreen() {
     }
 
     setFieldErrors({});
-    router.push('./association-and-next-of-kin');
+    router.push("./association-and-next-of-kin");
   }
 
   return (
@@ -55,7 +63,10 @@ export default function RiderMotorcycleDetailsScreen() {
           onChangeText={(value) => {
             setMotorcycleNumberPlate(value);
             if (fieldErrors.motorcycleNumberPlate) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, motorcycleNumberPlate: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                motorcycleNumberPlate: undefined,
+              }));
             }
           }}
           placeholder="UXX 123X"
@@ -77,15 +88,19 @@ export default function RiderMotorcycleDetailsScreen() {
                   onPress={() => {
                     setVehicleType(option.value);
                     if (fieldErrors.vehicleType) {
-                      setFieldErrors((currentErrors) => ({ ...currentErrors, vehicleType: undefined }));
+                      setFieldErrors((currentErrors) => ({
+                        ...currentErrors,
+                        vehicleType: undefined,
+                      }));
                     }
                   }}
                   style={({ pressed }) => [
                     styles.optionChip,
                     isSelected ? styles.optionChipSelected : null,
                     pressed ? styles.optionChipPressed : null,
-                  ]}>
-                  <AppText color={isSelected ? 'inverse' : 'primary'} variant="label">
+                  ]}
+                >
+                  <AppText color={isSelected ? "inverse" : "primary"} variant="label">
                     {option.label}
                   </AppText>
                 </Pressable>
@@ -106,7 +121,10 @@ export default function RiderMotorcycleDetailsScreen() {
           onChangeText={(value) => {
             setPrimaryOperatingArea(value);
             if (fieldErrors.primaryOperatingArea) {
-              setFieldErrors((currentErrors) => ({ ...currentErrors, primaryOperatingArea: undefined }));
+              setFieldErrors((currentErrors) => ({
+                ...currentErrors,
+                primaryOperatingArea: undefined,
+              }));
             }
           }}
           placeholder="Kitooro, Entebbe"
@@ -118,7 +136,10 @@ export default function RiderMotorcycleDetailsScreen() {
           title="Motorcycle photograph"
           description="Upload a clear side view of the vehicle used for deliveries."
           onPress={() => {
-            Alert.alert('Upload motorcycle photo', 'Camera capture and compression will be connected in the document upload slice.');
+            Alert.alert(
+              "Upload motorcycle photo",
+              "Camera capture and compression will be connected in the document upload slice.",
+            );
           }}
         />
       </View>
@@ -149,13 +170,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   optionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   optionChip: {
     minHeight: 40,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,

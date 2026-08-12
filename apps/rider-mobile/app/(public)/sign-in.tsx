@@ -1,6 +1,6 @@
-import { AppButton, AppScreen, AppText, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderSignInScreen() {
   return (
@@ -24,14 +24,14 @@ export default function RiderSignInScreen() {
         <AppButton
           label="Forgot password?"
           onPress={() => {
-            router.push({ pathname: '../(auth)/forgot-password' });
+            router.push({ pathname: "../(auth)/forgot-password" });
           }}
           variant="secondary"
         />
         <AppButton
           label="Register as a rider"
           onPress={() => {
-            router.push('/(auth)/phone');
+            router.push("/(auth)/phone");
           }}
         />
         <AppButton

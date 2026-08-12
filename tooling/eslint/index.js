@@ -13,8 +13,8 @@ export default tseslint.config(
       "**/coverage/**",
       "**/web-build/**",
       "**/supabase/.temp/**",
-      "**/packages/database-types/src/database.types.ts"
-    ]
+      "**/packages/database-types/src/database.types.ts",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -24,29 +24,29 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.node
+        ...globals.node,
       },
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: process.cwd()
-      }
+        tsconfigRootDir: process.cwd(),
+      },
     },
     rules: {
       "@typescript-eslint/consistent-type-imports": [
         "error",
         {
-          "prefer": "type-imports"
-        }
+          prefer: "type-imports",
+        },
       ],
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
-          "argsIgnorePattern": "^_",
-          "varsIgnorePattern": "^_"
-        }
-      ]
-    }
-  }
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 );

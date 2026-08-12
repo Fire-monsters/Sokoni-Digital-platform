@@ -3,7 +3,7 @@ import type {
   AuthRouteDecision,
   AuthSessionState,
   OnboardingSnapshot,
-  ProtectedRouteArea
+  ProtectedRouteArea,
 } from "@sokoni-digital/domain";
 
 export type AuthEvent =
@@ -37,12 +37,12 @@ export function reduceAuthSession(_state: AuthSessionState, event: AuthEvent): A
       return {
         status: "authenticated",
         profile: event.profile,
-        ...(event.onboarding ? { onboarding: event.onboarding } : {})
+        ...(event.onboarding ? { onboarding: event.onboarding } : {}),
       };
     case "session_failed":
       return {
         status: "error",
-        message: event.message
+        message: event.message,
       };
     default: {
       const exhaustiveCheck: never = event;
@@ -76,7 +76,7 @@ export function getApprovalRoute(approvalStatus: ApprovalStatus): AuthRouteDecis
 
 export function decideProtectedRoute(
   session: AuthSessionState,
-  area: ProtectedRouteArea
+  area: ProtectedRouteArea,
 ): AuthRouteDecision {
   if (session.status === "loading") {
     return { action: "allow" };
@@ -99,7 +99,10 @@ export function decideProtectedRoute(
       return getApprovalRoute(profile.approvalStatus);
     }
 
-    if (profile.trustedDeviceStatus !== "approved" && profile.trustedDeviceStatus !== "not_required") {
+    if (
+      profile.trustedDeviceStatus !== "approved" &&
+      profile.trustedDeviceStatus !== "not_required"
+    ) {
       return { action: "redirect", pathname: "/(approval)/pending" };
     }
 

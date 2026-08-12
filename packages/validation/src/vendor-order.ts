@@ -26,5 +26,7 @@ export const vendorOrderTransitionSchema = z.object({
   operationId: z.uuid(),
 });
 
+export const vendorPickupConfirmationSchema = z.object({ operationId: z.uuid() });
+
 export type VendorOrderListQuery = z.infer<typeof vendorOrderListQuerySchema>;
 export type VendorOrderTransitionInput = z.infer<typeof vendorOrderTransitionSchema>;

@@ -1,5 +1,5 @@
-import { AppScreen, OnboardingSlide } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
+import { AppScreen, OnboardingSlide } from "@sokoni-digital/ui";
+import { router } from "expo-router";
 
 export default function VendorOnboardingScreen() {
   return (
@@ -12,7 +12,7 @@ export default function VendorOnboardingScreen() {
         totalSteps={2}
         primaryActionLabel="Next"
         onPrimaryAction={() => {
-          router.push('/(public)/onboarding/benefits');
+          router.push("/(public)/onboarding/benefits");
         }}
       />
     </AppScreen>

@@ -21,9 +21,18 @@ export function createQualityChecksRouter(service = new QualityChecksService()):
     async (request, response, next) => {
       const params = vendorOrderParamsSchema.safeParse(request.params);
       const body = qualityImageIntentSchema.safeParse(request.body);
-      if (!params.success) { sendZodValidationError(request, response, params.error.issues); return; }
-      if (!body.success) { sendZodValidationError(request, response, body.error.issues); return; }
-      if (!request.auth) { next(new Error("Authenticated request context is missing.")); return; }
+      if (!params.success) {
+        sendZodValidationError(request, response, params.error.issues);
+        return;
+      }
+      if (!body.success) {
+        sendZodValidationError(request, response, body.error.issues);
+        return;
+      }
+      if (!request.auth) {
+        next(new Error("Authenticated request context is missing."));
+        return;
+      }
       try {
         sendSuccess(
           request,
@@ -46,9 +55,18 @@ export function createQualityChecksRouter(service = new QualityChecksService()):
     async (request, response, next) => {
       const params = qualityImageParamsSchema.safeParse(request.params);
       const body = completeQualityImageSchema.safeParse(request.body);
-      if (!params.success) { sendZodValidationError(request, response, params.error.issues); return; }
-      if (!body.success) { sendZodValidationError(request, response, body.error.issues); return; }
-      if (!request.auth) { next(new Error("Authenticated request context is missing.")); return; }
+      if (!params.success) {
+        sendZodValidationError(request, response, params.error.issues);
+        return;
+      }
+      if (!body.success) {
+        sendZodValidationError(request, response, body.error.issues);
+        return;
+      }
+      if (!request.auth) {
+        next(new Error("Authenticated request context is missing."));
+        return;
+      }
       try {
         sendSuccess(
           request,
@@ -70,9 +88,18 @@ export function createQualityChecksRouter(service = new QualityChecksService()):
   router.post("/:sellerOrderId/quality-check/complete", async (request, response, next) => {
     const params = vendorOrderParamsSchema.safeParse(request.params);
     const body = completeQualityCheckSchema.safeParse(request.body);
-    if (!params.success) { sendZodValidationError(request, response, params.error.issues); return; }
-    if (!body.success) { sendZodValidationError(request, response, body.error.issues); return; }
-    if (!request.auth) { next(new Error("Authenticated request context is missing.")); return; }
+    if (!params.success) {
+      sendZodValidationError(request, response, params.error.issues);
+      return;
+    }
+    if (!body.success) {
+      sendZodValidationError(request, response, body.error.issues);
+      return;
+    }
+    if (!request.auth) {
+      next(new Error("Authenticated request context is missing."));
+      return;
+    }
     try {
       sendSuccess(
         request,

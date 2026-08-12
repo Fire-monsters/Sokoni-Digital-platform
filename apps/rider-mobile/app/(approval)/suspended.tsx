@@ -1,6 +1,6 @@
-import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 export default function RiderSuspendedScreen() {
   return (
@@ -36,7 +36,7 @@ export default function RiderSuspendedScreen() {
         <AppButton
           label="Go to sign in"
           onPress={() => {
-            router.replace('../(public)/sign-in');
+            router.replace("../(public)/sign-in");
           }}
         />
       </View>
@@ -50,11 +50,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   statusBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     minHeight: 28,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
-    backgroundColor: '#FFF4E4',
+    backgroundColor: "#FFF4E4",
     paddingHorizontal: spacing.sm,
   },
   statusBadgeText: {

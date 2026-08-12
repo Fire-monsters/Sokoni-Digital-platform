@@ -7,6 +7,8 @@ import type {
   VendorOrderSummary,
   VendorOrderTransitionResult,
   VendorOrderTransitionTarget,
+  DeliveryPickupConfirmationResult,
+  DeliveryStatus,
 } from "@sokoni-digital/domain";
 import type { Database } from "@sokoni-digital/database-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -133,6 +135,16 @@ export class SupabaseVendorOrdersRepository implements VendorOrderRepository {
           .createSignedUrl(proof.thumbnail_path, 600)
       : null;
     if (signedThumbnail?.error) throw signedThumbnail.error;
+    const { data: pickup, error: pickupError } = await this.db
+      .from("delivery_pickups")
+      .select(
+        "delivery_id,vendor_confirmed_at,rider_confirmed_at,collected_at,deliveries!inner(reference,status)",
+      )
+      .eq("seller_order_id", orderId)
+      .maybeSingle();
+    if (pickupError) throw new Error(pickupError.message);
+    const pickupDelivery = pickup?.deliveries as unknown as
+      { reference: string; status: string } | undefined;
 
     return {
       ...summary,
@@ -143,6 +155,17 @@ export class SupabaseVendorOrdersRepository implements VendorOrderRepository {
         at: entry.created_at,
       })),
       packingProofThumbnailUrl: signedThumbnail?.data.signedUrl ?? null,
+      deliveryPickup:
+        pickup && pickupDelivery
+          ? {
+              deliveryId: pickup.delivery_id,
+              deliveryReference: pickupDelivery.reference,
+              deliveryStatus: pickupDelivery.status as DeliveryStatus,
+              vendorConfirmed: Boolean(pickup.vendor_confirmed_at),
+              riderConfirmed: Boolean(pickup.rider_confirmed_at),
+              collectedAt: pickup.collected_at,
+            }
+          : null,
     };
   }
 
@@ -166,6 +189,31 @@ export class SupabaseVendorOrdersRepository implements VendorOrderRepository {
       orderId: String(value.orderId),
       status: String(value.status) as VendorFulfilmentStatus,
       version: Number(value.version),
+      operationId: String(value.operationId),
+      duplicate: Boolean(value.duplicate),
+    };
+  }
+
+  async confirmPickup(
+    userId: string,
+    orderId: string,
+    operationId: string,
+  ): Promise<DeliveryPickupConfirmationResult> {
+    const { data, error } = await this.db.rpc("confirm_delivery_pickup", {
+      p_seller_order_id: orderId,
+      p_actor_user_id: userId,
+      p_actor_type: "vendor",
+      p_operation_id: operationId,
+    });
+    if (error) throw mapVendorOrderDatabaseError(error);
+    const value = data as Record<string, unknown>;
+    return {
+      pickupId: String(value.pickupId),
+      deliveryId: String(value.deliveryId),
+      sellerOrderId: String(value.sellerOrderId),
+      status: String(value.status) as "pending" | "collected",
+      vendorConfirmed: Boolean(value.vendorConfirmed),
+      riderConfirmed: Boolean(value.riderConfirmed),
       operationId: String(value.operationId),
       duplicate: Boolean(value.duplicate),
     };

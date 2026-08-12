@@ -1,6 +1,6 @@
-import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 export default function VendorChangesRequestedScreen() {
   return (
@@ -36,13 +36,13 @@ export default function VendorChangesRequestedScreen() {
         <AppButton
           label="Review application"
           onPress={() => {
-            router.replace('../(registration)/review');
+            router.replace("../(registration)/review");
           }}
         />
         <AppButton
           label="Go to sign in"
           onPress={() => {
-            router.replace('../(public)/sign-in');
+            router.replace("../(public)/sign-in");
           }}
           variant="ghost"
         />
@@ -57,9 +57,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   statusBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     minHeight: 28,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
     backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,

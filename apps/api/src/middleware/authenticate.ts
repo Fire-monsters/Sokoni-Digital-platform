@@ -52,6 +52,12 @@ export async function authenticate(
     .eq("user_id", data.user.id)
     .maybeSingle();
   if (sellerAccount && !roles.includes("vendor")) roles.push("vendor");
+  const { data: transporterProfile } = await supabase
+    .from("transporter_profiles")
+    .select("id")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+  if (transporterProfile && !roles.includes("rider")) roles.push("rider");
 
   request.auth = {
     userId: data.user.id,

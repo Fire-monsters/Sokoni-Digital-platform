@@ -3,6 +3,7 @@ import {
   vendorOrderListQuerySchema,
   vendorOrderParamsSchema,
   vendorOrderTransitionSchema,
+  vendorPickupConfirmationSchema,
 } from "@sokoni-digital/validation/vendor-order";
 
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
@@ -19,8 +20,14 @@ export function createVendorOrdersRouter(
 
   router.get("/", async (request, response, next) => {
     const parsed = vendorOrderListQuerySchema.safeParse(request.query);
-    if (!parsed.success) { sendZodValidationError(request, response, parsed.error.issues); return; }
-    if (!request.auth) { next(new Error("Authenticated request context is missing.")); return; }
+    if (!parsed.success) {
+      sendZodValidationError(request, response, parsed.error.issues);
+      return;
+    }
+    if (!request.auth) {
+      next(new Error("Authenticated request context is missing."));
+      return;
+    }
     try {
       sendSuccess(request, response, 200, await service.list(request.auth.userId, parsed.data));
     } catch (error) {
@@ -30,8 +37,14 @@ export function createVendorOrdersRouter(
 
   router.get("/:sellerOrderId", async (request, response, next) => {
     const parsed = vendorOrderParamsSchema.safeParse(request.params);
-    if (!parsed.success) { sendZodValidationError(request, response, parsed.error.issues); return; }
-    if (!request.auth) { next(new Error("Authenticated request context is missing.")); return; }
+    if (!parsed.success) {
+      sendZodValidationError(request, response, parsed.error.issues);
+      return;
+    }
+    if (!request.auth) {
+      next(new Error("Authenticated request context is missing."));
+      return;
+    }
     try {
       sendSuccess(
         request,
@@ -47,9 +60,18 @@ export function createVendorOrdersRouter(
   router.post("/:sellerOrderId/transitions", async (request, response, next) => {
     const params = vendorOrderParamsSchema.safeParse(request.params);
     const body = vendorOrderTransitionSchema.safeParse(request.body);
-    if (!params.success) { sendZodValidationError(request, response, params.error.issues); return; }
-    if (!body.success) { sendZodValidationError(request, response, body.error.issues); return; }
-    if (!request.auth) { next(new Error("Authenticated request context is missing.")); return; }
+    if (!params.success) {
+      sendZodValidationError(request, response, params.error.issues);
+      return;
+    }
+    if (!body.success) {
+      sendZodValidationError(request, response, body.error.issues);
+      return;
+    }
+    if (!request.auth) {
+      next(new Error("Authenticated request context is missing."));
+      return;
+    }
     try {
       sendSuccess(
         request,
@@ -60,6 +82,37 @@ export function createVendorOrdersRouter(
           params.data.sellerOrderId,
           body.data.toStatus,
           body.data.expectedVersion,
+          body.data.operationId,
+        ),
+      );
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:sellerOrderId/pickup/confirm", async (request, response, next) => {
+    const params = vendorOrderParamsSchema.safeParse(request.params);
+    const body = vendorPickupConfirmationSchema.safeParse(request.body);
+    if (!params.success) {
+      sendZodValidationError(request, response, params.error.issues);
+      return;
+    }
+    if (!body.success) {
+      sendZodValidationError(request, response, body.error.issues);
+      return;
+    }
+    if (!request.auth) {
+      next(new Error("Authenticated request context is missing."));
+      return;
+    }
+    try {
+      sendSuccess(
+        request,
+        response,
+        200,
+        await service.confirmPickup(
+          request.auth.userId,
+          params.data.sellerOrderId,
           body.data.operationId,
         ),
       );

@@ -24,6 +24,11 @@ import { createListingApprovalRouter } from "./modules/listing-approval/index.js
 import { createVendorOrdersRouter } from "./modules/orders/index.js";
 import { createQualityChecksRouter } from "./modules/quality/index.js";
 import { createNotificationsRouter } from "./modules/notifications/index.js";
+import {
+  createConsumerDeliveryRouter,
+  createDispatcherRouter,
+  createRiderOperationsRouter,
+} from "./modules/delivery/index.js";
 
 export function createApp(): express.Express {
   const app = express();
@@ -60,6 +65,7 @@ export function createApp(): express.Express {
   app.use("/v1/carts", createCartRouter());
   app.use("/v1/checkouts", createCheckoutRouter());
   app.use("/v1/orders", createConsumerOrdersRouter());
+  app.use("/v1/orders/deliveries", createConsumerDeliveryRouter());
   app.use("/v1/notifications", createNotificationsRouter());
   app.use("/v1", createPaymentsRouter());
   app.use("/v1/operations", createPaymentOperationsRouter());
@@ -67,8 +73,10 @@ export function createApp(): express.Express {
   app.use("/v1/vendor/listings", createListingsRouter());
   app.use("/v1/vendor/orders", createVendorOrdersRouter());
   app.use("/v1/vendor/orders", createQualityChecksRouter());
+  app.use("/v1/rider", createRiderOperationsRouter());
   app.use("/v1/admin", createListingApprovalRouter());
   app.use("/v1/admin", createPaymentAdminRouter());
+  app.use("/v1/admin", createDispatcherRouter());
   app.use("/v1/admin", adminRouter);
 
   app.use(notFound);

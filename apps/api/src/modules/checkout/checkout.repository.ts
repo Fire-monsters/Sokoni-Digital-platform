@@ -5,6 +5,7 @@ import type {
   ConsumerOrderProgressStep,
   ConsumerQualityProof,
   VendorFulfilmentStatus,
+  DeliveryStatus,
 } from "@sokoni-digital/domain";
 
 import { supabase } from "../../infrastructure/supabase/client.js";
@@ -317,10 +318,96 @@ export class CheckoutRepository {
       : { data: [], error: null };
     if (imagesResult.error) throw new Error(imagesResult.error.message);
 
+    const { data: deliveryGroup, error: deliveryGroupError } = await this.db
+      .from("delivery_groups")
+      .select("id,address_label,address_summary")
+      .eq("checkout_id", checkoutId)
+      .maybeSingle();
+    if (deliveryGroupError) throw new Error(deliveryGroupError.message);
+    const { data: delivery, error: deliveryError } = deliveryGroup
+      ? await this.db
+          .from("deliveries")
+          .select("id,reference,status,version,updated_at,assigned_transporter_id")
+          .eq("delivery_group_id", deliveryGroup.id)
+          .maybeSingle()
+      : { data: null, error: null };
+    if (deliveryError) throw new Error(deliveryError.message);
+    const [riderResult, deliveryHistoryResult, riderLocationResult] = delivery
+      ? await Promise.all([
+          delivery.assigned_transporter_id
+            ? this.db
+                .from("transporter_profiles")
+                .select("display_name")
+                .eq("id", delivery.assigned_transporter_id)
+                .maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+          this.db
+            .from("delivery_status_history")
+            .select("to_status,created_at")
+            .eq("delivery_id", delivery.id)
+            .order("created_at"),
+          delivery.assigned_transporter_id &&
+          [
+            "assigned",
+            "arrived_at_market",
+            "picked_up",
+            "in_transit",
+            "arrived_at_customer",
+          ].includes(String(delivery.status))
+            ? this.db
+                .from("transporter_locations_current")
+                .select("latitude,longitude,accuracy_meters,captured_at,received_at")
+                .eq("transporter_id", delivery.assigned_transporter_id)
+                .maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+        ])
+      : [
+          { data: null, error: null },
+          { data: [], error: null },
+          { data: null, error: null },
+        ];
+    if (riderResult.error) throw new Error(riderResult.error.message);
+    if (deliveryHistoryResult.error) throw new Error(deliveryHistoryResult.error.message);
+    if (riderLocationResult.error) throw new Error(riderLocationResult.error.message);
+
     return {
       checkoutId: String(checkout.id),
       reference: String(checkout.reference),
       status: String(checkout.status),
+      delivery:
+        delivery && deliveryGroup
+          ? {
+              id: String(delivery.id),
+              reference: String(delivery.reference),
+              status: String(delivery.status) as DeliveryStatus,
+              version: Number(delivery.version),
+              riderName: riderResult.data?.display_name
+                ? String(riderResult.data.display_name)
+                : null,
+              riderLocation: riderLocationResult.data
+                ? {
+                    latitude: Number(riderLocationResult.data.latitude),
+                    longitude: Number(riderLocationResult.data.longitude),
+                    accuracyMeters: Number(riderLocationResult.data.accuracy_meters),
+                    capturedAt: String(riderLocationResult.data.captured_at),
+                    receivedAt: String(riderLocationResult.data.received_at),
+                    isFresh:
+                      Date.now() - Date.parse(String(riderLocationResult.data.received_at)) <=
+                      10 * 60 * 1000,
+                  }
+                : null,
+              destinationLabel: String(deliveryGroup.address_label),
+              destinationSummary: String(deliveryGroup.address_summary),
+              updatedAt: String(delivery.updated_at),
+              timeline: this.buildDeliveryTimeline(
+                String(delivery.status) as DeliveryStatus,
+                (deliveryHistoryResult.data ?? []).map((entry) => ({
+                  status: String(entry.to_status) as DeliveryStatus,
+                  at: String(entry.created_at),
+                })),
+              ),
+            }
+          : null,
       sellerOrders: (orders ?? []).map((order) => {
         const seller = order.sellers as unknown as {
           business_name: string;
@@ -444,5 +531,26 @@ export class CheckoutRepository {
     if (error.code === "23514" || error.code === "22023")
       return new CheckoutRejectedError(error.message);
     return new Error(error.message);
+  }
+
+  private buildDeliveryTimeline(
+    currentStatus: DeliveryStatus,
+    history: { status: DeliveryStatus; at: string }[],
+  ): NonNullable<ConsumerCheckoutProgress["delivery"]>["timeline"] {
+    const steps: { status: DeliveryStatus; label: string }[] = [
+      { status: "assigned", label: "Rider assigned" },
+      { status: "arrived_at_market", label: "Rider collecting orders" },
+      { status: "picked_up", label: "All seller handovers complete" },
+      { status: "in_transit", label: "On the way" },
+      { status: "arrived_at_customer", label: "Rider at your address" },
+      { status: "delivered", label: "Delivered" },
+    ];
+    const currentRank = steps.findIndex((step) => step.status === currentStatus);
+    return steps.map((step, index) => ({
+      ...step,
+      completed: currentRank >= index,
+      current: step.status === currentStatus,
+      at: history.find((entry) => entry.status === step.status)?.at ?? null,
+    }));
   }
 }

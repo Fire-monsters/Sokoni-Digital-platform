@@ -2,8 +2,16 @@ import {
   apiQueryKeys,
   fetchCheckoutProgress,
   fetchConsumerQualityProof,
+  fetchConsumerDeliveryEvidence,
+  rotateConsumerDeliveryPin,
 } from "@sokoni-digital/api-client";
-import type { ConsumerSellerOrderProgress } from "@sokoni-digital/domain";
+
+import type {
+  ConsumerSellerOrderProgress,
+  DeliveryEvidence,
+  DeliveryPin,
+  DeliveryStatus,
+} from "@sokoni-digital/domain";
 import { AppButton, AppScreen, AppText, colors, spacing } from "@sokoni-digital/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -13,6 +21,11 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { useConsumerAuth } from "@/features/auth/auth-provider";
 import { qualityProofImagePolicy } from "@/features/orders/quality-proof-policy";
+import { DeliveryMap } from "@/features/orders/delivery-map";
+import {
+  canGenerateDeliveryPin,
+  canViewDeliveryEvidence,
+} from "@/features/orders/delivery-handover-policy";
 import { publicApiOptions } from "@/lib/api";
 
 function SellerOrderCard({ order, token }: { order: ConsumerSellerOrderProgress; token: string }) {
@@ -113,6 +126,123 @@ function SellerOrderCard({ order, token }: { order: ConsumerSellerOrderProgress;
   );
 }
 
+function DeliveryHandover({
+  deliveryId,
+  status,
+  token,
+}: {
+  deliveryId: string;
+  status: DeliveryStatus;
+  token: string;
+}) {
+  const [pin, setPin] = useState<DeliveryPin>();
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinError, setPinError] = useState<string>();
+  const [evidenceRequested, setEvidenceRequested] = useState(false);
+  const evidence = useQuery<DeliveryEvidence>({
+    queryKey: apiQueryKeys.deliveryEvidence(deliveryId),
+    queryFn: () =>
+      fetchConsumerDeliveryEvidence({ ...publicApiOptions, accessToken: token }, deliveryId),
+    enabled: evidenceRequested && canViewDeliveryEvidence(status),
+    staleTime: 4 * 60 * 1000,
+    refetchOnReconnect: true,
+  });
+  const canGeneratePin = canGenerateDeliveryPin(status);
+
+  async function generatePin(): Promise<void> {
+    setPinLoading(true);
+    setPinError(undefined);
+    try {
+      setPin(
+        await rotateConsumerDeliveryPin({ ...publicApiOptions, accessToken: token }, deliveryId),
+      );
+    } catch (error) {
+      setPinError(error instanceof Error ? error.message : "PIN could not be generated.");
+    } finally {
+      setPinLoading(false);
+    }
+  }
+
+  return (
+    <View style={styles.handoverCard}>
+      {canGeneratePin ? (
+        <>
+          <AppText variant="heading3">Secure delivery PIN</AppText>
+          <AppText color="secondary" variant="caption">
+            Generate this only when you are ready to receive the order. Share it with the assigned
+            rider after checking your packages.
+          </AppText>
+          {pin ? (
+            <View
+              accessibilityLabel={`Delivery PIN ${pin.pin.split("").join(" ")}`}
+              style={styles.pinPanel}
+            >
+              <AppText variant="caption">ONE-TIME DELIVERY PIN</AppText>
+              <AppText style={styles.pinText} variant="heading1">
+                {pin.pin}
+              </AppText>
+              <AppText color="secondary" variant="caption">
+                Expires {new Date(pin.expiresAt).toLocaleString()}
+              </AppText>
+            </View>
+          ) : null}
+          <AppButton
+            label={pin ? "Generate a new PIN" : "Generate delivery PIN"}
+            loading={pinLoading}
+            onPress={() => void generatePin()}
+            variant={pin ? "secondary" : "primary"}
+          />
+          {pinError ? <AppText style={styles.error}>{pinError}</AppText> : null}
+        </>
+      ) : null}
+
+      {canViewDeliveryEvidence(status) ? (
+        <View style={styles.evidenceSection}>
+          <AppText variant="heading3">Delivery evidence</AppText>
+          <AppText color="secondary" variant="caption">
+            These private links expire automatically and are generated only when requested.
+          </AppText>
+          {!evidenceRequested ? (
+            <AppButton
+              label="View delivery evidence"
+              onPress={() => setEvidenceRequested(true)}
+              variant="secondary"
+            />
+          ) : null}
+          {evidence.isPending ? <ActivityIndicator color={colors.primary} /> : null}
+          {evidence.data ? (
+            <>
+              <AppText color="secondary" variant="caption">
+                Consumer confirmed{" "}
+                {evidence.data.consumerConfirmedAt
+                  ? new Date(evidence.data.consumerConfirmedAt).toLocaleString()
+                  : "—"}
+              </AppText>
+              {evidence.data.images.map((image) => (
+                <Image
+                  key={image.id}
+                  source={{ uri: image.thumbnailUrl }}
+                  contentFit="cover"
+                  cachePolicy="memory"
+                  transition={150}
+                  style={styles.proofImage}
+                />
+              ))}
+            </>
+          ) : null}
+          {evidence.isError ? (
+            <AppButton
+              label="Retry evidence"
+              onPress={() => void evidence.refetch()}
+              variant="secondary"
+            />
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export default function ConsumerOrderProgressScreen() {
   const { checkoutId = "" } = useLocalSearchParams<{ checkoutId: string }>();
   const { session } = useConsumerAuth();
@@ -144,6 +274,71 @@ export default function ConsumerOrderProgressScreen() {
     <AppScreen scroll contentStyle={styles.content}>
       <AppText variant="heading1">Order {progress.data.reference}</AppText>
       <AppText color="secondary">Each seller prepares and verifies their part separately.</AppText>
+      {progress.data.delivery ? (
+        <View style={styles.deliveryCard}>
+          <View style={styles.row}>
+            <View style={styles.flex}>
+              <AppText variant="caption">DELIVERY · {progress.data.delivery.reference}</AppText>
+              <AppText variant="heading2">
+                {progress.data.delivery.status === "arrived_at_customer"
+                  ? "Your rider has arrived"
+                  : progress.data.delivery.status.replaceAll("_", " ")}
+              </AppText>
+            </View>
+            {progress.data.delivery.riderName ? (
+              <AppText variant="label">{progress.data.delivery.riderName}</AppText>
+            ) : null}
+          </View>
+          <AppText color="secondary">
+            {progress.data.delivery.destinationLabel} · {progress.data.delivery.destinationSummary}
+          </AppText>
+          {progress.data.delivery.riderLocation ? (
+            <DeliveryMap
+              location={progress.data.delivery.riderLocation}
+              riderName={progress.data.delivery.riderName}
+            />
+          ) : progress.data.delivery.riderName && progress.data.delivery.status !== "delivered" ? (
+            <View style={styles.locationUnavailable}>
+              <AppText variant="label">Rider location unavailable</AppText>
+              <AppText color="secondary" variant="caption">
+                The delivery timeline will continue updating. Location is optional and never blocks
+                handover.
+              </AppText>
+            </View>
+          ) : null}
+          <View style={styles.timeline}>
+            {progress.data.delivery.timeline.map((step, index) => (
+              <View key={step.status} style={styles.timelineRow}>
+                <View style={styles.rail}>
+                  <View
+                    style={[
+                      styles.dot,
+                      step.completed ? styles.dotComplete : null,
+                      step.current ? styles.dotCurrent : null,
+                    ]}
+                  />
+                  {index < progress.data.delivery!.timeline.length - 1 ? (
+                    <View style={[styles.line, step.completed ? styles.lineComplete : null]} />
+                  ) : null}
+                </View>
+                <View style={styles.stepCopy}>
+                  <AppText color={step.completed ? "primary" : "secondary"}>{step.label}</AppText>
+                  {step.at ? (
+                    <AppText color="secondary" variant="caption">
+                      {new Date(step.at).toLocaleString()}
+                    </AppText>
+                  ) : null}
+                </View>
+              </View>
+            ))}
+          </View>
+          <DeliveryHandover
+            deliveryId={progress.data.delivery.id}
+            status={progress.data.delivery.status}
+            token={token}
+          />
+        </View>
+      ) : null}
       {progress.data.sellerOrders.map((order) => (
         <SellerOrderCard key={order.id} order={order} token={token} />
       ))}
@@ -161,6 +356,14 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 12,
     backgroundColor: colors.surface,
+  },
+  deliveryCard: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 16,
+    backgroundColor: colors.primaryLight,
   },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   flex: { flex: 1 },
@@ -186,5 +389,27 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 3,
     borderRadius: 12,
     backgroundColor: colors.border,
+  },
+  handoverCard: {
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  pinPanel: {
+    alignItems: "center",
+    gap: spacing.xs,
+    padding: spacing.lg,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+  },
+  pinText: { letterSpacing: 10 },
+  evidenceSection: { gap: spacing.sm },
+  error: { color: colors.error },
+  locationUnavailable: {
+    gap: spacing.xs,
+    padding: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
   },
 });

@@ -38,7 +38,22 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow E-Katale Rider to photograph private proof of delivery.",
+          "photosPermission": "Allow E-Katale Rider to select a proof-of-delivery photo."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow E-Katale Rider to use your location while you update availability and active delivery progress."
+        }
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

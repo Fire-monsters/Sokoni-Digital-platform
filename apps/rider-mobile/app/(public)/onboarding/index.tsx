@@ -1,5 +1,5 @@
-import { AppScreen, OnboardingSlide } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
+import { AppScreen, OnboardingSlide } from "@sokoni-digital/ui";
+import { router } from "expo-router";
 
 export default function RiderOnboardingScreen() {
   return (
@@ -12,7 +12,7 @@ export default function RiderOnboardingScreen() {
         totalSteps={2}
         primaryActionLabel="Next"
         onPrimaryAction={() => {
-          router.push('/(public)/onboarding/benefits');
+          router.push("/(public)/onboarding/benefits");
         }}
       />
     </AppScreen>

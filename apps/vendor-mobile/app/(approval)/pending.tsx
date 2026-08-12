@@ -1,6 +1,6 @@
-import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { AppButton, AppScreen, AppText, InfoCard, colors, spacing } from "@sokoni-digital/ui";
+import { router } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
 export default function VendorPendingApprovalScreen() {
   return (
@@ -36,7 +36,7 @@ export default function VendorPendingApprovalScreen() {
         <AppButton
           label="Go to sign in"
           onPress={() => {
-            router.replace('../(public)/sign-in');
+            router.replace("../(public)/sign-in");
           }}
         />
       </View>
@@ -50,9 +50,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   statusBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     minHeight: 28,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 8,
     backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,

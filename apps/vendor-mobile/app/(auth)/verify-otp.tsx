@@ -1,12 +1,12 @@
-import { parseOtpCode } from '@sokoni-digital/validation';
-import { AppButton, AppScreen, AppText, OtpInput, colors, spacing } from '@sokoni-digital/ui';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { parseOtpCode } from "@sokoni-digital/validation";
+import { AppButton, AppScreen, AppText, OtpInput, colors, spacing } from "@sokoni-digital/ui";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
 
 export default function VendorOtpScreen() {
   const { phoneNumber } = useLocalSearchParams<{ phoneNumber?: string }>();
-  const [otpCode, setOtpCode] = useState('');
+  const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | undefined>();
 
   function verifyOtp() {
@@ -19,9 +19,9 @@ export default function VendorOtpScreen() {
 
     setError(undefined);
     router.push({
-      pathname: './create-password',
+      pathname: "./create-password",
       params: {
-        phoneNumber: phoneNumber ?? '',
+        phoneNumber: phoneNumber ?? "",
       },
     });
   }
@@ -32,7 +32,7 @@ export default function VendorOtpScreen() {
         <View style={styles.copy}>
           <AppText variant="heading1">Verify your phone</AppText>
           <AppText color="secondary" variant="bodyLarge">
-            Enter the 6-digit code sent to {phoneNumber ?? 'your phone number'}.
+            Enter the 6-digit code sent to {phoneNumber ?? "your phone number"}.
           </AppText>
         </View>
 
@@ -49,7 +49,8 @@ export default function VendorOtpScreen() {
           />
           <View style={styles.notice}>
             <AppText color="secondary" variant="caption">
-              Codes expire after a short time. Resend cooldown and Supabase OTP verification will connect through the backend slice.
+              Codes expire after a short time. Resend cooldown and Supabase OTP verification will
+              connect through the backend slice.
             </AppText>
           </View>
         </View>
@@ -60,7 +61,10 @@ export default function VendorOtpScreen() {
         <AppButton
           label="Resend code"
           onPress={() => {
-            Alert.alert('Resend code', 'OTP resend cooldown will be connected with the backend OTP service.');
+            Alert.alert(
+              "Resend code",
+              "OTP resend cooldown will be connected with the backend OTP service.",
+            );
           }}
           variant="secondary"
         />

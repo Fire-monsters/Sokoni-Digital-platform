@@ -1,5 +1,5 @@
-import { AppScreen, OnboardingSlide } from '@sokoni-digital/ui';
-import { router } from 'expo-router';
+import { AppScreen, OnboardingSlide } from "@sokoni-digital/ui";
+import { router } from "expo-router";
 
 export default function RiderBenefitsScreen() {
   return (
@@ -13,10 +13,10 @@ export default function RiderBenefitsScreen() {
         primaryActionLabel="Register as a rider"
         secondaryActionLabel="Sign in"
         onPrimaryAction={() => {
-          router.push('/(auth)/phone');
+          router.push("/(auth)/phone");
         }}
         onSecondaryAction={() => {
-          router.push('/(public)/sign-in');
+          router.push("/(public)/sign-in");
         }}
       />
     </AppScreen>
