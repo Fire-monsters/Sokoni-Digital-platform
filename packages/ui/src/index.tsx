@@ -524,6 +524,198 @@ interface InfoCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
+interface AppTopBarProps {
+  title: string;
+  backIcon: ReactNode;
+  onBack: () => void;
+  actionIcon?: ReactNode;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+export function AppTopBar({
+  title,
+  backIcon,
+  onBack,
+  actionIcon,
+  actionLabel = "Open settings",
+  onAction,
+}: AppTopBarProps) {
+  return (
+    <View style={styles.topBar}>
+      <Pressable
+        accessibilityLabel="Go back"
+        accessibilityRole="button"
+        hitSlop={12}
+        onPress={onBack}
+        style={({ pressed }) => [styles.iconButton, pressed ? styles.buttonPressed : null]}
+      >
+        {backIcon}
+      </Pressable>
+      <AppText align="center" numberOfLines={1} style={styles.topBarTitle} variant="heading3">
+        {title}
+      </AppText>
+      {actionIcon && onAction ? (
+        <Pressable
+          accessibilityLabel={actionLabel}
+          accessibilityRole="button"
+          hitSlop={12}
+          onPress={onAction}
+          style={({ pressed }) => [styles.iconButton, pressed ? styles.buttonPressed : null]}
+        >
+          {actionIcon}
+        </Pressable>
+      ) : (
+        <View style={styles.iconButton} />
+      )}
+    </View>
+  );
+}
+
+interface ProfileSummaryCardProps {
+  name: string;
+  roleLabel: string;
+  contact?: string;
+  statusLabel?: string;
+}
+
+export function ProfileSummaryCard({
+  name,
+  roleLabel,
+  contact,
+  statusLabel,
+}: ProfileSummaryCardProps) {
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => /[A-Za-z0-9]/.exec(part)?.[0]?.toUpperCase())
+      .filter(Boolean)
+      .join("") || "EK";
+
+  return (
+    <View style={styles.profileSummary}>
+      <View accessibilityLabel={`${name} profile picture placeholder`} style={styles.avatar}>
+        <AppText color="inverse" variant="heading2">
+          {initials}
+        </AppText>
+      </View>
+      <View style={styles.profileSummaryCopy}>
+        <AppText variant="heading2">{name}</AppText>
+        {contact ? <AppText color="secondary">{contact}</AppText> : null}
+        <View style={styles.profilePills}>
+          <View style={styles.rolePill}>
+            <AppText style={styles.rolePillText} variant="caption">
+              {roleLabel}
+            </AppText>
+          </View>
+          {statusLabel ? (
+            <View style={styles.statusPill}>
+              <AppText variant="caption">{statusLabel}</AppText>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export interface ProfileDetail {
+  label: string;
+  value: string;
+  hint?: string;
+}
+
+export function ProfileDetailSection({
+  title,
+  details,
+}: {
+  title: string;
+  details: readonly ProfileDetail[];
+}) {
+  return (
+    <View style={styles.detailSection}>
+      <AppText variant="heading3">{title}</AppText>
+      <View style={styles.detailCard}>
+        {details.map((detail, index) => (
+          <View
+            key={`${detail.label}-${String(index)}`}
+            style={[styles.detailRow, index > 0 ? styles.detailRowBorder : null]}
+          >
+            <View style={styles.detailCopy}>
+              <AppText color="secondary" variant="caption">
+                {detail.label}
+              </AppText>
+              <AppText variant="label">{detail.value}</AppText>
+              {detail.hint ? (
+                <AppText color="secondary" variant="caption">
+                  {detail.hint}
+                </AppText>
+              ) : null}
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+interface SettingsRowProps {
+  title: string;
+  description: string;
+  value?: string;
+  onPress?: () => void;
+  trailingIcon?: ReactNode;
+}
+
+export function SettingsRow({
+  title,
+  description,
+  value,
+  onPress,
+  trailingIcon,
+}: SettingsRowProps) {
+  const content = (
+    <>
+      <View style={styles.settingsRowCopy}>
+        <AppText variant="label">{title}</AppText>
+        <AppText color="secondary" variant="caption">
+          {description}
+        </AppText>
+      </View>
+      {value ? (
+        <AppText color="secondary" variant="caption">
+          {value}
+        </AppText>
+      ) : null}
+      {trailingIcon}
+    </>
+  );
+
+  return onPress ? (
+    <Pressable
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.settingsRow, pressed ? styles.settingsRowPressed : null]}
+    >
+      {content}
+    </Pressable>
+  ) : (
+    <View style={styles.settingsRow}>{content}</View>
+  );
+}
+
+export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <View style={styles.detailSection}>
+      <AppText variant="heading3">{title}</AppText>
+      <View style={styles.settingsCard}>{children}</View>
+    </View>
+  );
+}
+
 export function InfoCard({ title, description, aside, style }: InfoCardProps) {
   return (
     <View style={[styles.infoCard, style]}>
@@ -581,6 +773,115 @@ const styles = StyleSheet.create({
   screenContent: {
     flex: 1,
     padding: spacing.lg,
+  },
+  topBar: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  topBarTitle: {
+    flex: 1,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 22,
+  },
+  profileSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 36,
+    backgroundColor: colors.primary,
+  },
+  profileSummaryCopy: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  profilePills: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  rolePill: {
+    borderRadius: 999,
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  rolePillText: {
+    color: colors.primaryDark,
+    fontWeight: "600",
+  },
+  statusPill: {
+    borderRadius: 999,
+    backgroundColor: colors.surfaceMuted,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  detailSection: {
+    gap: spacing.sm,
+  },
+  detailCard: {
+    overflow: "hidden",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 68,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  detailRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  detailCopy: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  settingsCard: {
+    overflow: "hidden",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  settingsRow: {
+    minHeight: 74,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  settingsRowPressed: {
+    backgroundColor: colors.primaryLight,
+  },
+  settingsRowCopy: {
+    flex: 1,
+    gap: spacing.xxs,
   },
   scrollContent: {
     flexGrow: 1,

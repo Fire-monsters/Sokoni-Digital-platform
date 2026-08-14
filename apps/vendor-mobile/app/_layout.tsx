@@ -36,6 +36,7 @@ export default function RootLayout() {
           <Stack.Screen name="listings/new" options={{ title: "New listing" }} />
           <Stack.Screen name="listings/[listingId]" options={{ title: "Listing" }} />
           <Stack.Screen name="orders/[sellerOrderId]" options={{ title: "Seller order" }} />
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
         </Stack>
         <StatusBar style="auto" />

@@ -41,6 +41,7 @@ export default function RootLayout() {
             <Stack.Screen name="payments/cancelled" options={{ title: "Payment" }} />
             <Stack.Screen name="payments/error" options={{ title: "Payment" }} />
             <Stack.Screen name="orders/[checkoutId]" options={{ title: "Order progress" }} />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
           </Stack>
           <StatusBar style="auto" />
