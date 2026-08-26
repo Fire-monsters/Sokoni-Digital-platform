@@ -48,38 +48,39 @@ export class ExpoPushAdapter implements PushAdapter {
   }
 }
 
-export class TwilioSmsAdapter implements SmsAdapter {
+export class YoolaSmsAdapter implements SmsAdapter {
   constructor(
-    private readonly accountSid?: string,
-    private readonly authToken?: string,
-    private readonly messagingServiceSid?: string,
+    private readonly apiKey?: string,
     private readonly fetcher: typeof fetch = fetch,
   ) {}
 
   async send(destination: string, message: NotificationMessage): Promise<DeliveryReceipt> {
-    if (!this.accountSid || !this.authToken || !this.messagingServiceSid) {
-      throw new Error("Twilio notification SMS is not configured.");
+    if (!this.apiKey) {
+      throw new Error("Yoola notification SMS is not configured.");
     }
-    const body = new URLSearchParams({
-      To: destination,
-      MessagingServiceSid: this.messagingServiceSid,
-      Body: message.body,
+
+    const response = await this.fetcher("https://yoolasms.com/api/v1/send_sms", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        api_key: this.apiKey,
+        phone: destination.replace(/^\+/, ""),
+        message: message.body,
+      }),
     });
-    const response = await this.fetcher(
-      `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(this.accountSid)}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          authorization: `Basic ${Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64")}`,
-          "content-type": "application/x-www-form-urlencoded",
-        },
-        body,
-      },
-    );
-    const payload = (await response.json()) as { sid?: string; message?: string };
-    if (!response.ok || !payload.sid) {
-      throw new Error(payload.message ?? `Twilio SMS failed with HTTP ${String(response.status)}.`);
+    const payload = (await response.json()) as {
+      status?: string;
+      message_id?: string;
+      message?: string;
+      error?: string;
+    };
+    if (!response.ok || payload.status !== "success" || !payload.message_id) {
+      throw new Error(
+        payload.error ??
+          payload.message ??
+          `Yoola SMS failed with HTTP ${String(response.status)}.`,
+      );
     }
-    return { providerReference: payload.sid };
+    return { providerReference: payload.message_id };
   }
 }

@@ -36,9 +36,7 @@ const serverEnvSchema = z
       .min(1000)
       .max(300000)
       .default(15000),
-    TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
-    TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
-    TWILIO_MESSAGING_SERVICE_SID: z.string().min(1).optional(),
+    YOOLA_SMS_API_KEY: z.string().min(1).optional(),
   })
   .superRefine((environment, context) => {
     if (environment.NODE_ENV === "production" && environment.PAYMENTS_ENV === "fake") {

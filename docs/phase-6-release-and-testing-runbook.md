@@ -50,7 +50,7 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 ```
 
-Never commit `.env`, Supabase secret/service-role keys, Twilio credentials,
+Never commit `.env`, Supabase secret/service-role keys, Yoola credentials,
 database passwords, or Expo access tokens.
 
 ## 3. Credential boundaries
@@ -62,7 +62,7 @@ database passwords, or Expo access tokens.
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Mobile build environment         | Yes                                                            |
 | `VITE_API_URL`                         | Operations web build environment | Yes                                                            |
 | `SUPABASE_SECRET_KEY`                  | API server only                  | No                                                             |
-| `TWILIO_AUTH_TOKEN`                    | API server only                  | No                                                             |
+| `YOOLA_SMS_API_KEY`                    | API server only                  | No                                                             |
 | `EXPO_ACCESS_TOKEN`                    | API server only                  | No                                                             |
 | Google native Maps keys                | Native build configuration       | Embedded in app; protect with application and API restrictions |
 
@@ -308,9 +308,7 @@ NOTIFICATION_RETRY_BASE_SECONDS=30
 NOTIFICATION_POLL_INTERVAL_MS=15000
 EXPO_ACCESS_TOKEN=YOUR_EXPO_ACCESS_TOKEN
 
-TWILIO_ACCOUNT_SID=AC...
-TWILIO_AUTH_TOKEN=...
-TWILIO_MESSAGING_SERVICE_SID=MG...
+YOOLA_SMS_API_KEY=YOUR_YOOLA_SMS_API_KEY
 ```
 
 Important behavior in this repository:
@@ -322,8 +320,7 @@ Important behavior in this repository:
 - phone numbers must be valid E.164 numbers, such as `+256...`;
 - `EXPO_ACCESS_TOKEN` is required only when enhanced Expo push security is
   enabled, but enabling it is recommended for production;
-- the `SUPABASE_AUTH_SMS_TWILIO_*` variables are for Supabase Auth OTP and are
-  separate from the API notification worker's `TWILIO_*` variables.
+- `YOOLA_SMS_API_KEY` is used by the API notification worker for SMS fallback.
 
 The API's `SUPABASE_SECRET_KEY` is also the credential used to create signed
 Storage upload and evidence URLs. No additional Storage secret is required.

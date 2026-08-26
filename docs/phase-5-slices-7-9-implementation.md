@@ -40,15 +40,13 @@ Phase 5 now exposes seller-by-seller progress to consumers, delivers durable not
 The API accepts these optional notification variables:
 
 - `EXPO_ACCESS_TOKEN`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_MESSAGING_SERVICE_SID`
+- `YOOLA_SMS_API_KEY`
 - `NOTIFICATION_DELIVERY_BATCH_SIZE` (default `50`)
 - `NOTIFICATION_MAX_ATTEMPTS` (default `5`)
 - `NOTIFICATION_RETRY_BASE_SECONDS` (default `30`)
 - `NOTIFICATION_POLL_INTERVAL_MS` (default `15000`)
 
-Without a registered Expo token, push fails into the audited retry path. For critical events, configured Twilio credentials and an Auth phone number allow the SMS fallback to deliver.
+Without a registered Expo token, push fails into the audited retry path. For critical events, a configured Yoola API key and an Auth phone number allow the SMS fallback to deliver.
 
 ## Verification
 
