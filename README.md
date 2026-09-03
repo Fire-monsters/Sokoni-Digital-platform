@@ -33,8 +33,8 @@ apps/
   operations-web/      Operations dashboard
 packages/              Shared domain, UI, auth, validation, and API packages
 tooling/               Shared TypeScript and ESLint configuration
-supabase/               Local Supabase configuration, migrations, and DB tests
-docs/                   Implementation notes, audits, and release runbooks
+supabase/              Local Supabase configuration, migrations, and DB tests
+docs/                  Implementation notes, audits, and release runbooks
 ```
 
 ## Prerequisites

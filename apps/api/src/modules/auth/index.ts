@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 
+export { createAuthHookRouter } from "./send-sms-hook.routes.js";
+
 const ugandanPhoneNumberSchema = z
   .string()
   .trim()

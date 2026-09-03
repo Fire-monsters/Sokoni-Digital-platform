@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 import { authenticate } from "../../middleware/authenticate.js";
-import { authorize } from "../../middleware/authorize.js";
+import { requireRoleOrPermission } from "../../middleware/require-permission.js";
 import { createPaymentsService } from "./payments.composition.js";
 import { marketPickupPaymentSchema, paymentCheckoutParamsSchema } from "./payments.schemas.js";
 import type { PaymentsService } from "./payments.service.js";
@@ -11,7 +11,7 @@ export function createPaymentOperationsRouter(
   service: PaymentsService = createPaymentsService(),
 ): Router {
   const router = Router();
-  router.use(authenticate, authorize(["admin", "agent", "vendor"]));
+  router.use(authenticate, requireRoleOrPermission(["vendor"], "payments.reconcile"));
 
   router.post("/checkouts/:checkoutId/market-payment", async (request, response, next) => {
     const params = paymentCheckoutParamsSchema.safeParse(request.params);

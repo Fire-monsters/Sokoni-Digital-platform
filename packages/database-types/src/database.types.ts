@@ -2734,6 +2734,24 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: { created_at: string; description: string; key: string }
+        Insert: { created_at?: string; description: string; key: string }
+        Update: { created_at?: string; description?: string; key?: string }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: { created_at: string; permission: string; role: Database["public"]["Enums"]["staff_role"] }
+        Insert: { created_at?: string; permission: string; role: Database["public"]["Enums"]["staff_role"] }
+        Update: { created_at?: string; permission?: string; role?: Database["public"]["Enums"]["staff_role"] }
+        Relationships: [{ foreignKeyName: "role_permissions_permission_fkey"; columns: ["permission"]; isOneToOne: false; referencedRelation: "permissions"; referencedColumns: ["key"] }]
+      }
+      staff_members: {
+        Row: { created_at: string; display_name: string; role: Database["public"]["Enums"]["staff_role"]; status: Database["public"]["Enums"]["staff_status"]; updated_at: string; user_id: string }
+        Insert: { created_at?: string; display_name: string; role: Database["public"]["Enums"]["staff_role"]; status?: Database["public"]["Enums"]["staff_status"]; updated_at?: string; user_id: string }
+        Update: { created_at?: string; display_name?: string; role?: Database["public"]["Enums"]["staff_role"]; status?: Database["public"]["Enums"]["staff_status"]; updated_at?: string; user_id?: string }
+        Relationships: []
+      }
       seller_accounts: {
         Row: {
           created_at: string
@@ -4202,6 +4220,8 @@ export type Database = {
         | "approved"
         | "rejected"
         | "suspended"
+      staff_role: "admin" | "agent" | "dispatcher" | "finance" | "viewer"
+      staff_status: "active" | "suspended" | "disabled"
       transporter_verification_status:
         | "pending"
         | "approved"
@@ -4481,6 +4501,8 @@ export const Constants = {
         "rejected",
         "suspended",
       ],
+      staff_role: ["admin", "agent", "dispatcher", "finance", "viewer"],
+      staff_status: ["active", "suspended", "disabled"],
       transporter_verification_status: [
         "pending",
         "approved",
@@ -4502,4 +4524,3 @@ export const Constants = {
     },
   },
 } as const
-

@@ -40,6 +40,7 @@ export function DeliveryBoard({
   onBusy,
   onMessage,
   onReload,
+  canManage,
 }: {
   token: string;
   board: DispatcherDeliveryBoard;
@@ -48,6 +49,7 @@ export function DeliveryBoard({
   onBusy: (busy: boolean) => void;
   onMessage: (message: string) => void;
   onReload: () => Promise<void>;
+  canManage: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string>();
   const [riderId, setRiderId] = useState("");
@@ -172,7 +174,7 @@ export function DeliveryBoard({
         ))}
       </div>
 
-      {selected ? (
+      {selected && canManage ? (
         <div className="dispatcher-panel">
           <div className="dispatcher-summary">
             <div>

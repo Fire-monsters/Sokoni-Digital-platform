@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { sendError } from "../http/responses.js";
 import { supabase } from "../infrastructure/supabase/client.js";
+import type { StaffAuthorization } from "../modules/staff/staff-authorization.repository.js";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -10,6 +11,7 @@ declare global {
       auth?: {
         userId: string;
         roles: string[];
+        staff?: StaffAuthorization;
       };
     }
   }

@@ -49,6 +49,7 @@ import type {
   DeliveryIssueResolutionCode,
   DispatcherDeliveryAction,
   DispatcherDeliveryActionResult,
+  StaffSession,
 } from "@sokoni-digital/domain";
 
 export const apiQueryKeys = {
@@ -178,6 +179,10 @@ export function fetchCatalogueListing(
 
 export function fetchMe(options: ApiClientOptions): Promise<AuthenticatedProfile> {
   return requestApi<AuthenticatedProfile>(options, "/v1/me");
+}
+
+export function fetchStaffSession(options: ApiClientOptions): Promise<StaffSession> {
+  return requestApi<StaffSession>(options, "/v1/admin/session");
 }
 
 export function fetchOnboarding(options: ApiClientOptions): Promise<OnboardingSnapshot> {

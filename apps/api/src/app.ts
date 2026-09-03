@@ -5,11 +5,11 @@ import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 
 import { errorHandler } from "./middleware/error-handler.js";
-import { capturePaymentCallbackRawBody } from "./middleware/capture-raw-body.js";
+import { captureSignedWebhookRawBody } from "./middleware/capture-raw-body.js";
 import { notFound } from "./middleware/not-found.js";
 import { requestContext } from "./middleware/request-context.js";
 import { adminRouter } from "./modules/admin/index.js";
-import { authRouter } from "./modules/auth/index.js";
+import { authRouter, createAuthHookRouter } from "./modules/auth/index.js";
 import { createCatalogueRouter } from "./modules/catalogue/index.js";
 import { createCartRouter } from "./modules/carts/index.js";
 import { createCheckoutRouter, createConsumerOrdersRouter } from "./modules/checkout/index.js";
@@ -45,7 +45,7 @@ export function createApp(): express.Express {
   );
   app.use(helmet());
   app.use(cors());
-  app.use(express.json({ limit: "250kb", verify: capturePaymentCallbackRawBody }));
+  app.use(express.json({ limit: "250kb", verify: captureSignedWebhookRawBody }));
 
   app.get("/health", (request, response) => {
     response.status(200).json({
@@ -60,6 +60,7 @@ export function createApp(): express.Express {
     });
   });
 
+  app.use("/v1/auth", createAuthHookRouter());
   app.use("/v1/auth", authRouter);
   app.use("/v1/catalogue", createCatalogueRouter());
   app.use("/v1/carts", createCartRouter());

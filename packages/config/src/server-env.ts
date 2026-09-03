@@ -14,6 +14,7 @@ const serverEnvSchema = z
     LOG_LEVEL: z
       .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
       .default("info"),
+
     CHECKOUT_RESERVATION_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
     PAYMENTS_ENV: z.enum(["fake", "sandbox", "production"]).default("fake"),
     PAYMENT_CALLBACK_BASE_URL: z.url().default("http://localhost:4000/v1/payments"),
@@ -37,6 +38,10 @@ const serverEnvSchema = z
       .max(300000)
       .default(15000),
     YOOLA_SMS_API_KEY: z.string().min(1).optional(),
+    SUPABASE_AUTH_SEND_SMS_HOOK_SECRETS: z
+      .string()
+      .regex(/^v1,whsec_[A-Za-z0-9+/]+={0,2}$/, "Use the v1,whsec_<base64-secret> format.")
+      .optional(),
   })
   .superRefine((environment, context) => {
     if (environment.NODE_ENV === "production" && environment.PAYMENTS_ENV === "fake") {

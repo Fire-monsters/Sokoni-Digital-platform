@@ -13,8 +13,10 @@
   "dependencies": {
     "@sokoni-digital/api-client": "workspace:*",
     "@sokoni-digital/domain": "workspace:*",
+    "@supabase/supabase-js": "^2.112.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

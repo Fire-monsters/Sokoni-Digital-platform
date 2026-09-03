@@ -231,7 +231,7 @@ export class DeliveryProofService {
 
   async getEvidence(
     userId: string,
-    roles: readonly string[],
+    access: "consumer" | "staff",
     deliveryId: string,
   ): Promise<DeliveryEvidence> {
     const { data: delivery, error: deliveryError } = await this.db
@@ -242,7 +242,7 @@ export class DeliveryProofService {
     if (deliveryError) throw new Error(deliveryError.message);
     if (!delivery)
       throw mapRiderOperationsDatabaseError({ code: "P0002", message: "delivery not found" });
-    if (!roles.some((role) => role === "admin" || role === "agent")) {
+    if (access === "consumer") {
       const { data: group, error: groupError } = await this.db
         .from("delivery_groups")
         .select("consumer_id")

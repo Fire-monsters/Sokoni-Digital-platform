@@ -1,6 +1,13 @@
 export type { ApiErrorCode, ApiErrorDetail, ApiErrorResponse } from "./api-error.js";
 export type { ApiSuccessResponse } from "./api-success.js";
 export {
+  staffPermissions,
+  type StaffPermission,
+  type StaffRole,
+  type StaffSession,
+  type StaffStatus,
+} from "./staff-session.js";
+export {
   listingAvailabilities,
   listingStatuses,
   type CatalogueCategory,

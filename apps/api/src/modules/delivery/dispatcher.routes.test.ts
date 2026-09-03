@@ -18,6 +18,12 @@ vi.mock("../../middleware/authenticate.js", () => ({
   },
 }));
 vi.mock("../../infrastructure/supabase/client.js", () => ({ supabase: {} }));
+vi.mock("../../middleware/require-permission.js", () => ({
+  requirePermission:
+    () => (_request: express.Request, _response: express.Response, next: express.NextFunction) => {
+      next();
+    },
+}));
 
 describe("dispatcher routes", () => {
   const performAction = vi.fn();

@@ -28,6 +28,11 @@ enable_signup = true
 enable_signup = true
 enable_confirmations = true
 
+[auth.hook.send_sms]
+enabled = true
+uri = "http://host.docker.internal:4000/v1/auth/hooks/send-sms"
+secrets = "env(SUPABASE_AUTH_SEND_SMS_HOOK_SECRETS)"
+
 [storage]
 enabled = true
 file_size_limit = "50MiB"

@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:ci": "vitest run --coverage --passWithNoTests",
+    "staff:provision": "tsx src/scripts/provision-staff.ts",
+    "staff:provision:test": "tsx src/scripts/provision-test-staff.ts",
     "clean": "rimraf dist coverage"
   },
   "keywords": [],

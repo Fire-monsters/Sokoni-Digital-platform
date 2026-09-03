@@ -44,7 +44,7 @@ export function createConsumerDeliveryRouter(service = new DeliveryProofService(
         request,
         response,
         200,
-        await service.getEvidence(request.auth.userId, request.auth.roles, params.data.deliveryId),
+        await service.getEvidence(request.auth.userId, "consumer", params.data.deliveryId),
       );
     } catch (error) {
       next(error);
