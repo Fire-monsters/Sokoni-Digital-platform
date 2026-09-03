@@ -5,6 +5,7 @@ import { sendError, sendSuccess, sendZodValidationError } from "../../http/respo
 import { supabase } from "../../infrastructure/supabase/client.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requireActiveStaff, requirePermission } from "../../middleware/require-permission.js";
+import { createAdminCollectionQuerySchema, createAdminPagination } from "./admin-query.js";
 
 const applicationStatusSchema = z.enum([
   "submitted",
@@ -15,12 +16,14 @@ const applicationStatusSchema = z.enum([
   "suspended",
 ]);
 
-const applicationListQuerySchema = z.object({
-  status: applicationStatusSchema.optional(),
-  role: z.enum(["vendor", "rider"]).optional(),
-  market: z.string().min(1).optional(),
-  submittedFrom: z.iso.datetime().optional(),
-  submittedTo: z.iso.datetime().optional(),
+const applicationListQuerySchema = createAdminCollectionQuerySchema({
+  sortFields: ["submittedAt", "status"] as const,
+  defaultSortBy: "submittedAt",
+  filters: {
+    status: applicationStatusSchema.optional(),
+    type: z.enum(["vendor", "rider"]).optional(),
+    marketId: z.uuid().optional(),
+  },
 });
 
 const applicationParamsSchema = z.object({
@@ -85,9 +88,8 @@ adminRouter.get("/applications", requirePermission("applications.read"), (reques
   }
 
   sendSuccess(request, response, 200, {
-    filters: result.data,
-    applications: [],
-    nextCursor: null,
+    data: [],
+    pagination: createAdminPagination(result.data.page, result.data.pageSize, 0),
   });
 });
 

@@ -2,7 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { staffSignInError } from "../auth/auth-errors";
+
 type LocationState = { from?: string; reason?: string; message?: string };
+
 export function LoginPage() {
   const { state, signIn } = useAuth();
   const location = useLocation();
@@ -12,6 +14,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
   if (state.status === "authenticated")
     return <Navigate replace to={routeState?.from ?? "/dashboard/overview"} />;
   async function submit(event: FormEvent) {
