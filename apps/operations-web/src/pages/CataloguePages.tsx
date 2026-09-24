@@ -3,8 +3,8 @@ import {
   requestAdminListingChanges,
   reviewAdminPrice,
 } from "@sokoni-digital/api-client";
-import type { AdminListingReview } from "@sokoni-digital/domain";
-import { useEffect, useState } from "react";
+import type { AdminListingReview, AdminPriceReview } from "@sokoni-digital/domain";
+import { useEffect, useRef, useState } from "react";
 import { useOperations } from "../operations/OperationsContext";
 import { useAuth } from "../auth/AuthContext";
 const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
@@ -15,6 +15,7 @@ export function CatalogueListingsPage() {
   const { can } = useAuth();
   const [selected, setSelected] = useState<AdminListingReview>();
   const [note, setNote] = useState("");
+  const pendingOperations = useRef(new Map<string, string>());
   const listing =
     operations.listings.find((item) => item.id === selected?.id) ?? operations.listings[0];
   useEffect(() => {
@@ -22,21 +23,29 @@ export function CatalogueListingsPage() {
   }, [token, loadCatalogue]);
   async function decide(decision: "approve" | "changes") {
     if (!listing) return;
+    const operationKey = `${listing.id}:${decision}`;
+    const operationId = pendingOperations.current.get(operationKey) ?? crypto.randomUUID();
+    pendingOperations.current.set(operationKey, operationId);
     operations.setLoading(true);
     try {
       if (decision === "approve")
         await approveAdminListing(
           { baseUrl, accessToken: operations.token },
           listing.id,
+          listing.version,
+          operationId,
           note || undefined,
         );
       else
         await requestAdminListingChanges(
           { baseUrl, accessToken: operations.token },
           listing.id,
+          listing.version,
+          operationId,
           note,
         );
       setNote("");
+      pendingOperations.current.delete(operationKey);
       operations.setMessage(decision === "approve" ? "Listing approved." : "Changes requested.");
       await operations.loadCatalogue();
     } catch (error) {
@@ -103,7 +112,14 @@ export function CatalogueListingsPage() {
                 <dd>{listing.availability.replace("_", " ")}</dd>
                 <dt>Description</dt>
                 <dd>{listing.description || "No description"}</dd>
+                <dt>Current approved price</dt>
+                <dd>
+                  {listing.approvedPriceUgx
+                    ? `UGX ${listing.approvedPriceUgx.toLocaleString()}`
+                    : "Not yet approved"}
+                </dd>
               </dl>
+              <ReviewHistory listing={listing} />
               {can("catalogue.review") ? (
                 <>
                   <textarea
@@ -140,24 +156,36 @@ export function CatalogueListingsPage() {
     </>
   );
 }
+
 export function PriceChangesPage() {
   const operations = useOperations();
   const { loadCatalogue, token } = operations;
   const { can } = useAuth();
+  const [selected, setSelected] = useState<AdminPriceReview>();
   const [note, setNote] = useState("");
+  const pendingOperations = useRef(new Map<string, string>());
+  const price =
+    operations.prices.find((item) => item.requestId === selected?.requestId) ??
+    operations.prices[0];
   useEffect(() => {
     if (token) void loadCatalogue();
   }, [token, loadCatalogue]);
+
   async function decide(id: string, decision: "approve" | "reject") {
+    const operationKey = `${id}:${decision}`;
+    const operationId = pendingOperations.current.get(operationKey) ?? crypto.randomUUID();
+    pendingOperations.current.set(operationKey, operationId);
     operations.setLoading(true);
     try {
       await reviewAdminPrice(
         { baseUrl, accessToken: operations.token },
         id,
         decision,
+        operationId,
         note || undefined,
       );
       setNote("");
+      pendingOperations.current.delete(operationKey);
       operations.setMessage(`Price request ${decision === "approve" ? "approved" : "rejected"}.`);
       await operations.loadCatalogue();
     } catch (error) {
@@ -173,52 +201,135 @@ export function PriceChangesPage() {
         title="Price changes"
         description="Review proposed pricing updates from vendors."
       />
-      <section className="price-queue">
-        {can("catalogue.review") ? (
-          <textarea
-            aria-label="Review note"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Optional review note"
-          />
-        ) : (
-          <p className="read-only-notice">You have read-only access to price changes.</p>
-        )}
-        {operations.prices.map((price) => (
-          <div className="price-request" key={price.requestId}>
-            <div>
-              <strong>
-                {price.productName} · {price.vendorName}
-              </strong>
-              <p>
-                UGX {price.currentPriceUgx?.toLocaleString() ?? "—"} → UGX{" "}
-                {price.proposedPriceUgx.toLocaleString()}
-              </p>
-            </div>
-            {can("catalogue.review") ? (
-              <div className="actions">
-                <button
-                  className="approve"
-                  disabled={operations.loading}
-                  onClick={() => void decide(price.requestId, "approve")}
-                >
-                  Approve
-                </button>
-                <button
-                  disabled={operations.loading}
-                  onClick={() => void decide(price.requestId, "reject")}
-                >
-                  Reject
-                </button>
+      <div className="review-layout">
+        <aside>
+          <h2>Pending ({operations.prices.length})</h2>
+          {operations.prices.map((item) => (
+            <button
+              className={`queue-item ${price?.requestId === item.requestId ? "selected" : ""}`}
+              key={item.requestId}
+              onClick={() => setSelected(item)}
+            >
+              <strong>{item.productName}</strong>
+              <span>{item.vendorName}</span>
+            </button>
+          ))}
+          {!operations.prices.length ? (
+            <Empty token={operations.token} load={operations.loadCatalogue} />
+          ) : null}
+        </aside>
+        <section className="review-card">
+          {price ? (
+            <>
+              <div className="review-heading">
+                <div>
+                  <p className="eyebrow">{price.marketName ?? "No market"}</p>
+                  <h2>{price.productName}</h2>
+                  <p>{price.vendorName}</p>
+                </div>
+                <strong>
+                  UGX {price.currentPriceUgx?.toLocaleString() ?? "—"} → UGX{" "}
+                  {price.proposedPriceUgx.toLocaleString()}
+                </strong>
               </div>
-            ) : null}
-          </div>
-        ))}
-        {!operations.prices.length ? (
-          <Empty token={operations.token} load={operations.loadCatalogue} />
-        ) : null}
-      </section>
+              <div className="image-row">
+                {price.images.map((image) => (
+                  <img
+                    alt={price.productName}
+                    key={image.id}
+                    src={image.thumbnailUrl ?? image.url}
+                  />
+                ))}
+              </div>
+              {price.largePriceChange ? (
+                <p className="review-warning">
+                  Large price {Number(price.percentageChange) >= 0 ? "increase" : "decrease"}:{" "}
+                  {price.percentageChange}%
+                </p>
+              ) : null}
+              {price.recentUnavailableChanges > 1 ? (
+                <p className="review-warning">
+                  {price.recentUnavailableChanges} unavailable-status changes in the last 30 days.
+                </p>
+              ) : null}
+              <dl>
+                <dt>Package</dt>
+                <dd>
+                  {price.packageQuantity} {price.packageUnit}
+                </dd>
+                <dt>Vendor reason</dt>
+                <dd>{price.reason || "No reason supplied"}</dd>
+                <dt>Submitted</dt>
+                <dd>{new Date(price.createdAt).toLocaleString()}</dd>
+              </dl>
+              <AuditHistory entries={price.auditHistory} />
+              {can("catalogue.review") ? (
+                <>
+                  <textarea
+                    aria-label="Review note"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    placeholder="Review note (required when rejecting)"
+                  />
+                  <div className="actions">
+                    <button
+                      className="approve"
+                      disabled={operations.loading}
+                      onClick={() => void decide(price.requestId, "approve")}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      disabled={operations.loading || note.trim().length < 3}
+                      onClick={() => void decide(price.requestId, "reject")}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="read-only-notice">You have read-only access to price changes.</p>
+              )}
+            </>
+          ) : (
+            <p>Select a pending price change to review.</p>
+          )}
+        </section>
+      </div>
     </>
+  );
+}
+
+function ReviewHistory({ listing }: { listing: AdminListingReview }) {
+  return (
+    <div className="review-history">
+      <h3>Price history</h3>
+      {listing.priceHistory.map((entry) => (
+        <p key={entry.requestId}>
+          UGX {entry.previousPriceUgx?.toLocaleString() ?? "—"} → UGX{" "}
+          {entry.proposedPriceUgx.toLocaleString()} · {entry.status.replace("_", " ")}
+          {entry.reviewNote ? ` · ${entry.reviewNote}` : ""}
+        </p>
+      ))}
+      <AuditHistory entries={listing.auditHistory} />
+    </div>
+  );
+}
+
+function AuditHistory({ entries }: { entries: AdminListingReview["auditHistory"] }) {
+  return (
+    <div className="review-history">
+      <h3>Audit history</h3>
+      {entries.length ? (
+        entries.map((entry) => (
+          <p key={entry.id}>
+            {entry.action.replaceAll(".", " ")} · {new Date(entry.createdAt).toLocaleString()}
+          </p>
+        ))
+      ) : (
+        <p>No review actions yet.</p>
+      )}
+    </div>
   );
 }
 function Title({

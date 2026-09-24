@@ -256,12 +256,10 @@ export interface DispatcherDelivery {
   marketName: string;
   zoneName: string;
   destinationSummary: string;
-  consumerPhoneNumber: string;
   transporter: {
     id: string;
     displayName: string;
     availability: RiderAvailability;
-    phoneNumber: string | null;
   } | null;
   openIssueCount: number;
 }
@@ -283,8 +281,113 @@ export interface DispatcherRider {
   availability: RiderAvailability;
   locationIsFresh: boolean;
   locationReceivedAt: string | null;
-  phoneNumber?: string | null;
   distanceKm?: number;
+  lastLocation: RiderLocation | null;
+}
+
+export interface DispatcherDeliveryDetail {
+  delivery: {
+    id: string;
+    reference: string;
+    status: DeliveryStatus;
+    version: number;
+    feeUgx: number;
+    assignedAt: string | null;
+    completedAt: string | null;
+    scheduledFor: string | null;
+    createdAt: string;
+    updatedAt: string;
+    market: { id: string; name: string };
+    destination: { label: string; summary: string; zoneName: string };
+  };
+  order: {
+    id: string;
+    reference: string;
+    status: string;
+    currency: string;
+    itemsSubtotal: number;
+    deliveryFee: number;
+    serviceFee: number;
+    total: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  vendors: Array<{
+    vendor: { id: string; name: string };
+    sellerOrder: {
+      id: string;
+      reference: string;
+      status: string;
+      version: number;
+      subtotal: number;
+    };
+    items: Array<{
+      id: string;
+      productName: string;
+      packageQuantity: number;
+      packageUnit: string;
+      unitPrice: number;
+      quantity: number;
+      lineTotal: number;
+    }>;
+  }>;
+  pickups: Array<{
+    id: string;
+    sellerOrderId: string;
+    sellerOrderReference: string;
+    vendorName: string;
+    status: "pending" | "collected";
+    vendorConfirmedAt: string | null;
+    riderConfirmedAt: string | null;
+    collectedAt: string | null;
+  }>;
+  assignedRider: {
+    id: string;
+    displayName: string;
+    availability: RiderAvailability;
+    locationIsFresh: boolean;
+    lastLocation: RiderLocation | null;
+  } | null;
+  customerPin: {
+    configured: boolean;
+    confirmedAt: string | null;
+    expiresAt: string | null;
+    failedAttempts: number;
+    lockedAt: string | null;
+  };
+  issues: Array<{
+    id: string;
+    reason: DeliveryIssueReason;
+    note: string | null;
+    status: "open" | "resolved";
+    reportedStatus: DeliveryStatus;
+    reportedVersion: number;
+    resolutionCode: string | null;
+    resolutionNote: string | null;
+    createdAt: string;
+    resolvedAt: string | null;
+  }>;
+  assignmentHistory: Array<{
+    operationId: string;
+    riderId: string;
+    riderName: string;
+    previousRiderId: string | null;
+    reason: string;
+    assignedBy: { id: string; name: string } | null;
+    assignedAt: string;
+    reassignment: boolean;
+  }>;
+  evidence: DeliveryEvidence;
+  timeline: Array<{
+    id: string;
+    type: "status" | "issue" | "pickup" | "pin" | "evidence";
+    title: string;
+    fromStatus: string | null;
+    toStatus: string | null;
+    actor: { id: string; name: string } | null;
+    reason: string | null;
+    occurredAt: string;
+  }>;
 }
 
 export const dispatcherDeliveryActions = [

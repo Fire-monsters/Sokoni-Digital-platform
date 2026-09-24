@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(87);
+select plan(97);
 
 insert into auth.users (id, aud, role, email) values
   ('07000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'offers-rider-a@example.test'),
@@ -290,6 +290,11 @@ select is((public.dispatcher_assign_delivery(
   '07000000-0000-4000-8000-000000000006', 'No automated rider accepted', 3,
   'f7000000-0000-4000-8000-000000000001', false
 )->>'duplicate'), 'true', 'manual assignment safely replays');
+select throws_ok($$select public.dispatcher_assign_delivery(
+  'a7000000-0000-4000-8000-000000000003', 'b7000000-0000-4000-8000-000000000002',
+  '07000000-0000-4000-8000-000000000006', 'A different reason', 3,
+  'f7000000-0000-4000-8000-000000000001', false
+)$$, '23505', null, 'an assignment operation id cannot be reused with different input');
 update public.transporter_profiles
 set availability = 'available', availability_updated_at = now()
 where id = 'b7000000-0000-4000-8000-000000000001';
@@ -300,6 +305,22 @@ select is((public.dispatcher_assign_delivery(
 )->>'previousTransporterId'), 'b7000000-0000-4000-8000-000000000002', 'dispatcher reassignment records the previous rider');
 select is((select availability::text from public.transporter_profiles where id = 'b7000000-0000-4000-8000-000000000002'), 'available', 'reassignment releases the previous rider');
 select is((select availability::text from public.transporter_profiles where id = 'b7000000-0000-4000-8000-000000000001'), 'assigned', 'reassignment reserves the new rider');
+select is((public.get_dispatcher_delivery_detail(
+  'a7000000-0000-4000-8000-000000000003'
+)->'delivery'->>'reference'), 'DL-9700003', 'delivery detail returns the selected delivery');
+select is(jsonb_array_length(public.get_dispatcher_delivery_detail(
+  'a7000000-0000-4000-8000-000000000003'
+)->'vendors'), 1, 'delivery detail includes its vendor orders');
+select is(jsonb_array_length(public.get_dispatcher_delivery_detail(
+  'a7000000-0000-4000-8000-000000000003'
+)->'assignmentHistory'), 2, 'delivery detail preserves assignment and reassignment history');
+select is(jsonb_array_length(public.get_dispatcher_nearby_riders(
+  'a7000000-0000-4000-8000-000000000003', 10
+)), 1, 'nearby search supports reassignment and excludes the assigned rider');
+select ok(
+  not jsonb_path_exists(public.get_dispatcher_delivery_board(), '$.deliveries[*].consumerPhoneNumber'),
+  'delivery board does not bypass audited contact access'
+);
 select is((public.report_delivery_issue(
   'a7000000-0000-4000-8000-000000000003', '07000000-0000-4000-8000-000000000001',
   'VEHICLE_PROBLEM', 'Rear tyre needs inspection', 5,
@@ -314,6 +335,20 @@ select is((public.resolve_delivery_issue(
   'Rider confirmed the vehicle is safe', 'f7000000-0000-4000-8000-000000000004'
 )->>'status'), 'resolved', 'dispatcher can resolve an exception with a structured outcome');
 select is((select status::text from public.delivery_issues where delivery_id = 'a7000000-0000-4000-8000-000000000003'), 'resolved', 'issue resolution is persisted for the exception queue');
+select is((
+  select count(*)::integer from public.delivery_audit_events
+  where delivery_id = 'a7000000-0000-4000-8000-000000000003'
+    and action in ('delivery.issue_reported', 'delivery.issue_resolved')
+), 2, 'reporting and resolving an issue both write delivery audit events');
+select is((public.resolve_delivery_issue(
+  (select id from public.delivery_issues where delivery_id = 'a7000000-0000-4000-8000-000000000003'),
+  '07000000-0000-4000-8000-000000000006', 'RESUME_DELIVERY',
+  'Rider confirmed the vehicle is safe', 'f7000000-0000-4000-8000-000000000004'
+)->>'duplicate'), 'true', 'an identical issue resolution safely replays');
+select throws_ok(format($query$select public.resolve_delivery_issue(
+  %L, '07000000-0000-4000-8000-000000000006', 'CLOSED_NO_ACTION',
+  'A different resolution', 'f7000000-0000-4000-8000-000000000004'
+)$query$, (select id from public.delivery_issues where delivery_id = 'a7000000-0000-4000-8000-000000000003')), '23505', null, 'an issue resolution operation id cannot be reused with different input');
 select is((public.dispatcher_delivery_action(
   'a7000000-0000-4000-8000-000000000003', '07000000-0000-4000-8000-000000000006',
   'CANCEL_ASSIGNMENT', 'Rider is no longer able to collect', 5,
@@ -327,6 +362,11 @@ select is((public.dispatcher_delivery_action(
   'CANCEL_ASSIGNMENT', 'Rider is no longer able to collect', 5,
   'f7000000-0000-4000-8000-000000000005'
 )->>'duplicate'), 'true', 'dispatcher assignment cancellation safely replays');
+select throws_ok($$select public.dispatcher_delivery_action(
+  'a7000000-0000-4000-8000-000000000003', '07000000-0000-4000-8000-000000000006',
+  'CANCEL_ASSIGNMENT', 'A different cancellation reason', 5,
+  'f7000000-0000-4000-8000-000000000005'
+)$$, '23505', null, 'a dispatcher action operation id cannot be reused with different input');
 select is((select count(*)::integer from public.delivery_audit_events where delivery_id = 'a7000000-0000-4000-8000-000000000003' and action = 'delivery.cancel_assignment'), 1, 'dispatcher cancellation writes one audit event');
 
 select * from finish();

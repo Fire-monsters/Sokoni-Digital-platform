@@ -3,7 +3,6 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { errorHandler } from "../../middleware/error-handler.js";
-import { DeliveryProofService } from "./delivery-proof.service.js";
 import { createDispatcherRouter } from "./dispatcher.routes.js";
 import { DispatcherService } from "./dispatcher.service.js";
 
@@ -13,7 +12,18 @@ vi.mock("../../middleware/authenticate.js", () => ({
     _response: express.Response,
     next: express.NextFunction,
   ) => {
-    request.auth = { userId: "dispatcher-user", roles: ["admin"] };
+    request.requestId = "request-id";
+    request.auth = {
+      userId: "dispatcher-user",
+      roles: ["admin"],
+      staff: {
+        userId: "dispatcher-user",
+        displayName: "Dispatcher",
+        role: "dispatcher",
+        status: "active",
+        permissions: ["deliveries.read", "deliveries.manage"],
+      },
+    };
     next();
   },
 }));
@@ -27,10 +37,15 @@ vi.mock("../../middleware/require-permission.js", () => ({
 
 describe("dispatcher routes", () => {
   const performAction = vi.fn();
+  const assign = vi.fn();
+  const getDelivery = vi.fn();
+  const getNearbyRiders = vi.fn();
   const service = Object.assign(Object.create(DispatcherService.prototype) as DispatcherService, {
     performAction,
+    assign,
+    getDelivery,
+    getNearbyRiders,
   });
-  const proofService = Object.create(DeliveryProofService.prototype) as DeliveryProofService;
   const deliveryId = "d5000000-0000-4000-8000-000000000001";
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,7 +54,7 @@ describe("dispatcher routes", () => {
   function app() {
     const server = express();
     server.use(express.json());
-    server.use("/v1/admin", createDispatcherRouter(service, proofService));
+    server.use("/v1/admin", createDispatcherRouter(service));
     server.use(errorHandler);
     return server;
   }
@@ -72,10 +87,65 @@ describe("dispatcher routes", () => {
       operationId: "d5000000-0000-4000-8000-000000000003",
     });
     expect(response.status).toBe(200);
-    expect(performAction).toHaveBeenCalledWith(
-      "dispatcher-user",
-      deliveryId,
-      expect.objectContaining({ action: "CONTACT_CONSUMER", expectedVersion: 3 }),
+    const command = performAction.mock.calls[0]?.[0] as unknown as {
+      actor: { userId: string };
+      params: { deliveryId: string };
+      input: { action: string; expectedVersion: number };
+      requestId: string;
+    };
+    expect(command).toMatchObject({
+      actor: { userId: "dispatcher-user" },
+      params: { deliveryId },
+      input: { action: "CONTACT_CONSUMER", expectedVersion: 3 },
+      requestId: "request-id",
+    });
+  });
+
+  it("loads the complete delivery detail with the authorized staff identity", async () => {
+    getDelivery.mockResolvedValue({ delivery: { id: deliveryId }, timeline: [] });
+
+    const response = await request(app()).get(`/v1/admin/deliveries/${deliveryId}`);
+
+    expect(response.status).toBe(200);
+    expect(getDelivery).toHaveBeenCalledWith("dispatcher-user", deliveryId);
+  });
+
+  it("normalizes the nearby-rider radius", async () => {
+    getNearbyRiders.mockResolvedValue([]);
+
+    const response = await request(app()).get(
+      `/v1/admin/deliveries/${deliveryId}/nearby-riders?radiusKm=15`,
     );
+
+    expect(response.status).toBe(200);
+    expect(getNearbyRiders).toHaveBeenCalledWith(deliveryId, 15);
+  });
+
+  it.each([
+    ["assign-rider", false],
+    ["reassign-rider", true],
+  ] as const)("executes the %s workflow with staff context", async (path, reassign) => {
+    assign.mockResolvedValue({ deliveryId, status: "assigned" });
+    const operationId = "d5000000-0000-4000-8000-000000000004";
+
+    const response = await request(app()).post(`/v1/admin/deliveries/${deliveryId}/${path}`).send({
+      transporterId: "d5000000-0000-4000-8000-000000000010",
+      reason: "Nearest eligible rider",
+      expectedVersion: 3,
+      operationId,
+    });
+
+    expect(response.status).toBe(200);
+    expect(assign.mock.calls[0]?.[0]).toBe(reassign);
+    const command = assign.mock.calls[0]?.[1] as unknown as {
+      actor: { userId: string };
+      params: { deliveryId: string };
+      input: { operationId: string; expectedVersion: number };
+    };
+    expect(command).toMatchObject({
+      actor: { userId: "dispatcher-user" },
+      params: { deliveryId },
+      input: { operationId, expectedVersion: 3 },
+    });
   });
 });

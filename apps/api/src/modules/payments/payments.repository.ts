@@ -2,7 +2,10 @@ import type {
   PaymentMethod,
   PaymentProvider,
   PaymentStatus,
-  ProviderPaymentStatus,
+  PaymentFinanceDetail,
+  PaymentFinanceInput,
+  PaymentFinanceResult,
+  PaymentRecheckResult,
 } from "@sokoni-digital/domain";
 import type { Database, Json } from "@sokoni-digital/database-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -14,6 +17,7 @@ import {
   PaymentOperationForbiddenError,
   PaymentRejectedError,
 } from "./payments.errors.js";
+import type { AuditWriteContext } from "../admin/workflows/index.js";
 
 export interface PaymentAttemptRecord {
   id: string;
@@ -37,6 +41,74 @@ export interface PaymentAttemptRecord {
 
 export class PaymentsRepository {
   constructor(private readonly db: SupabaseClient<Database> = supabase) {}
+
+  async getFinanceDetail(id: string): Promise<PaymentFinanceDetail> {
+    const { data, error } = await this.db.rpc("admin_get_payment_detail", { p_payment_id: id });
+    if (error) throw mapDatabaseError(error);
+    return data as unknown as PaymentFinanceDetail;
+  }
+
+  async commandFinance(
+    actor: string,
+    id: string,
+    action: string,
+    input: PaymentFinanceInput,
+    auditContext: AuditWriteContext,
+  ): Promise<PaymentFinanceResult> {
+    const { data, error } = await this.db.rpc("command_payment_finance_audited", {
+      p_actor: actor,
+      p_payment_id: id,
+      p_action: action,
+      p_input: toJson(input),
+      p_audit_context: auditContext as unknown as Json,
+    });
+    if (error) throw mapDatabaseError(error);
+    return data as unknown as PaymentFinanceResult;
+  }
+
+  async applyReconciliation(
+    id: string,
+    evidence: Record<string, unknown>,
+    source: string,
+    actor?: string,
+    operationId?: string,
+    auditContext?: AuditWriteContext,
+  ): Promise<PaymentRecheckResult> {
+    const request = {
+      p_payment_id: id,
+      p_evidence: toJson(evidence),
+      p_source: source,
+      ...(actor === undefined ? {} : { p_actor: actor }),
+      ...(operationId === undefined ? {} : { p_operation_id: operationId }),
+    };
+    const { data, error } =
+      auditContext && actor && operationId
+        ? await this.db.rpc("apply_payment_reconciliation_audited", {
+            p_payment_id: id,
+            p_evidence: toJson(evidence),
+            p_source: source,
+            p_actor: actor,
+            p_operation_id: operationId,
+            p_audit_context: auditContext as unknown as Json,
+          })
+        : await this.db.rpc("apply_payment_reconciliation", request);
+    if (error) throw mapDatabaseError(error);
+    return data as unknown as PaymentRecheckResult;
+  }
+
+  async claimAdminBatch(
+    actor: string,
+    operationId: string,
+    limit: number,
+  ): Promise<PaymentAttemptRecord[]> {
+    const { data, error } = await this.db.rpc("claim_admin_payment_batch", {
+      p_actor: actor,
+      p_operation_id: operationId,
+      p_limit: limit,
+    });
+    if (error) throw mapDatabaseError(error);
+    return data.map(mapAttempt);
+  }
 
   async createAttempt(
     consumerId: string,
@@ -282,65 +354,6 @@ export class PaymentsRepository {
         verification_method: authenticityVerified ? "provider_status_lookup" : null,
       })
       .eq("id", id);
-    if (error) throw new Error(error.message);
-  }
-
-  async processResult(input: {
-    provider: PaymentProvider;
-    providerTransactionId: string;
-    merchantReference: string;
-    status: ProviderPaymentStatus;
-    amount: number;
-    currency: string;
-    paymentMethod?: PaymentMethod;
-    providerEventId?: string;
-    confirmationCode?: string;
-    reasonCode?: string;
-    message?: string;
-  }) {
-    const { data, error } = await this.db.rpc("process_payment_result", {
-      p_provider: input.provider,
-      p_provider_transaction_id: input.providerTransactionId,
-      p_merchant_reference: input.merchantReference,
-      p_normalized_status: input.status,
-      p_amount_ugx: input.amount,
-      p_currency: input.currency,
-      ...(input.paymentMethod === undefined ? {} : { p_payment_method: input.paymentMethod }),
-      ...(input.providerEventId === undefined
-        ? {}
-        : { p_provider_event_id: input.providerEventId }),
-      ...(input.confirmationCode === undefined
-        ? {}
-        : { p_confirmation_code: input.confirmationCode }),
-      ...(input.reasonCode === undefined ? {} : { p_provider_reason_code: input.reasonCode }),
-      ...(input.message === undefined ? {} : { p_provider_message: input.message }),
-    });
-    if (error) throw mapDatabaseError(error);
-    return data as { paymentAttemptId: string; status: PaymentStatus };
-  }
-
-  async recordReconciliation(input: {
-    attempt: PaymentAttemptRecord;
-    providerStatus: ProviderPaymentStatus;
-    result: Database["public"]["Enums"]["reconciliation_result"];
-    providerAmount?: number;
-    providerCurrency?: string;
-    providerResponse: unknown;
-    runSource: string;
-    requestedBy?: string;
-  }) {
-    const { error } = await this.db.from("payment_reconciliation_runs").insert({
-      payment_attempt_id: input.attempt.id,
-      provider: input.attempt.provider,
-      previous_status: input.attempt.status,
-      provider_status: input.providerStatus,
-      result: input.result,
-      provider_amount_ugx: input.providerAmount ?? null,
-      provider_currency: input.providerCurrency ?? null,
-      provider_response: toJson(input.providerResponse),
-      run_source: input.runSource,
-      requested_by: input.requestedBy ?? null,
-    });
     if (error) throw new Error(error.message);
   }
 

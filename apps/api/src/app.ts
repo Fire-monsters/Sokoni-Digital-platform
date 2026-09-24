@@ -9,21 +9,25 @@ import { captureSignedWebhookRawBody } from "./middleware/capture-raw-body.js";
 import { notFound } from "./middleware/not-found.js";
 import { requestContext } from "./middleware/request-context.js";
 import { adminRouter } from "./modules/admin/index.js";
+import { createAdminReadModelsRouter } from "./modules/admin/admin-read-models.routes.js";
 import { authRouter, createAuthHookRouter } from "./modules/auth/index.js";
 import { createCatalogueRouter } from "./modules/catalogue/index.js";
 import { createCartRouter } from "./modules/carts/index.js";
 import { createCheckoutRouter, createConsumerOrdersRouter } from "./modules/checkout/index.js";
+
 import {
   createPaymentAdminRouter,
   createPaymentOperationsRouter,
   createPaymentsRouter,
 } from "./modules/payments/index.js";
+
 import { meRouter } from "./modules/me/index.js";
 import { createListingsRouter } from "./modules/listings/index.js";
 import { createListingApprovalRouter } from "./modules/listing-approval/index.js";
 import { createVendorOrdersRouter } from "./modules/orders/index.js";
 import { createQualityChecksRouter } from "./modules/quality/index.js";
 import { createNotificationsRouter } from "./modules/notifications/index.js";
+import { createOrderInvestigationRouter } from "./modules/order-investigation/index.js";
 import {
   createConsumerDeliveryRouter,
   createDispatcherRouter,
@@ -70,14 +74,18 @@ export function createApp(): express.Express {
   app.use("/v1/notifications", createNotificationsRouter());
   app.use("/v1", createPaymentsRouter());
   app.use("/v1/operations", createPaymentOperationsRouter());
+  app.use("/v1/me", createApplicantRouter());
   app.use("/v1/me", meRouter);
   app.use("/v1/vendor/listings", createListingsRouter());
   app.use("/v1/vendor/orders", createVendorOrdersRouter());
   app.use("/v1/vendor/orders", createQualityChecksRouter());
   app.use("/v1/rider", createRiderOperationsRouter());
   app.use("/v1/admin", createListingApprovalRouter());
+  app.use("/v1/admin", createAdminReadModelsRouter());
+  app.use("/v1/admin", createOrderInvestigationRouter());
   app.use("/v1/admin", createPaymentAdminRouter());
   app.use("/v1/admin", createDispatcherRouter());
+  app.use("/v1/admin", createApplicationReviewRouter());
   app.use("/v1/admin", adminRouter);
 
   app.use(notFound);
@@ -85,3 +93,5 @@ export function createApp(): express.Express {
 
   return app;
 }
+import { createApplicationReviewRouter } from "./modules/applications/applications.routes.js";
+import { createApplicantRouter } from "./modules/applications/applicant.routes.js";

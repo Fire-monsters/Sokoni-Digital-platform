@@ -1,10 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ApplicationsPage } from "../pages/ApplicationsPage";
+import { PaymentsPage } from "../pages/PaymentsPage";
+import { OrderInvestigationPage } from "../pages/OrderInvestigationPage";
+import { AuditLogPage } from "../pages/AuditLogPage";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { ProtectedRoute } from "../auth/ProtectedRoute";
 import { RequirePermission } from "../auth/RequirePermission";
 import { CatalogueListingsPage, PriceChangesPage } from "../pages/CataloguePages";
 import { DeliveriesPage } from "../pages/DeliveriesPage";
-import { NotFoundPage, OrderDetailPage, PlaceholderPage } from "../pages/PlaceholderPage";
+import { NotFoundPage, PlaceholderPage } from "../pages/PlaceholderPage";
 import { LoginPage } from "../pages/LoginPage";
 import { UnauthorizedPage } from "../pages/UnauthorizedPage";
 import type { StaffPermission } from "@sokoni-digital/domain";
@@ -31,16 +35,22 @@ export function AppRouter() {
               path="orders"
               element={allowed("orders.read", <PlaceholderPage title="Orders" />)}
             />
-            <Route path="orders/:orderId" element={allowed("orders.read", <OrderDetailPage />)} />
+            <Route
+              path="orders/:orderId"
+              element={allowed("orders.read", <OrderInvestigationPage />)}
+            />
             <Route path="deliveries" element={allowed("deliveries.read", <DeliveriesPage />)} />
             <Route path="approvals" element={<ApprovalIndex />} />
             <Route
               path="approvals/vendors"
-              element={allowed("applications.read", <PlaceholderPage title="Vendor approvals" />)}
+              element={allowed(
+                "applications.read",
+                <ApplicationsPage key="vendor" type="vendor" />,
+              )}
             />
             <Route
               path="approvals/riders"
-              element={allowed("applications.read", <PlaceholderPage title="Rider approvals" />)}
+              element={allowed("applications.read", <ApplicationsPage key="rider" type="rider" />)}
             />
             <Route
               path="approvals/listings"
@@ -50,10 +60,7 @@ export function AppRouter() {
               path="approvals/price-changes"
               element={allowed("catalogue.read", <PriceChangesPage />)}
             />
-            <Route
-              path="payments"
-              element={allowed("payments.read", <PlaceholderPage title="Payments" />)}
-            />
+            <Route path="payments" element={allowed("payments.read", <PaymentsPage />)} />
             <Route
               path="refunds"
               element={allowed("refunds.read", <PlaceholderPage title="Refunds" />)}
@@ -74,10 +81,7 @@ export function AppRouter() {
               path="reports"
               element={allowed("reports.read", <PlaceholderPage title="Reports" />)}
             />
-            <Route
-              path="audit"
-              element={allowed("audit.read", <PlaceholderPage title="Audit Log" />)}
-            />
+            <Route path="audit" element={allowed("audit.read", <AuditLogPage />)} />
             <Route
               path="settings"
               element={allowed("settings.manage", <PlaceholderPage title="Settings" />)}

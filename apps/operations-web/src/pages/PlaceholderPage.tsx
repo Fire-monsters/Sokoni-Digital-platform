@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 export function PlaceholderPage({ title }: { title: string }) {
   return (
     <section className="placeholder-page">
@@ -13,19 +13,6 @@ export function PlaceholderPage({ title }: { title: string }) {
           actions will be added without changing the navigation structure.
         </p>
       </div>
-    </section>
-  );
-}
-export function OrderDetailPage() {
-  const { orderId } = useParams();
-  return (
-    <section className="placeholder-page">
-      <p className="eyebrow">Order management</p>
-      <h1>Order {orderId}</h1>
-      <p>The order-detail route loads independently and is ready for its feature slice.</p>
-      <Link className="button-link" to="/dashboard/orders">
-        Back to orders
-      </Link>
     </section>
   );
 }

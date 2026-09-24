@@ -1,4 +1,23 @@
 import type {
+  PaymentFinanceDetail,
+  PaymentFinanceQueue,
+  PaymentFinanceInput,
+  PaymentFinanceResult,
+  PaymentRecheckResult,
+  PaymentBatchResult,
+  OrderContactTarget,
+  OrderInvestigation,
+  OrderInvestigationCommandResult,
+  AuditEventDetail,
+  AuditEventPage,
+  AuditEventQuery,
+  ApplicationType,
+  ApplicationStatus,
+  ApplicationAction,
+  ApplicationReview,
+  ApplicationQueue,
+  ApplicationReviewInput,
+  ApplicationReviewResult,
   ApiErrorResponse,
   ApiSuccessResponse,
   AuthenticatedProfile,
@@ -10,6 +29,7 @@ import type {
   CatalogueQuery,
   AdminListingReview,
   AdminPriceReview,
+  CatalogueReviewResult,
   AvailabilityResult,
   ListingAvailability,
   ListingUploadIntent,
@@ -44,6 +64,7 @@ import type {
   DeliveryIssueReason,
   DeliveryIssueResult,
   DispatcherDeliveryBoard,
+  DispatcherDeliveryDetail,
   DispatcherRider,
   DispatcherAssignmentResult,
   DeliveryIssueResolutionCode,
@@ -74,13 +95,158 @@ export const apiQueryKeys = {
   riderOffer: ["rider", "offer"] as const,
   riderDelivery: ["rider", "delivery"] as const,
   dispatcherDeliveries: ["admin", "deliveries"] as const,
+  dispatcherDelivery: (deliveryId: string) => ["admin", "deliveries", deliveryId] as const,
   dispatcherRiders: ["admin", "delivery-riders"] as const,
   deliveryEvidence: (deliveryId: string) => ["delivery", deliveryId, "evidence"] as const,
+  adminAuditEvents: (query: AuditEventQuery) => ["admin", "audit-events", query] as const,
+  adminAuditEvent: (eventId: string) => ["admin", "audit-events", eventId] as const,
 };
 
 export interface ApiClientOptions {
   baseUrl: string;
   accessToken?: string;
+}
+
+export function fetchAuditEvents(
+  options: ApiClientOptions,
+  query: AuditEventQuery = {},
+  signal?: AbortSignal,
+): Promise<AuditEventPage> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  }
+  const search = params.toString();
+  return requestApi<AuditEventPage>(
+    options,
+    `/v1/admin/audit-events${search ? `?${search}` : ""}`,
+    signal ? { signal } : {},
+  );
+}
+
+export function fetchAuditEvent(
+  options: ApiClientOptions,
+  eventId: string,
+  signal?: AbortSignal,
+): Promise<AuditEventDetail> {
+  return requestApi<AuditEventDetail>(
+    options,
+    `/v1/admin/audit-events/${encodeURIComponent(eventId)}`,
+    signal ? { signal } : {},
+  );
+}
+
+export function fetchOrderInvestigation(
+  options: ApiClientOptions,
+  orderId: string,
+  signal?: AbortSignal,
+): Promise<OrderInvestigation> {
+  return requestApi<OrderInvestigation>(
+    options,
+    `/v1/admin/orders/${encodeURIComponent(orderId)}`,
+    signal ? { signal } : {},
+  );
+}
+
+function commandOrderInvestigation(
+  options: ApiClientOptions,
+  orderId: string,
+  path: string,
+  input: Record<string, unknown>,
+) {
+  return requestApi<OrderInvestigationCommandResult>(
+    options,
+    `/v1/admin/orders/${encodeURIComponent(orderId)}/${path}`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export function addOrderSupportNote(
+  options: ApiClientOptions,
+  orderId: string,
+  operationId: string,
+  note: string,
+) {
+  return commandOrderInvestigation(options, orderId, "notes", { operationId, note });
+}
+export function revealOrderContact(
+  options: ApiClientOptions,
+  orderId: string,
+  target: OrderContactTarget,
+  operationId: string,
+  reason: string,
+) {
+  return commandOrderInvestigation(options, orderId, `contact/${target}/reveal`, {
+    operationId,
+    reason,
+  });
+}
+export function resendOrderNotification(
+  options: ApiClientOptions,
+  orderId: string,
+  notificationId: string,
+  operationId: string,
+  reason: string,
+) {
+  return commandOrderInvestigation(
+    options,
+    orderId,
+    `notifications/${encodeURIComponent(notificationId)}/resend`,
+    { operationId, reason },
+  );
+}
+export function escalateOrderToDispatch(
+  options: ApiClientOptions,
+  orderId: string,
+  operationId: string,
+  reason: string,
+  expectedDeliveryVersion: number,
+) {
+  return commandOrderInvestigation(options, orderId, "escalate-dispatch", {
+    operationId,
+    reason,
+    expectedDeliveryVersion,
+  });
+}
+export function cancelUnpaidOrder(
+  options: ApiClientOptions,
+  orderId: string,
+  operationId: string,
+  reason: string,
+) {
+  return commandOrderInvestigation(options, orderId, "cancel", { operationId, reason });
+}
+
+export function fetchApplicationQueue(
+  options: ApiClientOptions,
+  query: { type: ApplicationType; status?: ApplicationStatus; page?: number },
+) {
+  const params = new URLSearchParams({ type: query.type, page: String(query.page ?? 1) });
+  if (query.status) params.set("status", query.status);
+  return requestApi<ApplicationQueue>(options, `/v1/admin/applications?${params}`);
+}
+export function fetchApplicationReview(
+  options: ApiClientOptions,
+  id: string,
+  signal?: AbortSignal,
+) {
+  return requestApi<ApplicationReview>(
+    options,
+    `/v1/admin/applications/${encodeURIComponent(id)}`,
+    signal ? { signal } : {},
+  );
+}
+export function reviewApplication(
+  options: ApiClientOptions,
+  id: string,
+  action: ApplicationAction,
+  input: ApplicationReviewInput,
+) {
+  return requestApi<ApplicationReviewResult>(
+    options,
+    `/v1/admin/applications/${encodeURIComponent(id)}/${action}`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
 }
 
 export class ApiClientError extends Error {
@@ -388,6 +554,16 @@ export function fetchDispatcherDeliveryBoard(
   return requestApi<DispatcherDeliveryBoard>(options, "/v1/admin/deliveries");
 }
 
+export function fetchDispatcherDelivery(
+  options: ApiClientOptions,
+  deliveryId: string,
+): Promise<DispatcherDeliveryDetail> {
+  return requestApi<DispatcherDeliveryDetail>(
+    options,
+    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}`,
+  );
+}
+
 export function fetchDispatcherRiders(options: ApiClientOptions): Promise<DispatcherRider[]> {
   return requestApi<DispatcherRider[]>(options, "/v1/admin/delivery-riders");
 }
@@ -411,7 +587,7 @@ export function assignDispatcherDelivery(
 ): Promise<DispatcherAssignmentResult> {
   return requestApi<DispatcherAssignmentResult>(
     options,
-    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}/${reassign ? "reassign" : "assign"}`,
+    `/v1/admin/deliveries/${encodeURIComponent(deliveryId)}/${reassign ? "reassign-rider" : "assign-rider"}`,
     { method: "POST", body: JSON.stringify(input) },
   );
 }
@@ -705,25 +881,29 @@ export function fetchAdminListingQueue(
 export function approveAdminListing(
   options: ApiClientOptions,
   listingId: string,
+  expectedVersion: number,
+  operationId: string,
   reviewNote?: string,
-): Promise<AdminListingReview> {
-  return requestApi<AdminListingReview>(options, `/v1/admin/listings/${listingId}/approve`, {
+): Promise<CatalogueReviewResult> {
+  return requestApi<CatalogueReviewResult>(options, `/v1/admin/listings/${listingId}/approve`, {
     method: "POST",
-    body: JSON.stringify({ reviewNote }),
+    body: JSON.stringify({ reviewNote, expectedVersion, operationId }),
   });
 }
 
 export function requestAdminListingChanges(
   options: ApiClientOptions,
   listingId: string,
+  expectedVersion: number,
+  operationId: string,
   reviewNote: string,
-): Promise<AdminListingReview> {
-  return requestApi<AdminListingReview>(
+): Promise<CatalogueReviewResult> {
+  return requestApi<CatalogueReviewResult>(
     options,
     `/v1/admin/listings/${listingId}/request-changes`,
     {
       method: "POST",
-      body: JSON.stringify({ reviewNote }),
+      body: JSON.stringify({ reviewNote, expectedVersion, operationId }),
     },
   );
 }
@@ -738,15 +918,66 @@ export function reviewAdminPrice(
   options: ApiClientOptions,
   requestId: string,
   decision: "approve" | "reject",
+  operationId: string,
   reviewNote?: string,
-) {
-  return requestApi<{
-    requestId: string;
-    listingId: string;
-    status: string;
-    proposedPriceUgx: number;
-  }>(options, `/v1/admin/price-requests/${requestId}/${decision}`, {
+): Promise<CatalogueReviewResult> {
+  return requestApi<CatalogueReviewResult>(
+    options,
+    `/v1/admin/price-requests/${requestId}/${decision}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reviewNote, operationId }),
+    },
+  );
+}
+export function fetchPaymentFinanceQueue(
+  options: ApiClientOptions,
+  query: { page: number; q?: string; reconciliationStatus?: string },
+  signal?: AbortSignal,
+): Promise<PaymentFinanceQueue> {
+  const params = new URLSearchParams({ page: String(query.page), pageSize: "25" });
+  if (query.q) params.set("q", query.q);
+  if (query.reconciliationStatus) params.set("reconciliationStatus", query.reconciliationStatus);
+  return requestApi<PaymentFinanceQueue>(options, `/v1/admin/payments/reconciliation?${params}`, {
+    ...(signal ? { signal } : {}),
+  });
+}
+export function fetchPaymentFinanceDetail(
+  options: ApiClientOptions,
+  id: string,
+  signal?: AbortSignal,
+): Promise<PaymentFinanceDetail> {
+  return requestApi<PaymentFinanceDetail>(options, `/v1/admin/payments/${id}`, {
+    ...(signal ? { signal } : {}),
+  });
+}
+export function recheckPayment(
+  options: ApiClientOptions,
+  id: string,
+  operationId: string,
+): Promise<PaymentRecheckResult> {
+  return requestApi<PaymentRecheckResult>(options, `/v1/admin/payments/${id}/reconcile`, {
     method: "POST",
-    body: JSON.stringify({ reviewNote }),
+    body: JSON.stringify({ operationId }),
+  });
+}
+export function reconcilePendingPayments(
+  options: ApiClientOptions,
+  operationId: string,
+): Promise<PaymentBatchResult> {
+  return requestApi<PaymentBatchResult>(options, "/v1/admin/payments/reconciliation/run", {
+    method: "POST",
+    body: JSON.stringify({ operationId, scope: "pending" }),
+  });
+}
+export function commandPaymentFinance(
+  options: ApiClientOptions,
+  id: string,
+  action: "flag-investigation" | "request-refund",
+  input: PaymentFinanceInput,
+): Promise<PaymentFinanceResult> {
+  return requestApi<PaymentFinanceResult>(options, `/v1/admin/payments/${id}/${action}`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }

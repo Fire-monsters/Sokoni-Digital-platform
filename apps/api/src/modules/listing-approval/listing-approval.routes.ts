@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   priceRequestParamsSchema,
+  rejectPriceSchema,
   requestChangesSchema,
   reviewListingSchema,
   reviewPriceSchema,
@@ -10,15 +11,19 @@ import { listingIdParamsSchema } from "@sokoni-digital/validation/listing";
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requirePermission } from "../../middleware/require-permission.js";
-import { ListingApprovalRepository } from "./listing-approval.repository.js";
+import { createAdminWorkflowRoute } from "../admin/workflows/index.js";
+import {
+  SupabaseCatalogueReviewRepository,
+  type CatalogueReviewRepository,
+} from "./listing-approval.repository.js";
+import { ListingApprovalService } from "./listing-approval.service.js";
 
-export function createListingApprovalRouter(repository = new ListingApprovalRepository()): Router {
+export function createListingApprovalRouter(
+  repository: CatalogueReviewRepository = new SupabaseCatalogueReviewRepository(),
+): Router {
   const router = Router();
+  const service = new ListingApprovalService(repository);
   router.use(authenticate);
-  const adminId = (request: Express.Request) => {
-    if (!request.auth) throw new Error("Authenticated request context is missing.");
-    return request.auth.userId;
-  };
 
   router.get("/listings", requirePermission("catalogue.read"), async (request, response, next) => {
     try {
@@ -59,97 +64,36 @@ export function createListingApprovalRouter(repository = new ListingApprovalRepo
 
   router.post(
     "/listings/:listingId/approve",
-    requirePermission("catalogue.review"),
-    async (request, response, next) => {
-      const params = listingIdParamsSchema.safeParse(request.params);
-      const body = reviewListingSchema.safeParse(request.body);
-      if (!params.success) {
-        sendZodValidationError(request, response, params.error.issues);
-        return;
-      }
-      if (!body.success) {
-        sendZodValidationError(request, response, body.error.issues);
-        return;
-      }
-      try {
-        sendSuccess(
-          request,
-          response,
-          200,
-          await repository.approveListing(
-            params.data.listingId,
-            adminId(request),
-            body.data.reviewNote,
-          ),
-        );
-      } catch (error) {
-        next(error);
-      }
-    },
+    ...createAdminWorkflowRoute({
+      operation: "catalogue.listing.approve",
+      permission: "catalogue.review",
+      paramsSchema: listingIdParamsSchema,
+      bodySchema: reviewListingSchema,
+      execute: (command) => service.approveListing(command),
+    }),
   );
 
   router.post(
     "/listings/:listingId/request-changes",
-    requirePermission("catalogue.review"),
-    async (request, response, next) => {
-      const params = listingIdParamsSchema.safeParse(request.params);
-      const body = requestChangesSchema.safeParse(request.body);
-      if (!params.success) {
-        sendZodValidationError(request, response, params.error.issues);
-        return;
-      }
-      if (!body.success) {
-        sendZodValidationError(request, response, body.error.issues);
-        return;
-      }
-      try {
-        sendSuccess(
-          request,
-          response,
-          200,
-          await repository.requestChanges(
-            params.data.listingId,
-            adminId(request),
-            body.data.reviewNote,
-          ),
-        );
-      } catch (error) {
-        next(error);
-      }
-    },
+    ...createAdminWorkflowRoute({
+      operation: "catalogue.listing.request_changes",
+      permission: "catalogue.review",
+      paramsSchema: listingIdParamsSchema,
+      bodySchema: requestChangesSchema,
+      execute: (command) => service.requestChanges(command),
+    }),
   );
 
   for (const decision of ["approved", "rejected"] as const) {
     router.post(
       `/price-requests/:requestId/${decision === "approved" ? "approve" : "reject"}`,
-      requirePermission("catalogue.review"),
-      async (request, response, next) => {
-        const params = priceRequestParamsSchema.safeParse(request.params);
-        const body = reviewPriceSchema.safeParse(request.body);
-        if (!params.success) {
-          sendZodValidationError(request, response, params.error.issues);
-          return;
-        }
-        if (!body.success) {
-          sendZodValidationError(request, response, body.error.issues);
-          return;
-        }
-        try {
-          sendSuccess(
-            request,
-            response,
-            200,
-            await repository.reviewPrice(
-              params.data.requestId,
-              adminId(request),
-              decision,
-              body.data.reviewNote,
-            ),
-          );
-        } catch (error) {
-          next(error);
-        }
-      },
+      ...createAdminWorkflowRoute({
+        operation: `catalogue.price_request.${decision}`,
+        permission: "catalogue.review",
+        paramsSchema: priceRequestParamsSchema,
+        bodySchema: decision === "approved" ? reviewPriceSchema : rejectPriceSchema,
+        execute: (command) => service.reviewPrice(decision, command),
+      }),
     );
   }
 

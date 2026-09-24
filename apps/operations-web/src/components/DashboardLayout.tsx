@@ -6,6 +6,7 @@ import { useOperations } from "../operations/OperationsContext";
 import { Icon } from "./Icon";
 import { useAuth } from "../auth/AuthContext";
 import { RouteErrorBoundary } from "../errors/RouteErrorBoundary";
+
 export function DashboardLayout() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
@@ -16,7 +17,8 @@ export function DashboardLayout() {
   const title =
     routeTitles.get(location.pathname) ??
     (location.pathname.includes("/orders/") ? "Order details" : "Dashboard");
-  return (
+
+    return (
     <div className="dashboard-shell">
       <aside className={`sidebar ${open ? "sidebar-open" : ""}`} aria-label="Main navigation">
         <div className="brand">

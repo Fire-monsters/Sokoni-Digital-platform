@@ -1,4 +1,4 @@
-import { Router, type NextFunction, type Request, type Response } from "express";
+import { Router } from "express";
 import {
   deliveryIssueParamsSchema,
   deliveryIssueResolutionSchema,
@@ -11,13 +11,10 @@ import {
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requirePermission } from "../../middleware/require-permission.js";
-import { DeliveryProofService } from "./delivery-proof.service.js";
+import { createAdminWorkflowRoute } from "../admin/workflows/index.js";
 import { DispatcherService } from "./dispatcher.service.js";
 
-export function createDispatcherRouter(
-  service = new DispatcherService(),
-  proofService = new DeliveryProofService(),
-): Router {
+export function createDispatcherRouter(service = new DispatcherService()): Router {
   const router = Router();
   router.use(authenticate);
 
@@ -38,6 +35,32 @@ export function createDispatcherRouter(
     async (request, response, next) => {
       try {
         sendSuccess(request, response, 200, await service.getRiders());
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+  router.get(
+    "/deliveries/:deliveryId",
+    requirePermission("deliveries.read"),
+    async (request, response, next) => {
+      const params = riderDeliveryParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        sendZodValidationError(request, response, params.error.issues);
+        return;
+      }
+      const staff = request.auth?.staff;
+      if (!staff) {
+        next(new Error("Staff authorization context is missing."));
+        return;
+      }
+      try {
+        sendSuccess(
+          request,
+          response,
+          200,
+          await service.getDelivery(staff.userId, params.data.deliveryId),
+        );
       } catch (error) {
         next(error);
       }
@@ -70,103 +93,39 @@ export function createDispatcherRouter(
     },
   );
 
-  const assign =
-    (reassign: boolean) => async (request: Request, response: Response, next: NextFunction) => {
-      const params = riderDeliveryParamsSchema.safeParse(request.params);
-      const body = dispatcherAssignmentSchema.safeParse(request.body);
-      if (!params.success) {
-        sendZodValidationError(request, response, params.error.issues);
-        return;
-      }
-      if (!body.success) {
-        sendZodValidationError(request, response, body.error.issues);
-        return;
-      }
-      if (!request.auth) {
-        next(new Error("Authenticated request context is missing."));
-        return;
-      }
-      try {
-        sendSuccess(
-          request,
-          response,
-          200,
-          await service.assign(request.auth.userId, params.data.deliveryId, reassign, body.data),
-        );
-      } catch (error) {
-        next(error);
-      }
-    };
-  router.post(
-    "/deliveries/:deliveryId/assign",
-    requirePermission("deliveries.manage"),
-    assign(false),
-  );
-  router.post(
-    "/deliveries/:deliveryId/reassign",
-    requirePermission("deliveries.manage"),
-    assign(true),
-  );
+  const assignment = (reassign: boolean) =>
+    createAdminWorkflowRoute({
+      operation: reassign ? "delivery.reassign_rider" : "delivery.assign_rider",
+      permission: "deliveries.manage",
+      paramsSchema: riderDeliveryParamsSchema,
+      bodySchema: dispatcherAssignmentSchema,
+      execute: (command) => service.assign(reassign, command),
+    });
+  router.post("/deliveries/:deliveryId/assign-rider", ...assignment(false));
+  router.post("/deliveries/:deliveryId/reassign-rider", ...assignment(true));
+  // Backward-compatible aliases for clients released before the operation route names stabilized.
+  router.post("/deliveries/:deliveryId/assign", ...assignment(false));
+  router.post("/deliveries/:deliveryId/reassign", ...assignment(true));
 
   router.post(
     "/delivery-issues/:issueId/resolve",
-    requirePermission("deliveries.manage"),
-    async (request, response, next) => {
-      const params = deliveryIssueParamsSchema.safeParse(request.params);
-      const body = deliveryIssueResolutionSchema.safeParse(request.body);
-      if (!params.success) {
-        sendZodValidationError(request, response, params.error.issues);
-        return;
-      }
-      if (!body.success) {
-        sendZodValidationError(request, response, body.error.issues);
-        return;
-      }
-      if (!request.auth) {
-        next(new Error("Authenticated request context is missing."));
-        return;
-      }
-      try {
-        sendSuccess(
-          request,
-          response,
-          200,
-          await service.resolveIssue(request.auth.userId, params.data.issueId, body.data),
-        );
-      } catch (error) {
-        next(error);
-      }
-    },
+    ...createAdminWorkflowRoute({
+      operation: "delivery.resolve_issue",
+      permission: "deliveries.manage",
+      paramsSchema: deliveryIssueParamsSchema,
+      bodySchema: deliveryIssueResolutionSchema,
+      execute: (command) => service.resolveIssue(command),
+    }),
   );
   router.post(
     "/deliveries/:deliveryId/actions",
-    requirePermission("deliveries.manage"),
-    async (request, response, next) => {
-      const params = riderDeliveryParamsSchema.safeParse(request.params);
-      const body = dispatcherDeliveryActionSchema.safeParse(request.body);
-      if (!params.success) {
-        sendZodValidationError(request, response, params.error.issues);
-        return;
-      }
-      if (!body.success) {
-        sendZodValidationError(request, response, body.error.issues);
-        return;
-      }
-      if (!request.auth) {
-        next(new Error("Authenticated request context is missing."));
-        return;
-      }
-      try {
-        sendSuccess(
-          request,
-          response,
-          200,
-          await service.performAction(request.auth.userId, params.data.deliveryId, body.data),
-        );
-      } catch (error) {
-        next(error);
-      }
-    },
+    ...createAdminWorkflowRoute({
+      operation: "delivery.perform_exception_action",
+      permission: "deliveries.manage",
+      paramsSchema: riderDeliveryParamsSchema,
+      bodySchema: dispatcherDeliveryActionSchema,
+      execute: (command) => service.performAction(command),
+    }),
   );
 
   router.get(
@@ -187,7 +146,7 @@ export function createDispatcherRouter(
           request,
           response,
           200,
-          await proofService.getEvidence(request.auth.userId, "staff", params.data.deliveryId),
+          await service.getEvidence(request.auth.userId, params.data.deliveryId),
         );
       } catch (error) {
         next(error);

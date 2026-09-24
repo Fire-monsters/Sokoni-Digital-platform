@@ -1,3 +1,4 @@
 {
-    "workbench.editor.enablePreviewFromCodeNavigation": false
+    "workbench.editor.enablePreviewFromCodeNavigation": false,
+    "editor.tabSize": 5
 }

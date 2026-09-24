@@ -1,6 +1,7 @@
 import type { PaymentProviderAdapter } from "../../infrastructure/payments/shared/index.js";
 import { PesapalRequestError } from "../../infrastructure/payments/pesapal/index.js";
 import type { ServerEnvironment } from "@sokoni-digital/config";
+import type { PaymentBatchResult, PaymentFinanceInput } from "@sokoni-digital/domain";
 
 import type { PaymentProviderRegistry } from "./payment-provider.registry.js";
 import type {
@@ -10,6 +11,7 @@ import type {
 } from "./payments.schemas.js";
 import { PaymentProviderUnavailableError, PaymentRejectedError } from "./payments.errors.js";
 import type { PaymentAttemptRecord, PaymentsRepository } from "./payments.repository.js";
+import type { AuditWriteContext } from "../admin/workflows/index.js";
 
 type ReconciliationSource =
   "consumer_status_check" | "callback_recovery" | "scheduled_job" | "admin_request";
@@ -148,14 +150,24 @@ export class PaymentsService {
     }
 
     try {
-      await this.resolveWithProvider(
+      const result = await this.resolveWithProvider(
         notification.merchantReference,
         notification.providerTransactionId,
         adapter,
         "callback_recovery",
         event.id,
       );
-      await this.repository.finishProviderEvent(event.id, "processed", undefined, true);
+      const verified = ![
+        "manual_review_required",
+        "reference_mismatch",
+        "amount_mismatch",
+      ].includes(result.outcome);
+      await this.repository.finishProviderEvent(
+        event.id,
+        verified ? "processed" : "failed",
+        undefined,
+        verified,
+      );
       return { duplicate: false };
     } catch (cause) {
       await this.repository.finishProviderEvent(event.id, "failed");
@@ -186,85 +198,98 @@ export class PaymentsService {
     return this.repository.getReconciliationOverview(limit);
   }
 
-  async reconcileAttempt(paymentAttemptId: string, requestedBy?: string) {
+  getFinanceDetail(paymentAttemptId: string) {
+    return this.repository.getFinanceDetail(paymentAttemptId);
+  }
+
+  commandFinance(
+    actor: string,
+    id: string,
+    action: string,
+    input: PaymentFinanceInput,
+    auditContext: AuditWriteContext,
+  ) {
+    return this.repository.commandFinance(actor, id, action, input, auditContext);
+  }
+
+  async reconcileAttempt(
+    paymentAttemptId: string,
+    requestedBy?: string,
+    operationId?: string,
+    auditContext?: AuditWriteContext,
+  ) {
     const attempt = await this.repository.getById(paymentAttemptId);
-    if (["successful", "failed", "cancelled", "expired"].includes(attempt.status)) {
-      return { paymentAttemptId: attempt.id, status: attempt.status, unchanged: true };
+    if (attempt.provider !== "pesapal") {
+      throw new PaymentRejectedError("Market-pickup payments cannot be rechecked with Pesapal.");
     }
-    if (!attempt.providerTransactionId) {
-      await this.repository.recordReconciliation({
-        attempt,
-        providerStatus: "unknown",
-        result: "manual_review_required",
-        providerResponse: { error: "Missing Pesapal order tracking ID." },
-        runSource: "admin_request",
-        ...(requestedBy === undefined ? {} : { requestedBy }),
-      });
-      return {
-        paymentAttemptId: attempt.id,
-        status: attempt.status,
-        outcome: "manual_review_required" as const,
-      };
-    }
-    try {
-      return await this.resolveWithProvider(
-        attempt.merchantReference,
-        attempt.providerTransactionId,
-        this.registry.get("pesapal"),
-        "admin_request",
-        undefined,
-        requestedBy,
-      );
-    } catch (cause) {
-      await this.repository.recordReconciliation({
-        attempt,
-        providerStatus: "unknown",
-        result: "manual_review_required",
-        providerResponse: { error: safeProviderMessage(cause) },
-        runSource: "admin_request",
-        ...(requestedBy === undefined ? {} : { requestedBy }),
-      });
-      throw cause;
-    }
+    return this.resolveWithProvider(
+      attempt.merchantReference,
+      attempt.providerTransactionId ?? "",
+      this.registry.get("pesapal"),
+      "admin_request",
+      undefined,
+      requestedBy,
+      operationId,
+      auditContext,
+    );
   }
 
   async reconcilePendingBatch(
     runSource: "scheduled_job" | "admin_request" = "scheduled_job",
     requestedBy?: string,
-  ): Promise<{ claimed: number; resolved: number; failed: number }> {
-    const attempts = await this.repository.claimReconciliationBatch(
-      this.environment.PAYMENT_RECONCILIATION_BATCH_SIZE,
-    );
+    operationId?: string,
+    auditContext?: AuditWriteContext,
+  ): Promise<PaymentBatchResult> {
+    const attempts =
+      runSource === "admin_request" && requestedBy && operationId
+        ? await this.repository.claimAdminBatch(
+            requestedBy,
+            operationId,
+            Math.min(this.environment.PAYMENT_RECONCILIATION_BATCH_SIZE, 10),
+          )
+        : await this.repository.claimReconciliationBatch(
+            this.environment.PAYMENT_RECONCILIATION_BATCH_SIZE,
+          );
     let resolved = 0;
     let failed = 0;
+    let pending = 0;
+    let needsReview = 0;
     const adapter = this.registry.get("pesapal");
-    for (const attempt of attempts) {
-      try {
-        if (!attempt.providerTransactionId) throw new Error("Missing Pesapal order tracking ID.");
-        await this.resolveWithProvider(
-          attempt.merchantReference,
-          attempt.providerTransactionId,
-          adapter,
-          runSource,
-          undefined,
-          requestedBy,
-        );
-        resolved += 1;
-        await this.repository.releaseReconciliationClaim(attempt.id, 30);
-      } catch (cause) {
-        failed += 1;
-        await this.repository.recordReconciliation({
-          attempt,
-          providerStatus: "unknown",
-          result: "manual_review_required",
-          providerResponse: { error: safeProviderMessage(cause) },
-          runSource,
-          ...(requestedBy === undefined ? {} : { requestedBy }),
-        });
-        await this.repository.releaseReconciliationClaim(attempt.id, 60);
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < attempts.length) {
+        const attempt = attempts[cursor++];
+        if (!attempt) break;
+        try {
+          const result = await this.resolveWithProvider(
+            attempt.merchantReference,
+            attempt.providerTransactionId ?? "",
+            adapter,
+            runSource,
+            undefined,
+            requestedBy,
+            operationId,
+            auditContext,
+          );
+          await this.repository.releaseReconciliationClaim(attempt.id, 30);
+          if (
+            ["manual_review_required", "amount_mismatch", "reference_mismatch"].includes(
+              result.outcome,
+            )
+          )
+            needsReview += 1;
+          else if (["successful", "failed", "cancelled", "expired"].includes(result.status))
+            resolved += 1;
+          else pending += 1;
+        } catch {
+          failed += 1;
+          // A persistence failure must not be mislabeled as a provider timeout.
+          await this.repository.releaseReconciliationClaim(attempt.id, 60);
+        }
       }
-    }
-    return { claimed: attempts.length, resolved, failed };
+    };
+    await Promise.all(Array.from({ length: Math.min(5, attempts.length) }, () => worker()));
+    return { claimed: attempts.length, resolved, pending, needsReview, failed };
   }
 
   private async resolveWithProvider(
@@ -274,60 +299,71 @@ export class PaymentsService {
     runSource: ReconciliationSource,
     providerEventId?: string,
     requestedBy?: string,
+    operationId?: string,
+    auditContext?: AuditWriteContext,
   ) {
     const attempt = await this.repository.getByMerchantReference(merchantReference);
-    if (attempt.providerTransactionId && attempt.providerTransactionId !== transactionId) {
-      throw new PaymentRejectedError(
-        "Pesapal transaction reference does not match the payment attempt.",
-      );
+    let evidence: Record<string, unknown>;
+    if (!transactionId) evidence = { errorCode: "MISSING_PROVIDER_REFERENCE" };
+    else if (attempt.providerTransactionId && attempt.providerTransactionId !== transactionId) {
+      evidence = { errorCode: "REFERENCE_MISMATCH" };
+    } else {
+      try {
+        const result = await adapter.getPaymentStatus({
+          providerTransactionId: transactionId,
+          merchantReference,
+        });
+        evidence = {
+          transactionId,
+          status: result.status,
+          amount: result.amount,
+          currency: result.currency,
+          paymentMethod: result.paymentMethod,
+          confirmationCode: result.confirmationCode,
+          reasonCode: result.reasonCode,
+          message: result.message,
+          providerEventId,
+          rawResponse: result.rawResponse,
+        };
+        if (
+          (result.merchantReference && result.merchantReference !== merchantReference) ||
+          (result.providerTransactionId && result.providerTransactionId !== transactionId)
+        ) {
+          evidence.errorCode = "REFERENCE_MISMATCH";
+        } else if (
+          result.amount === undefined ||
+          !Number.isSafeInteger(result.amount) ||
+          result.amount < 0 ||
+          !result.currency
+        ) {
+          evidence = {
+            transactionId,
+            errorCode: "INCOMPLETE_PROVIDER_RESPONSE",
+            rawResponse: result.rawResponse,
+          };
+        }
+      } catch {
+        // Raw exception messages may contain credentials or upstream request bodies.
+        evidence = { errorCode: "PROVIDER_LOOKUP_FAILED" };
+      }
     }
-    const providerResult = await adapter.getPaymentStatus({
-      providerTransactionId: transactionId,
-      merchantReference,
-    });
-    if (
-      providerResult.merchantReference &&
-      providerResult.merchantReference !== merchantReference
-    ) {
-      throw new PaymentRejectedError("Pesapal returned a different merchant reference.");
-    }
-    if (providerResult.amount === undefined || providerResult.currency === undefined) {
-      throw new PaymentProviderUnavailableError("Pesapal returned an incomplete payment status.");
-    }
-
-    const mismatch =
-      providerResult.amount !== attempt.amount || providerResult.currency !== attempt.currency;
-    await this.repository.recordReconciliation({
-      attempt,
-      providerStatus: providerResult.status,
-      result: mismatch
-        ? "amount_mismatch"
-        : providerResult.status === "pending"
-          ? "no_change"
-          : "status_updated",
-      providerAmount: providerResult.amount,
-      providerCurrency: providerResult.currency,
-      providerResponse: providerResult.rawResponse,
-      runSource,
-      ...(requestedBy === undefined ? {} : { requestedBy }),
-    });
-    return this.repository.processResult({
-      provider: "pesapal",
-      providerTransactionId: transactionId,
-      merchantReference,
-      status: providerResult.status,
-      amount: providerResult.amount,
-      currency: providerResult.currency,
-      ...(providerResult.paymentMethod === undefined
-        ? {}
-        : { paymentMethod: providerResult.paymentMethod }),
-      ...(providerEventId === undefined ? {} : { providerEventId }),
-      ...(providerResult.confirmationCode === undefined
-        ? {}
-        : { confirmationCode: providerResult.confirmationCode }),
-      ...(providerResult.reasonCode === undefined ? {} : { reasonCode: providerResult.reasonCode }),
-      ...(providerResult.message === undefined ? {} : { message: providerResult.message }),
-    });
+    const normalizedEvidence = { ...evidence, ...(providerEventId ? { providerEventId } : {}) };
+    return auditContext
+      ? this.repository.applyReconciliation(
+          attempt.id,
+          normalizedEvidence,
+          runSource,
+          requestedBy,
+          operationId,
+          auditContext,
+        )
+      : this.repository.applyReconciliation(
+          attempt.id,
+          normalizedEvidence,
+          runSource,
+          requestedBy,
+          operationId,
+        );
   }
 }
 

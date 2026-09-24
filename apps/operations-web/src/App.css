@@ -207,6 +207,94 @@ button:disabled {
   padding: 12px;
   background: #fff2d8;
 }
+.audit-integrity {
+  align-self: center;
+  border: 1px solid #b8d8c5;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: #eaf6ef;
+  color: #145c39;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.audit-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(180px, 1.5fr) repeat(3, minmax(130px, 1fr)) auto;
+  align-items: end;
+  gap: 10px;
+  margin: 24px 0;
+}
+.audit-filters label {
+  display: grid;
+  gap: 6px;
+  color: #4f5d55;
+  font-size: 12px;
+  font-weight: 700;
+}
+.audit-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
+  gap: 20px;
+}
+.audit-list {
+  min-width: 0;
+}
+.audit-event {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  margin-bottom: 8px;
+  border-color: #dce4df;
+  color: #17211b;
+  text-align: left;
+}
+.audit-event:hover,
+.audit-event.selected {
+  border-color: #1f7a4d;
+  background: #f0f8f3;
+}
+.audit-event-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.audit-event-heading time,
+.audit-event small,
+.audit-event > span:not(.audit-event-heading) {
+  color: #657168;
+  font-size: 12px;
+}
+.audit-event-heading time {
+  flex: none;
+}
+.audit-detail dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.audit-identifier {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+.audit-state {
+  margin-top: 18px;
+}
+.audit-state h3 {
+  margin-bottom: 7px;
+  font-size: 14px;
+}
+.audit-state pre {
+  overflow: auto;
+  max-height: 280px;
+  margin: 0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f4f7f5;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
 .review-layout {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
@@ -299,6 +387,25 @@ textarea {
   padding: 12px 0;
   border-top: 1px solid #dce4df;
 }
+
+.review-warning {
+  border: 1px solid #e2b857;
+  border-radius: 0.75rem;
+  background: #fff8e5;
+  padding: 0.75rem 1rem;
+}
+
+.review-history {
+  margin-top: 1rem;
+}
+
+.review-history h3 {
+  margin-bottom: 0.5rem;
+}
+
+.review-history p {
+  margin: 0.35rem 0;
+}
 .delivery-operations {
   margin-bottom: 40px;
 }
@@ -388,6 +495,59 @@ textarea {
 }
 .dispatcher-panel textarea {
   margin-top: 8px;
+}
+.detail-loading {
+  color: #5e6a63;
+}
+.delivery-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.delivery-detail-grid > section {
+  padding: 16px;
+  border: 1px solid #dce4df;
+  border-radius: 10px;
+  background: #f8faf8;
+}
+.delivery-detail-grid h4 {
+  margin: 0 0 12px;
+}
+.detail-wide {
+  grid-column: 1 / -1;
+}
+.detail-list,
+.delivery-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.detail-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid #dce4df;
+}
+.delivery-timeline li {
+  padding: 8px 0 8px 16px;
+  border-left: 2px solid #b9d9c7;
+}
+.delivery-timeline p {
+  margin: 4px 0;
+}
+.delivery-timeline small,
+.detail-list small {
+  color: #5e6a63;
+}
+@media (max-width: 760px) {
+  .delivery-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-wide {
+    grid-column: auto;
+  }
 }
 .contact-summary {
   display: flex;
@@ -1223,5 +1383,34 @@ summary:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+.investigation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.investigation-wide {
+  grid-column: 1 / -1;
+}
+
+.investigation-grid pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+
+@media (max-width: 800px) {
+  .investigation-grid {
+    grid-template-columns: 1fr;
+  }
+  .audit-filters,
+  .audit-layout {
+    grid-template-columns: 1fr;
+  }
+  .audit-event-heading {
+    flex-direction: column;
+    gap: 3px;
   }
 }

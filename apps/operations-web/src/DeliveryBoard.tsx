@@ -1,20 +1,20 @@
 import {
   assignDispatcherDelivery,
-  fetchDispatcherDeliveryEvidence,
+  fetchDispatcherDelivery,
   fetchDispatcherNearbyRiders,
   performDispatcherDeliveryAction,
   resolveDispatcherDeliveryIssue,
 } from "@sokoni-digital/api-client";
 import {
   deliveryIssueResolutionCodes,
-  type DeliveryEvidence,
   type DeliveryIssueResolutionCode,
   type DispatcherDelivery,
   type DispatcherDeliveryAction,
   type DispatcherDeliveryBoard,
+  type DispatcherDeliveryDetail,
   type DispatcherRider,
 } from "@sokoni-digital/domain";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { deliveryBoardColumn } from "./delivery-board-policy";
 
 const columns = [
@@ -57,7 +57,9 @@ export function DeliveryBoard({
   const [nearby, setNearby] = useState<DispatcherRider[]>();
   const [resolutionCode, setResolutionCode] =
     useState<DeliveryIssueResolutionCode>("RESUME_DELIVERY");
-  const [evidence, setEvidence] = useState<DeliveryEvidence>();
+  const [detail, setDetail] = useState<DispatcherDeliveryDetail>();
+  const [detailLoading, setDetailLoading] = useState(false);
+  const detailRequest = useRef(0);
   const selected = board.deliveries.find((delivery) => delivery.id === selectedId);
   const grouped = useMemo(
     () =>
@@ -71,6 +73,25 @@ export function DeliveryBoard({
   );
   const selectableRiders = nearby ?? riders.filter((rider) => rider.availability === "available");
 
+  async function loadDetail(deliveryId: string): Promise<void> {
+    const requestNumber = ++detailRequest.current;
+    setDetailLoading(true);
+    try {
+      const result = await fetchDispatcherDelivery(
+        { baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000", accessToken: token },
+        deliveryId,
+      );
+      if (requestNumber === detailRequest.current) setDetail(result);
+    } catch (error) {
+      if (requestNumber === detailRequest.current) {
+        setDetail(undefined);
+        onMessage(error instanceof Error ? error.message : "Delivery details could not be loaded.");
+      }
+    } finally {
+      if (requestNumber === detailRequest.current) setDetailLoading(false);
+    }
+  }
+
   async function run(action: () => Promise<unknown>, success: string): Promise<void> {
     onBusy(true);
     onMessage("");
@@ -80,6 +101,7 @@ export function DeliveryBoard({
       setReason("");
       setNearby(undefined);
       await onReload();
+      if (selected) await loadDetail(selected.id);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : "Dispatcher action failed.");
     } finally {
@@ -121,6 +143,7 @@ export function DeliveryBoard({
       );
       setReason("");
       await onReload();
+      await loadDetail(selected.id);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : "Dispatcher action failed.");
     } finally {
@@ -132,10 +155,10 @@ export function DeliveryBoard({
     <section className="delivery-operations">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Live dispatch</p>
+          <p className="eyebrow">Dispatch queue</p>
           <h2>Delivery board</h2>
         </div>
-        <span className="live-badge">● Live · 30 day window</span>
+        <span className="live-badge">Location snapshots · 30-day window</span>
       </div>
       <div className="delivery-board">
         {columns.map((column) => (
@@ -152,7 +175,8 @@ export function DeliveryBoard({
                   setSelectedId(delivery.id);
                   setRiderId("");
                   setNearby(undefined);
-                  setEvidence(undefined);
+                  setDetail(undefined);
+                  void loadDetail(delivery.id);
                 }}
               >
                 <strong>{delivery.reference}</strong>
@@ -174,7 +198,7 @@ export function DeliveryBoard({
         ))}
       </div>
 
-      {selected && canManage ? (
+      {selected ? (
         <div className="dispatcher-panel">
           <div className="dispatcher-summary">
             <div>
@@ -184,136 +208,245 @@ export function DeliveryBoard({
             </div>
             <div className="contact-summary">
               <strong>{selected.transporter?.displayName ?? "Unassigned"}</strong>
-              <span>{selected.consumerPhoneNumber}</span>
+              <span>{selected.destinationSummary}</span>
             </div>
           </div>
-          <label>
-            Required operations reason
-            <textarea
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              placeholder="Explain why this override is necessary"
-            />
-          </label>
-
-          {(["unassigned", "offering", "assigned", "arrived_at_market"] as string[]).includes(
-            selected.status,
-          ) ? (
-            <div className="assignment-controls">
-              <select
-                aria-label="Available rider"
-                value={riderId}
-                onChange={(event) => setRiderId(event.target.value)}
-              >
-                <option value="">Select an available rider</option>
-                {selectableRiders.map((rider) => (
-                  <option key={rider.id} value={rider.id}>
-                    {rider.displayName}
-                    {rider.distanceKm !== undefined ? ` · ${rider.distanceKm.toFixed(1)} km` : ""}
-                  </option>
-                ))}
-              </select>
-              {selected.status === "unassigned" || selected.status === "offering" ? (
-                <button
-                  disabled={busy}
-                  onClick={() =>
-                    void fetchDispatcherNearbyRiders(
-                      {
-                        baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
-                        accessToken: token,
-                      },
-                      selected.id,
-                    )
-                      .then(setNearby)
-                      .catch((error: unknown) =>
-                        onMessage(error instanceof Error ? error.message : "Nearby search failed."),
-                      )
-                  }
-                >
-                  Search nearby
-                </button>
-              ) : null}
-              <button
-                className="approve"
-                disabled={busy || !riderId || reason.trim().length < 3}
-                onClick={() =>
-                  void assignment(
-                    selected.status === "assigned" || selected.status === "arrived_at_market",
-                  )
-                }
-              >
-                {selected.status === "assigned" || selected.status === "arrived_at_market"
-                  ? "Reassign rider"
-                  : "Assign rider"}
-              </button>
+          {detailLoading ? <p className="detail-loading">Loading delivery details…</p> : null}
+          {detail ? (
+            <div className="delivery-detail-grid">
+              <section>
+                <h4>Order</h4>
+                <dl>
+                  <dt>Reference</dt>
+                  <dd>{detail.order.reference}</dd>
+                  <dt>Status</dt>
+                  <dd>{detail.order.status.replaceAll("_", " ")}</dd>
+                  <dt>Total</dt>
+                  <dd>
+                    {detail.order.currency} {detail.order.total.toLocaleString()}
+                  </dd>
+                  <dt>Destination</dt>
+                  <dd>{detail.delivery.destination.summary}</dd>
+                </dl>
+              </section>
+              <section>
+                <h4>Assigned rider</h4>
+                {detail.assignedRider ? (
+                  <dl>
+                    <dt>Name</dt>
+                    <dd>{detail.assignedRider.displayName}</dd>
+                    <dt>Availability</dt>
+                    <dd>{detail.assignedRider.availability}</dd>
+                    <dt>Location</dt>
+                    <dd>
+                      {detail.assignedRider.lastLocation
+                        ? `Updated ${age(detail.assignedRider.lastLocation.receivedAt)} ago${detail.assignedRider.locationIsFresh ? "" : " · stale"}`
+                        : "No location snapshot"}
+                    </dd>
+                  </dl>
+                ) : (
+                  <p>No rider assigned.</p>
+                )}
+              </section>
+              <section>
+                <h4>Pickup checklist</h4>
+                {detail.pickups.length ? (
+                  <ul className="detail-list">
+                    {detail.pickups.map((pickup) => (
+                      <li key={pickup.id}>
+                        <span>{pickup.vendorName}</span>
+                        <strong>{pickup.status}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Pickup checklist starts after assignment.</p>
+                )}
+              </section>
+              <section>
+                <h4>Vendor orders</h4>
+                <ul className="detail-list">
+                  {detail.vendors.map((vendor) => (
+                    <li key={vendor.sellerOrder.id}>
+                      <span>
+                        {vendor.vendor.name} · {vendor.sellerOrder.reference}
+                      </span>
+                      <strong>{vendor.sellerOrder.status.replaceAll("_", " ")}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <section>
+                <h4>Customer confirmation</h4>
+                <dl>
+                  <dt>PIN state</dt>
+                  <dd>
+                    {detail.customerPin.confirmedAt
+                      ? "Confirmed"
+                      : detail.customerPin.lockedAt
+                        ? "Locked"
+                        : detail.customerPin.configured
+                          ? "Awaiting confirmation"
+                          : "Not generated"}
+                  </dd>
+                  <dt>Attempts</dt>
+                  <dd>{detail.customerPin.failedAttempts}</dd>
+                </dl>
+              </section>
+              <section className="detail-wide">
+                <h4>Assignment history</h4>
+                {detail.assignmentHistory.length ? (
+                  <ul className="detail-list">
+                    {detail.assignmentHistory.map((assignment) => (
+                      <li key={assignment.operationId}>
+                        <span>
+                          {assignment.riderName} · {assignment.reason}
+                        </span>
+                        <small>{new Date(assignment.assignedAt).toLocaleString()}</small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No assignment history.</p>
+                )}
+              </section>
+              <section className="detail-wide">
+                <h4>Timeline</h4>
+                <ol className="delivery-timeline">
+                  {detail.timeline.map((entry) => (
+                    <li key={entry.id}>
+                      <strong>{entry.title}</strong>
+                      <span>
+                        {entry.fromStatus && entry.toStatus
+                          ? ` ${entry.fromStatus.replaceAll("_", " ")} → ${entry.toStatus.replaceAll("_", " ")}`
+                          : ""}
+                      </span>
+                      {entry.reason ? <p>{entry.reason}</p> : null}
+                      <small>{new Date(entry.occurredAt).toLocaleString()}</small>
+                    </li>
+                  ))}
+                </ol>
+              </section>
             </div>
           ) : null}
+          {canManage ? (
+            <>
+              <label>
+                Required operations reason
+                <textarea
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                  placeholder="Explain why this override is necessary"
+                />
+              </label>
 
-          <div className="override-actions">
-            {(["assigned", "arrived_at_market"] as string[]).includes(selected.status) ? (
-              <button
-                disabled={busy || reason.trim().length < 3}
-                onClick={() => void deliveryAction("CANCEL_ASSIGNMENT")}
-              >
-                Cancel assignment
-              </button>
-            ) : null}
-            {(["in_transit", "arrived_at_customer"] as string[]).includes(selected.status) ? (
-              <button
-                disabled={busy || reason.trim().length < 3}
-                onClick={() => void deliveryAction("MARK_CUSTOMER_UNAVAILABLE")}
-              >
-                Customer unavailable
-              </button>
-            ) : null}
-            {(
-              ["picked_up", "in_transit", "arrived_at_customer", "customer_unavailable"] as string[]
-            ).includes(selected.status) ? (
-              <button
-                disabled={busy || reason.trim().length < 3}
-                onClick={() => void deliveryAction("RETURN_TO_MARKET")}
-              >
-                Return to market
-              </button>
-            ) : null}
-            {selected.transporter ? (
-              <button
-                disabled={busy || reason.trim().length < 3}
-                onClick={() => void deliveryAction("CONTACT_RIDER")}
-              >
-                Contact rider
-              </button>
-            ) : null}
-            <button
-              disabled={busy || reason.trim().length < 3}
-              onClick={() => void deliveryAction("CONTACT_CONSUMER")}
-            >
-              Contact consumer
-            </button>
-            {selected.status === "delivered" ? (
-              <button
-                disabled={busy}
-                onClick={() =>
-                  void fetchDispatcherDeliveryEvidence(
-                    {
-                      baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
-                      accessToken: token,
-                    },
-                    selected.id,
-                  )
-                    .then(setEvidence)
-                    .catch((error: unknown) =>
-                      onMessage(error instanceof Error ? error.message : "Evidence unavailable."),
-                    )
-                }
-              >
-                View evidence
-              </button>
-            ) : null}
-          </div>
-          {evidence ? (
+              {(["unassigned", "offering", "assigned", "arrived_at_market"] as string[]).includes(
+                selected.status,
+              ) ? (
+                <div className="assignment-controls">
+                  <select
+                    aria-label="Available rider"
+                    value={riderId}
+                    onChange={(event) => setRiderId(event.target.value)}
+                  >
+                    <option value="">Select an available rider</option>
+                    {selectableRiders.map((rider) => (
+                      <option key={rider.id} value={rider.id}>
+                        {rider.displayName}
+                        {rider.distanceKm !== undefined
+                          ? ` · ${rider.distanceKm.toFixed(1)} km`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      void fetchDispatcherNearbyRiders(
+                        {
+                          baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
+                          accessToken: token,
+                        },
+                        selected.id,
+                      )
+                        .then(setNearby)
+                        .catch((error: unknown) =>
+                          onMessage(
+                            error instanceof Error ? error.message : "Nearby search failed.",
+                          ),
+                        )
+                    }
+                  >
+                    Search nearby
+                  </button>
+                  <button
+                    className="approve"
+                    disabled={busy || !riderId || reason.trim().length < 3}
+                    onClick={() =>
+                      void assignment(
+                        selected.status === "assigned" || selected.status === "arrived_at_market",
+                      )
+                    }
+                  >
+                    {selected.status === "assigned" || selected.status === "arrived_at_market"
+                      ? "Reassign rider"
+                      : "Assign rider"}
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="override-actions">
+                {(["assigned", "arrived_at_market"] as string[]).includes(selected.status) ? (
+                  <button
+                    disabled={busy || reason.trim().length < 3}
+                    onClick={() => void deliveryAction("CANCEL_ASSIGNMENT")}
+                  >
+                    Cancel assignment
+                  </button>
+                ) : null}
+                {(["in_transit", "arrived_at_customer"] as string[]).includes(selected.status) ? (
+                  <button
+                    disabled={busy || reason.trim().length < 3}
+                    onClick={() => void deliveryAction("MARK_CUSTOMER_UNAVAILABLE")}
+                  >
+                    Customer unavailable
+                  </button>
+                ) : null}
+                {(
+                  [
+                    "picked_up",
+                    "in_transit",
+                    "arrived_at_customer",
+                    "customer_unavailable",
+                  ] as string[]
+                ).includes(selected.status) ? (
+                  <button
+                    disabled={busy || reason.trim().length < 3}
+                    onClick={() => void deliveryAction("RETURN_TO_MARKET")}
+                  >
+                    Return to market
+                  </button>
+                ) : null}
+                {selected.transporter ? (
+                  <button
+                    disabled={busy || reason.trim().length < 3}
+                    onClick={() => void deliveryAction("CONTACT_RIDER")}
+                  >
+                    Contact rider
+                  </button>
+                ) : null}
+                <button
+                  disabled={busy || reason.trim().length < 3}
+                  onClick={() => void deliveryAction("CONTACT_CONSUMER")}
+                >
+                  Contact consumer
+                </button>
+              </div>
+            </>
+          ) : null}
+          {detail?.evidence.images.length ? (
             <div className="evidence-gallery">
-              {evidence.images.map((image) => (
+              {detail.evidence.images.map((image) => (
                 <a href={image.originalUrl} key={image.id} rel="noreferrer" target="_blank">
                   <img
                     alt={`Delivery evidence captured ${new Date(image.capturedAt).toLocaleString()}`}
@@ -337,44 +470,46 @@ export function DeliveryBoard({
               <p>{issue.note || "No rider note"}</p>
               <small>{new Date(issue.createdAt).toLocaleString()}</small>
             </div>
-            <div className="resolution-controls">
-              <select
-                value={resolutionCode}
-                onChange={(event) =>
-                  setResolutionCode(event.target.value as DeliveryIssueResolutionCode)
-                }
-              >
-                {deliveryIssueResolutionCodes.map((code) => (
-                  <option key={code} value={code}>
-                    {code.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="approve"
-                disabled={busy || reason.trim().length < 3}
-                onClick={() =>
-                  void run(
-                    () =>
-                      resolveDispatcherDeliveryIssue(
-                        {
-                          baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
-                          accessToken: token,
-                        },
-                        issue.id,
-                        {
-                          resolutionCode,
-                          resolutionNote: reason,
-                          operationId: crypto.randomUUID(),
-                        },
-                      ),
-                    "Issue resolved.",
-                  )
-                }
-              >
-                Resolve issue
-              </button>
-            </div>
+            {canManage ? (
+              <div className="resolution-controls">
+                <select
+                  value={resolutionCode}
+                  onChange={(event) =>
+                    setResolutionCode(event.target.value as DeliveryIssueResolutionCode)
+                  }
+                >
+                  {deliveryIssueResolutionCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {code.replaceAll("_", " ")}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="approve"
+                  disabled={busy || reason.trim().length < 3}
+                  onClick={() =>
+                    void run(
+                      () =>
+                        resolveDispatcherDeliveryIssue(
+                          {
+                            baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
+                            accessToken: token,
+                          },
+                          issue.id,
+                          {
+                            resolutionCode,
+                            resolutionNote: reason,
+                            operationId: crypto.randomUUID(),
+                          },
+                        ),
+                      "Issue resolved.",
+                    )
+                  }
+                >
+                  Resolve issue
+                </button>
+              </div>
+            ) : null}
           </div>
         ))}
         {board.issues.length === 0 ? <p>No open delivery exceptions.</p> : null}

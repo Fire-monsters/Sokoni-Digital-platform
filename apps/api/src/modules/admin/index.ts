@@ -5,30 +5,6 @@ import { sendError, sendSuccess, sendZodValidationError } from "../../http/respo
 import { supabase } from "../../infrastructure/supabase/client.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requireActiveStaff, requirePermission } from "../../middleware/require-permission.js";
-import { createAdminCollectionQuerySchema, createAdminPagination } from "./admin-query.js";
-
-const applicationStatusSchema = z.enum([
-  "submitted",
-  "under_review",
-  "changes_requested",
-  "approved",
-  "rejected",
-  "suspended",
-]);
-
-const applicationListQuerySchema = createAdminCollectionQuerySchema({
-  sortFields: ["submittedAt", "status"] as const,
-  defaultSortBy: "submittedAt",
-  filters: {
-    status: applicationStatusSchema.optional(),
-    type: z.enum(["vendor", "rider"]).optional(),
-    marketId: z.uuid().optional(),
-  },
-});
-
-const applicationParamsSchema = z.object({
-  applicationId: z.uuid(),
-});
 
 const deviceRequestParamsSchema = z.object({
   requestId: z.uuid(),
@@ -44,10 +20,6 @@ const userParamsSchema = z.object({
 
 const decisionReasonSchema = z.object({
   reason: z.string().trim().min(3, "A reason is required."),
-  internalNotes: z.string().trim().optional(),
-});
-
-const optionalNotesSchema = z.object({
   internalNotes: z.string().trim().optional(),
 });
 
@@ -78,143 +50,6 @@ adminRouter.get("/session", requireActiveStaff(), async (request, response) => {
     permissions: staff.permissions,
   });
 });
-
-adminRouter.get("/applications", requirePermission("applications.read"), (request, response) => {
-  const result = applicationListQuerySchema.safeParse(request.query);
-
-  if (!result.success) {
-    sendZodValidationError(request, response, result.error.issues);
-    return;
-  }
-
-  sendSuccess(request, response, 200, {
-    data: [],
-    pagination: createAdminPagination(result.data.page, result.data.pageSize, 0),
-  });
-});
-
-adminRouter.get(
-  "/applications/:applicationId",
-  requirePermission("applications.read"),
-  (request, response) => {
-    const result = applicationParamsSchema.safeParse(request.params);
-
-    if (!result.success) {
-      sendZodValidationError(request, response, result.error.issues);
-      return;
-    }
-
-    sendSuccess(request, response, 200, {
-      applicationId: result.data.applicationId,
-      status: "submitted",
-      applicant: null,
-      documents: [],
-      timeline: [],
-    });
-  },
-);
-
-adminRouter.post(
-  "/applications/:applicationId/start-review",
-  requirePermission("applications.review"),
-  (request, response) => {
-    const params = applicationParamsSchema.safeParse(request.params);
-    const body = optionalNotesSchema.safeParse(request.body);
-
-    if (!params.success) {
-      sendZodValidationError(request, response, params.error.issues);
-      return;
-    }
-
-    if (!body.success) {
-      sendZodValidationError(request, response, body.error.issues);
-      return;
-    }
-
-    sendSuccess(request, response, 200, {
-      applicationId: params.data.applicationId,
-      status: "under_review",
-      auditRecorded: true,
-    });
-  },
-);
-
-adminRouter.post(
-  "/applications/:applicationId/approve",
-  requirePermission("applications.review"),
-  (request, response) => {
-    const params = applicationParamsSchema.safeParse(request.params);
-    const body = optionalNotesSchema.safeParse(request.body);
-
-    if (!params.success) {
-      sendZodValidationError(request, response, params.error.issues);
-      return;
-    }
-
-    if (!body.success) {
-      sendZodValidationError(request, response, body.error.issues);
-      return;
-    }
-
-    sendSuccess(request, response, 200, {
-      applicationId: params.data.applicationId,
-      status: "approved",
-      auditRecorded: true,
-    });
-  },
-);
-
-adminRouter.post(
-  "/applications/:applicationId/request-changes",
-  requirePermission("applications.review"),
-  (request, response) => {
-    const params = applicationParamsSchema.safeParse(request.params);
-    const body = decisionReasonSchema.safeParse(request.body);
-
-    if (!params.success) {
-      sendZodValidationError(request, response, params.error.issues);
-      return;
-    }
-
-    if (!body.success) {
-      sendZodValidationError(request, response, body.error.issues);
-      return;
-    }
-
-    sendSuccess(request, response, 200, {
-      applicationId: params.data.applicationId,
-      status: "changes_requested",
-      reason: body.data.reason,
-      auditRecorded: true,
-    });
-  },
-);
-
-adminRouter.post(
-  "/applications/:applicationId/reject",
-  requirePermission("applications.review"),
-  (request, response) => {
-    const params = applicationParamsSchema.safeParse(request.params);
-    const body = decisionReasonSchema.safeParse(request.body);
-
-    if (!params.success) {
-      sendZodValidationError(request, response, params.error.issues);
-      return;
-    }
-
-    if (!body.success) {
-      sendZodValidationError(request, response, body.error.issues);
-      return;
-    }
-
-    sendSuccess(request, response, 200, {
-      applicationId: params.data.applicationId,
-      status: "rejected",
-      reason: body.data.reason,
-      auditRecorded: true,
-    });
-  },
-);
 
 adminRouter.post(
   "/users/:userId/suspend",

@@ -14,7 +14,6 @@ const delivery = {
   marketName: "Kitooro",
   zoneName: "Lunyo",
   destinationSummary: "Lunyo",
-  consumerPhoneNumber: "+256700000000",
   transporter: null,
   openIssueCount: 0,
 } satisfies DispatcherDelivery;

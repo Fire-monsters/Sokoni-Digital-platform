@@ -9,6 +9,262 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_applications: {
+        Row: {
+          details: Json
+          id: string
+          issues: string[]
+          reason: string | null
+          review_started_at: string | null
+          reviewer_id: string | null
+          seller_id: string | null
+          status: string
+          submitted_at: string
+          transporter_id: string | null
+          type: string
+          updated_at: string
+          user_id: string | null
+          version: number
+        }
+        Insert: {
+          details?: Json
+          id: string
+          issues?: string[]
+          reason?: string | null
+          review_started_at?: string | null
+          reviewer_id?: string | null
+          seller_id?: string | null
+          status: string
+          submitted_at?: string
+          transporter_id?: string | null
+          type: string
+          updated_at?: string
+          user_id?: string | null
+          version?: number
+        }
+        Update: {
+          details?: Json
+          id?: string
+          issues?: string[]
+          reason?: string | null
+          review_started_at?: string | null
+          reviewer_id?: string | null
+          seller_id?: string | null
+          status?: string
+          submitted_at?: string
+          transporter_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_applications_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "account_applications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "catalogue_listing_cards"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "account_applications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "catalogue_listing_details"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "account_applications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_applications_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: true
+            referencedRelation: "transporter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_documents: {
+        Row: {
+          application_id: string
+          byte_size: number
+          content_type: string
+          created_at: string
+          document_type: string
+          id: string
+          status: string
+          storage_path: string
+        }
+        Insert: {
+          application_id: string
+          byte_size: number
+          content_type: string
+          created_at?: string
+          document_type: string
+          id?: string
+          status?: string
+          storage_path: string
+        }
+        Update: {
+          application_id?: string
+          byte_size?: number
+          content_type?: string
+          created_at?: string
+          document_type?: string
+          id?: string
+          status?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "account_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_review_events: {
+        Row: {
+          action: string
+          actor_user_id: string
+          application_id: string
+          created_at: string
+          from_status: string
+          id: string
+          internal_notes: string | null
+          issues: string[]
+          reason: string | null
+          to_status: string
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          application_id: string
+          created_at?: string
+          from_status: string
+          id?: string
+          internal_notes?: string | null
+          issues?: string[]
+          reason?: string | null
+          to_status: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          application_id?: string
+          created_at?: string
+          from_status?: string
+          id?: string
+          internal_notes?: string | null
+          issues?: string[]
+          reason?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_review_events_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "account_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_review_operations: {
+        Row: {
+          command: Json
+          created_at: string
+          operation_id: string
+          result: Json
+        }
+        Insert: {
+          command: Json
+          created_at?: string
+          operation_id: string
+          result: Json
+        }
+        Update: {
+          command?: Json
+          created_at?: string
+          operation_id?: string
+          result?: Json
+        }
+        Relationships: []
+      }
+      audit_events: {
+        Row: {
+          action: string
+          actor_staff_id: string | null
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_reference: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_state: Json | null
+          operation_id: string | null
+          previous_state: Json | null
+          reason: string
+          request_id: string | null
+          source_id: string
+          source_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_staff_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_id: string
+          entity_reference?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_state?: Json | null
+          operation_id?: string | null
+          previous_state?: Json | null
+          reason: string
+          request_id?: string | null
+          source_id: string
+          source_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_staff_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string
+          entity_reference?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_state?: Json | null
+          operation_id?: string | null
+          previous_state?: Json | null
+          reason?: string
+          request_id?: string | null
+          source_id?: string
+          source_type?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       cart_item_operations: {
         Row: {
           cart_id: string
@@ -293,6 +549,39 @@ export type Database = {
           id?: string
           next_state?: Json | null
           previous_state?: Json | null
+        }
+        Relationships: []
+      }
+      catalogue_review_operations: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          entity_id: string
+          expected_version: number | null
+          operation_id: string
+          result: Json
+          review_note: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          created_at?: string
+          entity_id: string
+          expected_version?: number | null
+          operation_id: string
+          result: Json
+          review_note?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          entity_id?: string
+          expected_version?: number | null
+          operation_id?: string
+          result?: Json
+          review_note?: string | null
         }
         Relationships: []
       }
@@ -2300,6 +2589,123 @@ export type Database = {
         }
         Relationships: []
       }
+      order_support_audit_events: {
+        Row: {
+          action: string
+          actor_id: string
+          checkout_id: string
+          created_at: string
+          details: Json
+          id: string
+          next_status: Database["public"]["Enums"]["checkout_status"]
+          operation_id: string
+          previous_status: Database["public"]["Enums"]["checkout_status"]
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          checkout_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          next_status: Database["public"]["Enums"]["checkout_status"]
+          operation_id: string
+          previous_status: Database["public"]["Enums"]["checkout_status"]
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          checkout_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          next_status?: Database["public"]["Enums"]["checkout_status"]
+          operation_id?: string
+          previous_status?: Database["public"]["Enums"]["checkout_status"]
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_support_audit_events_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "customer_checkouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_support_notes: {
+        Row: {
+          author_id: string
+          checkout_id: string
+          created_at: string
+          id: string
+          note: string
+        }
+        Insert: {
+          author_id: string
+          checkout_id: string
+          created_at?: string
+          id?: string
+          note: string
+        }
+        Update: {
+          author_id?: string
+          checkout_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_support_notes_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "customer_checkouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_support_operations: {
+        Row: {
+          action: string
+          actor_id: string
+          checkout_id: string
+          created_at: string
+          input: Json
+          operation_id: string
+          response: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          checkout_id: string
+          created_at?: string
+          input: Json
+          operation_id: string
+          response: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          checkout_id?: string
+          created_at?: string
+          input?: Json
+          operation_id?: string
+          response?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_support_operations_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "customer_checkouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_attempts: {
         Row: {
           amount_ugx: number
@@ -2440,6 +2846,82 @@ export type Database = {
           },
         ]
       }
+      payment_finance_operations: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          input: Json
+          operation_id: string
+          payment_attempt_id: string
+          response: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          input: Json
+          operation_id: string
+          payment_attempt_id: string
+          response: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          input?: Json
+          operation_id?: string
+          payment_attempt_id?: string
+          response?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_finance_operations_payment_attempt_id_fkey"
+            columns: ["payment_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "payment_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_investigations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          payment_attempt_id: string
+          reason: string
+          reason_code: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          payment_attempt_id: string
+          reason: string
+          reason_code: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          payment_attempt_id?: string
+          reason?: string
+          reason_code?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_investigations_payment_attempt_id_fkey"
+            columns: ["payment_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "payment_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_provider_events: {
         Row: {
           authenticity_verified_at: string | null
@@ -2500,10 +2982,36 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_reconciliation_batches: {
+        Row: {
+          actor_id: string
+          created_at: string
+          operation_id: string
+          payment_ids: string[]
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          operation_id: string
+          payment_ids: string[]
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          operation_id?: string
+          payment_ids?: string[]
+        }
+        Relationships: []
+      }
       payment_reconciliation_runs: {
         Row: {
           created_at: string
+          error_code: string | null
           id: string
+          local_status_after:
+            | Database["public"]["Enums"]["payment_status"]
+            | null
+          operation_id: string | null
           payment_attempt_id: string
           previous_status: Database["public"]["Enums"]["payment_status"]
           provider: Database["public"]["Enums"]["payment_provider"]
@@ -2511,13 +3019,20 @@ export type Database = {
           provider_currency: string | null
           provider_response: Json | null
           provider_status: string | null
+          request_reference: string | null
           requested_by: string | null
+          response: Json | null
           result: Database["public"]["Enums"]["reconciliation_result"]
           run_source: string
         }
         Insert: {
           created_at?: string
+          error_code?: string | null
           id?: string
+          local_status_after?:
+            | Database["public"]["Enums"]["payment_status"]
+            | null
+          operation_id?: string | null
           payment_attempt_id: string
           previous_status: Database["public"]["Enums"]["payment_status"]
           provider: Database["public"]["Enums"]["payment_provider"]
@@ -2525,13 +3040,20 @@ export type Database = {
           provider_currency?: string | null
           provider_response?: Json | null
           provider_status?: string | null
+          request_reference?: string | null
           requested_by?: string | null
+          response?: Json | null
           result: Database["public"]["Enums"]["reconciliation_result"]
           run_source: string
         }
         Update: {
           created_at?: string
+          error_code?: string | null
           id?: string
+          local_status_after?:
+            | Database["public"]["Enums"]["payment_status"]
+            | null
+          operation_id?: string | null
           payment_attempt_id?: string
           previous_status?: Database["public"]["Enums"]["payment_status"]
           provider?: Database["public"]["Enums"]["payment_provider"]
@@ -2539,7 +3061,9 @@ export type Database = {
           provider_currency?: string | null
           provider_response?: Json | null
           provider_status?: string | null
+          request_reference?: string | null
           requested_by?: string | null
+          response?: Json | null
           result?: Database["public"]["Enums"]["reconciliation_result"]
           run_source?: string
         }
@@ -2552,6 +3076,24 @@ export type Database = {
             referencedColumns: ["id", "provider"]
           },
         ]
+      }
+      permissions: {
+        Row: {
+          created_at: string
+          description: string
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          key: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          key?: string
+        }
+        Relationships: []
       }
       quality_check_audit_events: {
         Row: {
@@ -2734,23 +3276,97 @@ export type Database = {
           },
         ]
       }
-      permissions: {
-        Row: { created_at: string; description: string; key: string }
-        Insert: { created_at?: string; description: string; key: string }
-        Update: { created_at?: string; description?: string; key?: string }
-        Relationships: []
+      refund_cases: {
+        Row: {
+          approval_state: Database["public"]["Enums"]["refund_approval_state"]
+          approved_at: string | null
+          approved_by: string | null
+          checkout_id: string
+          created_at: string
+          currency_code: string
+          id: string
+          payment_attempt_id: string | null
+          proposed_by: string
+          reason: Database["public"]["Enums"]["refund_reason"]
+          requested_amount_ugx: number
+          resolution_notes: string | null
+          status: Database["public"]["Enums"]["refund_status"]
+          updated_at: string
+        }
+        Insert: {
+          approval_state?: Database["public"]["Enums"]["refund_approval_state"]
+          approved_at?: string | null
+          approved_by?: string | null
+          checkout_id: string
+          created_at?: string
+          currency_code?: string
+          id?: string
+          payment_attempt_id?: string | null
+          proposed_by: string
+          reason: Database["public"]["Enums"]["refund_reason"]
+          requested_amount_ugx: number
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["refund_status"]
+          updated_at?: string
+        }
+        Update: {
+          approval_state?: Database["public"]["Enums"]["refund_approval_state"]
+          approved_at?: string | null
+          approved_by?: string | null
+          checkout_id?: string
+          created_at?: string
+          currency_code?: string
+          id?: string
+          payment_attempt_id?: string | null
+          proposed_by?: string
+          reason?: Database["public"]["Enums"]["refund_reason"]
+          requested_amount_ugx?: number
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["refund_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_cases_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "customer_checkouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_cases_payment_attempt_id_fkey"
+            columns: ["payment_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "payment_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
-        Row: { created_at: string; permission: string; role: Database["public"]["Enums"]["staff_role"] }
-        Insert: { created_at?: string; permission: string; role: Database["public"]["Enums"]["staff_role"] }
-        Update: { created_at?: string; permission?: string; role?: Database["public"]["Enums"]["staff_role"] }
-        Relationships: [{ foreignKeyName: "role_permissions_permission_fkey"; columns: ["permission"]; isOneToOne: false; referencedRelation: "permissions"; referencedColumns: ["key"] }]
-      }
-      staff_members: {
-        Row: { created_at: string; display_name: string; role: Database["public"]["Enums"]["staff_role"]; status: Database["public"]["Enums"]["staff_status"]; updated_at: string; user_id: string }
-        Insert: { created_at?: string; display_name: string; role: Database["public"]["Enums"]["staff_role"]; status?: Database["public"]["Enums"]["staff_status"]; updated_at?: string; user_id: string }
-        Update: { created_at?: string; display_name?: string; role?: Database["public"]["Enums"]["staff_role"]; status?: Database["public"]["Enums"]["staff_status"]; updated_at?: string; user_id?: string }
-        Relationships: []
+        Row: {
+          created_at: string
+          permission: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Insert: {
+          created_at?: string
+          permission: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Update: {
+          created_at?: string
+          permission?: string
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_fkey"
+            columns: ["permission"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       seller_accounts: {
         Row: {
@@ -2840,6 +3456,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      staff_members: {
+        Row: {
+          created_at: string
+          display_name: string
+          role: Database["public"]["Enums"]["staff_role"]
+          status: Database["public"]["Enums"]["staff_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          role: Database["public"]["Enums"]["staff_role"]
+          status?: Database["public"]["Enums"]["staff_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          role?: Database["public"]["Enums"]["staff_role"]
+          status?: Database["public"]["Enums"]["staff_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       transporter_availability_history: {
         Row: {
@@ -3393,6 +4036,27 @@ export type Database = {
       }
     }
     Views: {
+      admin_audit_event_projection: {
+        Row: {
+          action: string | null
+          actor_name: string | null
+          actor_role: string | null
+          actor_user_id: string | null
+          context: Json | null
+          details: Json | null
+          entity_id: string | null
+          entity_reference: string | null
+          entity_type: string | null
+          id: string | null
+          next_state: Json | null
+          occurred_at: string | null
+          operation_id: string | null
+          previous_state: Json | null
+          reason: string | null
+          request_id: string | null
+        }
+        Relationships: []
+      }
       catalogue_listing_cards: {
         Row: {
           approved_price_ugx: number | null
@@ -3476,6 +4140,178 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_get_audit_event: { Args: { p_event_id: string }; Returns: Json }
+      admin_get_operational_overview: {
+        Args: { p_from?: string; p_now?: string; p_to?: string }
+        Returns: Json
+      }
+      admin_get_order_investigation: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      admin_get_order_investigation_base: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      admin_get_payment_detail: {
+        Args: { p_payment_id: string }
+        Returns: Json
+      }
+      admin_list_applications: {
+        Args: {
+          p_from?: string
+          p_market_id?: string
+          p_page?: number
+          p_page_size?: number
+          p_query?: string
+          p_sort_by?: string
+          p_sort_order?: string
+          p_status?: string
+          p_to?: string
+          p_type?: string
+        }
+        Returns: Json
+      }
+      admin_list_audit_events: {
+        Args: {
+          p_action?: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_from?: string
+          p_page?: number
+          p_page_size?: number
+          p_query?: string
+          p_sort_by?: string
+          p_sort_order?: string
+          p_staff_user_id?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      admin_list_orders: {
+        Args: {
+          p_delayed_only?: boolean
+          p_delivery_status?: string
+          p_from?: string
+          p_fulfilment_type?: string
+          p_issues_only?: boolean
+          p_market_id?: string
+          p_now?: string
+          p_page?: number
+          p_page_size?: number
+          p_payment_status?: string
+          p_query?: string
+          p_seller_order_status?: string
+          p_sort_by?: string
+          p_sort_order?: string
+          p_to?: string
+          p_vendor_id?: string
+        }
+        Returns: Json
+      }
+      admin_list_payment_reconciliation: {
+        Args: {
+          p_callback_status?: string
+          p_from?: string
+          p_page?: number
+          p_page_size?: number
+          p_payment_method?: string
+          p_provider?: string
+          p_query?: string
+          p_reconciliation_status?: string
+          p_sort_by?: string
+          p_sort_order?: string
+          p_status?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      admin_list_refunds: {
+        Args: {
+          p_approval_state?: string
+          p_from?: string
+          p_max_amount?: number
+          p_min_amount?: number
+          p_page?: number
+          p_page_size?: number
+          p_query?: string
+          p_reason?: string
+          p_sort_by?: string
+          p_sort_order?: string
+          p_status?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      admin_review_listing: {
+        Args: {
+          p_admin_id: string
+          p_decision: string
+          p_expected_version: number
+          p_listing_id: string
+          p_operation_id: string
+          p_review_note: string
+        }
+        Returns: Json
+      }
+      admin_review_listing_audited: {
+        Args: {
+          p_admin_id: string
+          p_audit_context: Json
+          p_decision: string
+          p_expected_version: number
+          p_listing_id: string
+          p_operation_id: string
+          p_review_note: string
+        }
+        Returns: Json
+      }
+      admin_review_price_request: {
+        Args: {
+          p_admin_id: string
+          p_decision: string
+          p_operation_id: string
+          p_request_id: string
+          p_review_note: string
+        }
+        Returns: Json
+      }
+      admin_review_price_request_audited: {
+        Args: {
+          p_admin_id: string
+          p_audit_context: Json
+          p_decision: string
+          p_operation_id: string
+          p_request_id: string
+          p_review_note: string
+        }
+        Returns: Json
+      }
+      application_missing_requirements: {
+        Args: { p_id: string }
+        Returns: string[]
+      }
+      apply_payment_reconciliation: {
+        Args: {
+          p_actor?: string
+          p_evidence: Json
+          p_operation_id?: string
+          p_payment_id: string
+          p_source: string
+        }
+        Returns: Json
+      }
+      apply_payment_reconciliation_audited: {
+        Args: {
+          p_actor: string
+          p_audit_context: Json
+          p_evidence: Json
+          p_operation_id: string
+          p_payment_id: string
+          p_source: string
+        }
+        Returns: Json
+      }
       approve_listing_and_price: {
         Args: {
           requested_admin_id: string
@@ -3507,6 +4343,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cancel_order: {
+        Args: { p_actor: string; p_order_id: string; p_reason: string }
+        Returns: undefined
+      }
       cart_owner_matches: {
         Args: {
           requested_cart: Database["public"]["Tables"]["carts"]["Row"]
@@ -3537,6 +4377,41 @@ export type Database = {
           to: "listing_availability_operations"
           isOneToOne: true
           isSetofReturn: false
+        }
+      }
+      claim_admin_payment_batch: {
+        Args: { p_actor: string; p_limit: number; p_operation_id: string }
+        Returns: {
+          amount_ugx: number
+          checkout_id: string
+          consumer_id: string
+          created_at: string
+          currency_code: string
+          expires_at: string | null
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          initiated_at: string | null
+          merchant_reference: string
+          next_reconciliation_at: string | null
+          payer_phone_e164: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_confirmation_code: string | null
+          provider_redirect_url: string | null
+          provider_request_reference: string | null
+          provider_transaction_id: string | null
+          reconciliation_claimed_until: string | null
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "payment_attempts"
+          isOneToOne: false
+          isSetofReturn: true
         }
       }
       claim_idempotency_record: {
@@ -3591,6 +4466,48 @@ export type Database = {
           requested_installation_id?: string
         }
         Returns: undefined
+      }
+      command_order_investigation: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_input: Json
+          p_order_id: string
+        }
+        Returns: Json
+      }
+      command_order_investigation_audited: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_audit_context: Json
+          p_input: Json
+          p_order_id: string
+        }
+        Returns: Json
+      }
+      command_payment_finance: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_input: Json
+          p_payment_id: string
+        }
+        Returns: Json
+      }
+      command_payment_finance_audited: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_audit_context: Json
+          p_input: Json
+          p_payment_id: string
+        }
+        Returns: Json
+      }
+      complete_application_document: {
+        Args: { p_document_id: string; p_user: string }
+        Returns: Json
       }
       complete_delivery: {
         Args: {
@@ -3722,9 +4639,34 @@ export type Database = {
         }
         Returns: Json
       }
+      dispatcher_assign_delivery_audited: {
+        Args: {
+          p_audit_context: Json
+          p_delivery_id: string
+          p_dispatcher_user_id: string
+          p_expected_version: number
+          p_operation_id: string
+          p_reason: string
+          p_reassign: boolean
+          p_transporter_id: string
+        }
+        Returns: Json
+      }
       dispatcher_delivery_action: {
         Args: {
           p_action: string
+          p_delivery_id: string
+          p_dispatcher_user_id: string
+          p_expected_version: number
+          p_operation_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      dispatcher_delivery_action_audited: {
+        Args: {
+          p_action: string
+          p_audit_context: Json
           p_delivery_id: string
           p_dispatcher_user_id: string
           p_expected_version: number
@@ -3811,9 +4753,20 @@ export type Database = {
           transporter_id: string
         }[]
       }
+      get_admin_listing_review: {
+        Args: { p_listing_id: string }
+        Returns: Json
+      }
+      get_admin_listing_review_queue: { Args: never; Returns: Json }
+      get_admin_price_review_queue: { Args: never; Returns: Json }
+      get_application_review: { Args: { p_id: string }; Returns: Json }
       get_current_delivery_offer: { Args: { p_user_id: string }; Returns: Json }
       get_current_rider_delivery: { Args: { p_user_id: string }; Returns: Json }
       get_dispatcher_delivery_board: { Args: never; Returns: Json }
+      get_dispatcher_delivery_detail: {
+        Args: { p_delivery_id: string }
+        Returns: Json
+      }
       get_dispatcher_nearby_riders: {
         Args: { p_delivery_id: string; p_radius_km?: number }
         Returns: Json
@@ -3892,6 +4845,10 @@ export type Database = {
         }
         Returns: string
       }
+      normalize_sensitive_audit_action: {
+        Args: { p_action: string; p_source: string }
+        Returns: string
+      }
       offer_delivery_to_nearby_transporters: {
         Args: {
           p_delivery_id: string
@@ -3929,6 +4886,16 @@ export type Database = {
           p_currency: string
           p_operation_id: string
           p_pickup_code: string
+        }
+        Returns: Json
+      }
+      register_application_document: {
+        Args: {
+          p_byte_size: number
+          p_content_type: string
+          p_document_type: string
+          p_type: string
+          p_user: string
         }
         Returns: Json
       }
@@ -3996,6 +4963,44 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_delivery_issue_audited: {
+        Args: {
+          p_audit_context: Json
+          p_dispatcher_user_id: string
+          p_issue_id: string
+          p_operation_id: string
+          p_resolution_code: string
+          p_resolution_note: string
+        }
+        Returns: Json
+      }
+      review_account_application: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_id: string
+          p_issues?: string[]
+          p_notes?: string
+          p_operation_id: string
+          p_reason?: string
+          p_version: number
+        }
+        Returns: Json
+      }
+      review_account_application_audited: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_audit_context: Json
+          p_id: string
+          p_issues: string[]
+          p_notes: string
+          p_operation_id: string
+          p_reason: string
+          p_version: number
+        }
+        Returns: Json
+      }
       review_price_request: {
         Args: {
           requested_admin_id: string
@@ -4027,12 +5032,24 @@ export type Database = {
         Args: { p_consumer_user_id: string; p_delivery_id: string }
         Returns: Json
       }
+      save_account_application: {
+        Args: { p_details: Json; p_type: string; p_user: string }
+        Returns: Json
+      }
+      set_sensitive_audit_context: {
+        Args: { p_context: Json; p_operation_id: string }
+        Returns: undefined
+      }
       set_transporter_availability: {
         Args: {
           p_availability: string
           p_operation_id: string
           p_user_id: string
         }
+        Returns: Json
+      }
+      submit_account_application: {
+        Args: { p_operation_id: string; p_type: string; p_user: string }
         Returns: Json
       }
       submit_listing_for_approval: {
@@ -4208,6 +5225,30 @@ export type Database = {
         | "provider_not_found"
         | "manual_review_required"
         | "no_change"
+      refund_approval_state:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "not_required"
+      refund_reason:
+        | "cancellation"
+        | "vendor_rejection"
+        | "missing_products"
+        | "poor_quality"
+        | "failed_delivery"
+        | "duplicate_payment"
+        | "incorrect_payment"
+        | "partial_fulfilment"
+        | "other"
+      refund_status:
+        | "requested"
+        | "awaiting_approval"
+        | "approved"
+        | "processing"
+        | "completed"
+        | "rejected"
+        | "cancelled"
+        | "failed"
       rider_availability:
         | "offline"
         | "available"
@@ -4487,6 +5528,33 @@ export const Constants = {
         "manual_review_required",
         "no_change",
       ],
+      refund_approval_state: [
+        "pending",
+        "approved",
+        "rejected",
+        "not_required",
+      ],
+      refund_reason: [
+        "cancellation",
+        "vendor_rejection",
+        "missing_products",
+        "poor_quality",
+        "failed_delivery",
+        "duplicate_payment",
+        "incorrect_payment",
+        "partial_fulfilment",
+        "other",
+      ],
+      refund_status: [
+        "requested",
+        "awaiting_approval",
+        "approved",
+        "processing",
+        "completed",
+        "rejected",
+        "cancelled",
+        "failed",
+      ],
       rider_availability: [
         "offline",
         "available",
@@ -4524,3 +5592,4 @@ export const Constants = {
     },
   },
 } as const
+

@@ -52,6 +52,9 @@ export interface AdminListingReview extends VendorListing {
   sellerId: string;
   vendorName: string;
   marketName: string | null;
+  submittedAt: string;
+  priceHistory: AdminPriceHistoryEntry[];
+  auditHistory: CatalogueAuditEntry[];
 }
 
 export interface AdminPriceReview {
@@ -63,4 +66,41 @@ export interface AdminPriceReview {
   proposedPriceUgx: number;
   reason: string | null;
   createdAt: string;
+  packageQuantity: number;
+  packageUnit: string;
+  marketName: string | null;
+  images: VendorListingImage[];
+  percentageChange: number | null;
+  largePriceChange: boolean;
+  recentUnavailableChanges: number;
+  auditHistory: CatalogueAuditEntry[];
+}
+
+export interface AdminPriceHistoryEntry {
+  requestId: string;
+  previousPriceUgx: number | null;
+  proposedPriceUgx: number;
+  status: VendorPriceRequest["status"];
+  reason: string | null;
+  reviewNote: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+}
+
+export interface CatalogueAuditEntry {
+  id: string;
+  action: string;
+  actorUserId: string | null;
+  previousState: Record<string, unknown> | null;
+  nextState: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface CatalogueReviewResult {
+  operationId: string;
+  duplicate: boolean;
+  listingId: string;
+  requestId: string | null;
+  status: string;
+  version: number;
 }

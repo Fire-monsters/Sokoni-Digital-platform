@@ -1,179 +1,146 @@
+import type { Database, Json } from "@sokoni-digital/database-types";
 import type {
   AdminListingReview,
   AdminPriceReview,
+  CatalogueReviewResult,
   VendorListingImage,
-  VendorPriceRequest,
 } from "@sokoni-digital/domain";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { supabase } from "../../infrastructure/supabase/client.js";
 import { ListingHttpError } from "../listings/listings.errors.js";
+import type { AuditWriteContext } from "../admin/workflows/index.js";
 
-export class ListingApprovalRepository {
-  async listPendingPrices(): Promise<AdminPriceReview[]> {
-    const { data, error } = await supabase
-      .from("listing_price_requests")
-      .select("id,listing_id,seller_id,proposed_price_ugx,current_price_ugx,reason,created_at")
-      .eq("status", "pending")
-      .order("created_at", { ascending: true });
-    if (error) throw error;
+interface StoredImage {
+  id: string;
+  storageBucket: string;
+  storagePath: string;
+  thumbnailPath: string | null;
+  sortOrder: number;
+  isPrimary: boolean;
+}
 
-    const reviews = await Promise.all(
-      data.map(async (request) => {
-        const [listing, seller] = await Promise.all([
-          supabase
-            .from("listings")
-            .select("status,catalog_products!inner(name)")
-            .eq("id", request.listing_id)
-            .single(),
-          supabase.from("sellers").select("business_name").eq("id", request.seller_id).single(),
-        ]);
-        if (listing.error) throw listing.error;
-        if (seller.error) throw seller.error;
-        if (listing.data.status !== "active" && listing.data.status !== "paused") return null;
-        return {
-          requestId: request.id,
-          listingId: request.listing_id,
-          productName: listing.data.catalog_products.name,
-          vendorName: seller.data.business_name,
-          currentPriceUgx: request.current_price_ugx,
-          proposedPriceUgx: request.proposed_price_ugx,
-          reason: request.reason,
-          createdAt: request.created_at,
-        };
-      }),
-    );
-    return reviews.filter((review): review is AdminPriceReview => review !== null);
+type StoredListingReview = Omit<AdminListingReview, "images"> & { images: StoredImage[] };
+type StoredPriceReview = Omit<AdminPriceReview, "images"> & { images: StoredImage[] };
+
+export interface CatalogueReviewRepository {
+  listPending(): Promise<AdminListingReview[]>;
+  listPendingPrices(): Promise<AdminPriceReview[]>;
+  getListing(listingId: string): Promise<AdminListingReview>;
+  reviewListing(input: {
+    listingId: string;
+    adminId: string;
+    decision: "approved" | "changes_requested";
+    reviewNote?: string | undefined;
+    expectedVersion: number;
+    operationId: string;
+    auditContext: AuditWriteContext;
+  }): Promise<CatalogueReviewResult>;
+  reviewPrice(input: {
+    requestId: string;
+    adminId: string;
+    decision: "approved" | "rejected";
+    reviewNote?: string | undefined;
+    operationId: string;
+    auditContext: AuditWriteContext;
+  }): Promise<CatalogueReviewResult>;
+}
+
+function mapDatabaseError(error: { code?: string; message: string }): ListingHttpError {
+  if (error.code === "P0002") return new ListingHttpError(404, "NOT_FOUND", error.message);
+  if (error.code === "40001") return new ListingHttpError(409, "CONFLICT", error.message);
+  return new ListingHttpError(409, "CONFLICT", error.message);
+}
+
+function storedImages(value: unknown): StoredImage[] {
+  return Array.isArray(value) ? (value as StoredImage[]) : [];
+}
+
+export class SupabaseCatalogueReviewRepository implements CatalogueReviewRepository {
+  constructor(private readonly db: SupabaseClient<Database> = supabase) {}
+
+  private images(images: StoredImage[]): VendorListingImage[] {
+    return images.map((image) => ({
+      id: image.id,
+      url: this.db.storage.from(image.storageBucket).getPublicUrl(image.storagePath).data.publicUrl,
+      thumbnailUrl: image.thumbnailPath
+        ? this.db.storage.from(image.storageBucket).getPublicUrl(image.thumbnailPath).data.publicUrl
+        : null,
+      sortOrder: image.sortOrder,
+      isPrimary: image.isPrimary,
+    }));
   }
+
+  private listing(value: unknown): AdminListingReview {
+    const review = value as StoredListingReview;
+    return { ...review, images: this.images(storedImages(review.images)) };
+  }
+
+  private price(value: unknown): AdminPriceReview {
+    const review = value as StoredPriceReview;
+    return { ...review, images: this.images(storedImages(review.images)) };
+  }
+
   async listPending(): Promise<AdminListingReview[]> {
-    const { data, error } = await supabase
-      .from("listings")
-      .select("id")
-      .eq("status", "pending_approval")
-      .order("updated_at", { ascending: true });
-    if (error) throw error;
-    return Promise.all(data.map((listing) => this.getListing(listing.id)));
+    const { data, error } = await this.db.rpc("get_admin_listing_review_queue");
+    if (error) throw mapDatabaseError(error);
+    return (Array.isArray(data) ? data : []).map((review) => this.listing(review));
+  }
+
+  async listPendingPrices(): Promise<AdminPriceReview[]> {
+    const { data, error } = await this.db.rpc("get_admin_price_review_queue");
+    if (error) throw mapDatabaseError(error);
+    return (Array.isArray(data) ? data : []).map((review) => this.price(review));
   }
 
   async getListing(listingId: string): Promise<AdminListingReview> {
-    const { data: listing, error } = await supabase
-      .from("listings")
-      .select("*")
-      .eq("id", listingId)
-      .maybeSingle();
-    if (error) throw error;
-    if (!listing) throw new ListingHttpError(404, "NOT_FOUND", "Listing not found.");
-
-    const [sellerResult, productResult, imagesResult, pricesResult] = await Promise.all([
-      supabase
-        .from("sellers")
-        .select("business_name,markets(name)")
-        .eq("id", listing.seller_id)
-        .single(),
-      supabase
-        .from("catalog_products")
-        .select("name,categories!inner(name)")
-        .eq("id", listing.catalog_product_id)
-        .single(),
-      supabase
-        .from("listing_images")
-        .select("id,storage_bucket,storage_path,thumbnail_path,sort_order,is_primary")
-        .eq("listing_id", listing.id)
-        .eq("upload_status", "ready")
-        .order("sort_order"),
-      supabase
-        .from("listing_price_requests")
-        .select("id,proposed_price_ugx,current_price_ugx,status,review_note,created_at")
-        .eq("listing_id", listing.id)
-        .order("created_at", { ascending: false })
-        .limit(1),
-    ]);
-    if (sellerResult.error) throw sellerResult.error;
-    if (productResult.error) throw productResult.error;
-    if (imagesResult.error) throw imagesResult.error;
-    if (pricesResult.error) throw pricesResult.error;
-
-    const images: VendorListingImage[] = imagesResult.data.map((image) => ({
-      id: image.id,
-      url: supabase.storage.from(image.storage_bucket).getPublicUrl(image.storage_path).data
-        .publicUrl,
-      thumbnailUrl: image.thumbnail_path
-        ? supabase.storage.from(image.storage_bucket).getPublicUrl(image.thumbnail_path).data
-            .publicUrl
-        : null,
-      sortOrder: image.sort_order,
-      isPrimary: image.is_primary,
-    }));
-    const price = pricesResult.data.at(0);
-    const latestPriceRequest: VendorPriceRequest | null = price
-      ? {
-          id: price.id,
-          proposedPriceUgx: price.proposed_price_ugx,
-          currentPriceUgx: price.current_price_ugx,
-          status: price.status,
-          reviewNote: price.review_note,
-          createdAt: price.created_at,
-        }
-      : null;
-
-    return {
-      id: listing.id,
-      sellerId: listing.seller_id,
-      vendorName: sellerResult.data.business_name,
-      marketName: sellerResult.data.markets?.name ?? null,
-      catalogProductId: listing.catalog_product_id,
-      productName: productResult.data.name,
-      categoryName: productResult.data.categories.name,
-      packageQuantity: listing.package_quantity,
-      packageUnit: listing.package_unit,
-      description: listing.description,
-      approvedPriceUgx: listing.approved_price_ugx,
-      status: listing.status,
-      availability: listing.availability,
-      version: listing.version,
-      updatedAt: listing.updated_at,
-      images,
-      latestPriceRequest,
-    };
+    const { data, error } = await this.db.rpc("get_admin_listing_review", {
+      p_listing_id: listingId,
+    });
+    if (error) throw mapDatabaseError(error);
+    if (!data) throw new ListingHttpError(404, "NOT_FOUND", "Listing not found.");
+    return this.listing(data);
   }
 
-  async approveListing(listingId: string, adminId: string, reviewNote?: string) {
-    const { error } = await supabase.rpc("approve_listing_and_price", {
-      requested_listing_id: listingId,
-      requested_admin_id: adminId,
-      ...(reviewNote ? { requested_review_note: reviewNote } : {}),
+  async reviewListing(input: {
+    listingId: string;
+    adminId: string;
+    decision: "approved" | "changes_requested";
+    reviewNote?: string | undefined;
+    expectedVersion: number;
+    operationId: string;
+    auditContext: AuditWriteContext;
+  }): Promise<CatalogueReviewResult> {
+    const { data, error } = await this.db.rpc("admin_review_listing_audited", {
+      p_listing_id: input.listingId,
+      p_admin_id: input.adminId,
+      p_decision: input.decision,
+      p_review_note: input.reviewNote ?? "",
+      p_expected_version: input.expectedVersion,
+      p_operation_id: input.operationId,
+      p_audit_context: input.auditContext as unknown as Json,
     });
-    if (error) throw new ListingHttpError(409, "CONFLICT", error.message);
-    return this.getListing(listingId);
+    if (error) throw mapDatabaseError(error);
+    return data as unknown as CatalogueReviewResult;
   }
 
-  async requestChanges(listingId: string, adminId: string, reviewNote: string) {
-    const { error } = await supabase.rpc("request_listing_changes", {
-      requested_listing_id: listingId,
-      requested_admin_id: adminId,
-      requested_note: reviewNote,
+  async reviewPrice(input: {
+    requestId: string;
+    adminId: string;
+    decision: "approved" | "rejected";
+    reviewNote?: string | undefined;
+    operationId: string;
+    auditContext: AuditWriteContext;
+  }): Promise<CatalogueReviewResult> {
+    const { data, error } = await this.db.rpc("admin_review_price_request_audited", {
+      p_request_id: input.requestId,
+      p_admin_id: input.adminId,
+      p_decision: input.decision,
+      p_review_note: input.reviewNote ?? "",
+      p_operation_id: input.operationId,
+      p_audit_context: input.auditContext as unknown as Json,
     });
-    if (error) throw new ListingHttpError(409, "CONFLICT", error.message);
-    return this.getListing(listingId);
-  }
-
-  async reviewPrice(
-    requestId: string,
-    adminId: string,
-    decision: "approved" | "rejected",
-    reviewNote?: string,
-  ) {
-    const { data, error } = await supabase.rpc("review_price_request", {
-      requested_request_id: requestId,
-      requested_admin_id: adminId,
-      requested_decision: decision,
-      ...(reviewNote ? { requested_note: reviewNote } : {}),
-    });
-    if (error) throw new ListingHttpError(409, "CONFLICT", error.message);
-    return {
-      requestId: data.id,
-      listingId: data.listing_id,
-      status: data.status,
-      proposedPriceUgx: data.proposed_price_ugx,
-    };
+    if (error) throw mapDatabaseError(error);
+    return data as unknown as CatalogueReviewResult;
   }
 }

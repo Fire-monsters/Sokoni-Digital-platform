@@ -22,11 +22,15 @@ export class RiderOperationsHttpError extends Error {
 
 export function mapRiderOperationsDatabaseError(error: { code?: string; message: string }): Error {
   if (error.code === "P0002") {
-    return new RiderOperationsHttpError(
-      404,
-      "NOT_FOUND",
-      error.message.includes("offer") ? "Delivery offer not found." : "Rider profile not found.",
-    );
+    const message = error.message.toLowerCase();
+    const publicMessage = message.includes("offer")
+      ? "Delivery offer not found."
+      : message.includes("issue")
+        ? "Delivery issue not found."
+        : message.includes("delivery")
+          ? "Delivery not found."
+          : "Rider profile not found.";
+    return new RiderOperationsHttpError(404, "NOT_FOUND", publicMessage);
   }
   if (error.code === "42501") {
     return new RiderOperationsHttpError(
@@ -116,19 +120,26 @@ export function mapRiderOperationsDatabaseError(error: { code?: string; message:
         "Record arrival at the market before confirming a seller handover.",
       );
     }
+    if (error.message.includes("selected rider")) {
+      return new RiderOperationsHttpError(
+        409,
+        "CONFLICT",
+        "The selected rider is no longer available and eligible.",
+      );
+    }
     return new RiderOperationsHttpError(
       409,
       "CONFLICT",
       error.message.includes("ACTIVE_DELIVERY")
         ? "Availability is managed automatically while a delivery is active."
-        : "The rider availability change is not allowed.",
+        : "The delivery operation is not allowed in its current state.",
     );
   }
   if (error.code === "22023") {
     return new RiderOperationsHttpError(
       400,
       "BAD_REQUEST",
-      "The rider operation contains invalid or stale data.",
+      "The delivery operation contains invalid or stale data.",
     );
   }
   return new Error(error.message);
