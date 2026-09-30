@@ -25,7 +25,7 @@ const serverEnvSchema = z
     PAYMENT_RECONCILIATION_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(100),
     PESAPAL_CONSUMER_KEY: z.string().min(1).optional(),
     PESAPAL_CONSUMER_SECRET: z.string().min(1).optional(),
-    //PESAPAL_IPN_ID: z.uuid().optional(),
+    PESAPAL_IPN_ID: z.uuid().optional(),
     NOTIFICATION_DELIVERY_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(50),
     NOTIFICATION_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(5),
     NOTIFICATION_RETRY_BASE_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
@@ -56,7 +56,7 @@ const serverEnvSchema = z
     for (const key of [
       "PESAPAL_CONSUMER_KEY",
       "PESAPAL_CONSUMER_SECRET",
-      //"PESAPAL_IPN_ID",
+      "PESAPAL_IPN_ID",
     ] as const) {
       if (!environment[key]) {
         context.addIssue({
@@ -80,6 +80,9 @@ export type ServerEnvironment = z.infer<typeof serverEnvSchema>;
 export function parseServerEnvironment(source: NodeJS.ProcessEnv = process.env): ServerEnvironment {
   const normalizedSource = {
     ...source,
+    PESAPAL_CONSUMER_KEY: source.PESAPAL_CONSUMER_KEY || undefined,
+    PESAPAL_CONSUMER_SECRET: source.PESAPAL_CONSUMER_SECRET || undefined,
+    PESAPAL_IPN_ID: source.PESAPAL_IPN_ID || undefined,
     SUPABASE_PUBLISHABLE_KEY: source.SUPABASE_PUBLISHABLE_KEY ?? source.SUPABASE_ANON_KEY,
     SUPABASE_SECRET_KEY: source.SUPABASE_SECRET_KEY ?? source.SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_JWKS_URL:

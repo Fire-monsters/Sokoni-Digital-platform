@@ -23,7 +23,15 @@ Official references:
 
 ## Environment setup
 
-Local development defaults to the deterministic fake adapter. Pesapal sandbox and production require:
+Local development defaults to the deterministic fake adapter. To run without a Pesapal IPN ID using the repository root `.env`, run from the repository root:
+
+```sh
+PAYMENTS_ENV=fake DOTENV_CONFIG_PATH=../../.env pnpm --dir apps/api dev
+```
+
+In fake mode, the Pesapal credentials and IPN ID can be left blank. Payments are simulated; no real money is collected.
+
+Pesapal sandbox and production require:
 
 ```dotenv
 PAYMENTS_ENV=sandbox
