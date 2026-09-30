@@ -10,6 +10,9 @@ export function errorHandler(
     statusCode?: number;
     code?: string;
     message?: string;
+    operationId?: string;
+    currentVersion?: number;
+    retryable?: boolean;
   };
   const statusCode = typedError.statusCode ?? 500;
   const message = error instanceof Error ? error.message : "An unexpected error occurred";
@@ -19,6 +22,11 @@ export function errorHandler(
     error: {
       code: typedError.code ?? "INTERNAL_ERROR",
       message,
+      ...(typedError.operationId === undefined ? {} : { operationId: typedError.operationId }),
+      ...(typedError.currentVersion === undefined
+        ? {}
+        : { currentVersion: typedError.currentVersion }),
+      ...(typedError.retryable === undefined ? {} : { retryable: typedError.retryable }),
       requestId: request.requestId,
     },
   });

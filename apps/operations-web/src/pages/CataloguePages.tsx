@@ -1,4 +1,5 @@
 import {
+  ApiClientError,
   approveAdminListing,
   requestAdminListingChanges,
   reviewAdminPrice,
@@ -34,7 +35,7 @@ export function CatalogueListingsPage() {
           listing.id,
           listing.version,
           operationId,
-          note || undefined,
+          note,
         );
       else
         await requestAdminListingChanges(
@@ -49,6 +50,12 @@ export function CatalogueListingsPage() {
       operations.setMessage(decision === "approve" ? "Listing approved." : "Changes requested.");
       await operations.loadCatalogue();
     } catch (error) {
+      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+        pendingOperations.current.delete(operationKey);
+        operations.setMessage(`${error.message} The latest listing has been loaded for review.`);
+        await operations.loadCatalogue();
+        return;
+      }
       operations.setMessage(error instanceof Error ? error.message : "Review failed.");
     } finally {
       operations.setLoading(false);
@@ -131,13 +138,13 @@ export function CatalogueListingsPage() {
                   <div className="actions">
                     <button
                       className="approve"
-                      disabled={operations.loading}
+                      disabled={operations.loading || note.trim().length < 5}
                       onClick={() => void decide("approve")}
                     >
                       Approve listing
                     </button>
                     <button
-                      disabled={operations.loading || note.trim().length < 3}
+                      disabled={operations.loading || note.trim().length < 5}
                       onClick={() => void decide("changes")}
                     >
                       Request changes
@@ -182,13 +189,20 @@ export function PriceChangesPage() {
         id,
         decision,
         operationId,
-        note || undefined,
+        0,
+        note,
       );
       setNote("");
       pendingOperations.current.delete(operationKey);
       operations.setMessage(`Price request ${decision === "approve" ? "approved" : "rejected"}.`);
       await operations.loadCatalogue();
     } catch (error) {
+      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+        pendingOperations.current.delete(operationKey);
+        operations.setMessage(`${error.message} The latest price request has been loaded.`);
+        await operations.loadCatalogue();
+        return;
+      }
       operations.setMessage(error instanceof Error ? error.message : "Price review failed.");
     } finally {
       operations.setLoading(false);
@@ -274,13 +288,13 @@ export function PriceChangesPage() {
                   <div className="actions">
                     <button
                       className="approve"
-                      disabled={operations.loading}
+                      disabled={operations.loading || note.trim().length < 5}
                       onClick={() => void decide(price.requestId, "approve")}
                     >
                       Approve
                     </button>
                     <button
-                      disabled={operations.loading || note.trim().length < 3}
+                      disabled={operations.loading || note.trim().length < 5}
                       onClick={() => void decide(price.requestId, "reject")}
                     >
                       Reject

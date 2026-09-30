@@ -43,7 +43,7 @@ export interface ApplicationReview {
 export interface ApplicationReviewInput {
   operationId: string;
   expectedVersion: number;
-  reason?: string;
+  reason: string;
   internalNotes?: string;
   issues?: string[];
 }

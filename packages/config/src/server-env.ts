@@ -14,6 +14,7 @@ const serverEnvSchema = z
     LOG_LEVEL: z
       .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
       .default("info"),
+    REDIS_URL: z.url().optional(),
 
     CHECKOUT_RESERVATION_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
     PAYMENTS_ENV: z.enum(["fake", "sandbox", "production"]).default("fake"),
@@ -24,7 +25,7 @@ const serverEnvSchema = z
     PAYMENT_RECONCILIATION_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(100),
     PESAPAL_CONSUMER_KEY: z.string().min(1).optional(),
     PESAPAL_CONSUMER_SECRET: z.string().min(1).optional(),
-    PESAPAL_IPN_ID: z.uuid().optional(),
+    //PESAPAL_IPN_ID: z.uuid().optional(),
     NOTIFICATION_DELIVERY_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(50),
     NOTIFICATION_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(5),
     NOTIFICATION_RETRY_BASE_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
@@ -55,7 +56,7 @@ const serverEnvSchema = z
     for (const key of [
       "PESAPAL_CONSUMER_KEY",
       "PESAPAL_CONSUMER_SECRET",
-      "PESAPAL_IPN_ID",
+      //"PESAPAL_IPN_ID",
     ] as const) {
       if (!environment[key]) {
         context.addIssue({

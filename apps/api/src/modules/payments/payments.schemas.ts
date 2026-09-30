@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { operationMetadataShape } from "@sokoni-digital/validation/admin-mutation";
 import {
   marketPickupCollectionMethods,
   paymentInvestigationReasons,
@@ -9,15 +10,13 @@ const e164Phone = z.string().regex(/^\+[1-9][0-9]{7,14}$/, "Use an E.164 phone n
 
 export const paymentCheckoutParamsSchema = z.object({ checkoutId: z.uuid() });
 export const paymentParamsSchema = z.object({ paymentAttemptId: z.uuid() });
-export const reconcilePaymentSchema = z.object({ operationId: z.uuid() }).strict();
+export const reconcilePaymentSchema = z.object(operationMetadataShape).strict();
 export const reconcileBatchSchema = reconcilePaymentSchema.extend({ scope: z.literal("pending") });
 export const flagPaymentSchema = reconcilePaymentSchema.extend({
   reasonCode: z.enum(paymentInvestigationReasons),
-  reason: z.string().trim().min(3).max(1000),
 });
 export const requestRefundSchema = reconcilePaymentSchema.extend({
   reasonCode: z.enum(refundRequestReasons),
-  reason: z.string().trim().min(3).max(1000),
   amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
 });
 

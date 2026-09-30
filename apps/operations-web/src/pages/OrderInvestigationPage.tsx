@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
+  ApiClientError,
   addOrderSupportNote,
   cancelUnpaidOrder,
   commandPaymentFinance,
@@ -98,6 +99,12 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
       setRevision((value) => value + 1);
       if (action === "note") setNote("");
     } catch (cause) {
+      if (cause instanceof ApiClientError && cause.code === "VERSION_CONFLICT") {
+        retry.current = null;
+        setRevision((value) => value + 1);
+        setError(`${cause.message} The latest order has been loaded for review.`);
+        return;
+      }
       setError(
         cause instanceof Error
           ? cause.message
@@ -110,7 +117,9 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
   }
   const options = accessToken ? { baseUrl, accessToken } : null;
   const payment = data?.payment as
-    { id?: string; status?: string; amount?: number; currency?: string } | null | undefined;
+    | { id?: string; status?: string; amount?: number; currency?: string; version?: number }
+    | null
+    | undefined;
   const canCancel =
     data?.order.status === "awaiting_payment" &&
     (!payment?.status || ["failed", "cancelled", "expired"].includes(payment.status));
@@ -197,12 +206,20 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
             {data.deliveryAddress && <pre>{JSON.stringify(data.deliveryAddress, null, 2)}</pre>}
             {can("orders.support") && (
               <button
-                disabled={busy || reason.trim().length < 3}
+                disabled={busy || reason.trim().length < 5}
                 onClick={() =>
                   options &&
                   void execute(
                     "contact-consumer",
-                    (op) => revealOrderContact(options, orderId, "consumer", op, reason.trim()),
+                    (op) =>
+                      revealOrderContact(
+                        options,
+                        orderId,
+                        "consumer",
+                        op,
+                        reason.trim(),
+                        data.delivery?.version ?? 0,
+                      ),
                     "Contact access recorded.",
                   )
                 }
@@ -238,12 +255,20 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                 </p>
                 {can("orders.support") && data.delivery.rider && (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() =>
                       options &&
                       void execute(
                         "contact-rider",
-                        (op) => revealOrderContact(options, orderId, "rider", op, reason.trim()),
+                        (op) =>
+                          revealOrderContact(
+                            options,
+                            orderId,
+                            "rider",
+                            op,
+                            reason.trim(),
+                            data.delivery?.version ?? 0,
+                          ),
                         "Contact access recorded.",
                       )
                     }
@@ -320,7 +345,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                 </p>
                 {can("notifications.manage") && (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() =>
                       options &&
                       void execute(
@@ -332,6 +357,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                             notification.id,
                             op,
                             reason.trim(),
+                            data.delivery?.version ?? 0,
                           ),
                         "Approved notification template queued again.",
                       )
@@ -378,12 +404,19 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   />
                 </label>
                 <button
-                  disabled={busy || note.trim().length < 3}
+                  disabled={busy || note.trim().length < 5}
                   onClick={() =>
                     options &&
                     void execute(
                       "note",
-                      (op) => addOrderSupportNote(options, orderId, op, note.trim()),
+                      (op) =>
+                        addOrderSupportNote(
+                          options,
+                          orderId,
+                          op,
+                          note.trim(),
+                          data.delivery?.version ?? 0,
+                        ),
                       "Support note recorded.",
                     )
                   }
@@ -408,7 +441,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
               <div className="actions">
                 {can("orders.support") && data.delivery && (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() =>
                       options &&
                       void execute(
@@ -430,12 +463,19 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                 )}
                 {can("orders.support") && canCancel && (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() =>
                       options &&
                       void execute(
                         "cancel",
-                        (op) => cancelUnpaidOrder(options, orderId, op, reason.trim()),
+                        (op) =>
+                          cancelUnpaidOrder(
+                            options,
+                            orderId,
+                            op,
+                            reason.trim(),
+                            data.delivery?.version ?? 0,
+                          ),
                         "Unpaid order cancelled and inventory released.",
                       )
                     }
@@ -471,7 +511,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   </label>
                   <button
                     disabled={
-                      reason.trim().length < 3 ||
+                      reason.trim().length < 5 ||
                       !Number.isSafeInteger(Number(refundAmount)) ||
                       Number(refundAmount) <= 0 ||
                       Number(refundAmount) > (payment.amount ?? 0)
@@ -483,6 +523,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                         (op) =>
                           commandPaymentFinance(options, payment.id!, "request-refund", {
                             operationId: op,
+                            expectedVersion: Number(payment.version ?? 0),
                             reason: reason.trim(),
                             reasonCode: refundReason,
                             amount: Number(refundAmount),

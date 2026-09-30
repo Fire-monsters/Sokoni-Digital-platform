@@ -7,7 +7,18 @@ import { createOrderInvestigationRouter } from "./order-investigation.routes.js"
 const auth = vi.hoisted(() => ({
   permissions: ["orders.read", "orders.support", "notifications.manage"] as string[],
 }));
-vi.mock("../../infrastructure/supabase/client.js", () => ({ supabase: {} }));
+vi.mock("../../infrastructure/supabase/client.js", () => ({
+  supabase: {
+    rpc: (name: string, input: { p_operation_id?: string }) =>
+      Promise.resolve({
+        data:
+          name === "claim_admin_operation"
+            ? { action: "proceed", operationId: input.p_operation_id }
+            : null,
+        error: null,
+      }),
+  },
+}));
 vi.mock("../../middleware/authenticate.js", () => ({
   authenticate: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     req.requestId = "order-support-test";
@@ -52,52 +63,77 @@ describe("order investigation boundary", () => {
     repository.command.mockResolvedValue({ orderId, status: "recorded", duplicate: false });
   });
   it("binds support notes to the authenticated staff actor", async () => {
-    const result = await request(app())
-      .post(`/v1/admin/orders/${orderId}/notes`)
-      .send({ operationId, note: "Customer called support." });
+    const result = await request(app()).post(`/v1/admin/orders/${orderId}/notes`).send({
+      operationId,
+      note: "Customer called support.",
+      reason: "Customer called support.",
+      expectedVersion: 0,
+    });
     expect(result.status).toBe(200);
     expect(result.headers["cache-control"]).toBe("no-store");
     expect(repository.command).toHaveBeenCalledWith(
       orderId,
       "a3500000-0000-4000-8000-000000000001",
       "notes",
-      { operationId, note: "Customer called support." },
+      {
+        operationId,
+        note: "Customer called support.",
+        reason: "Customer called support.",
+        expectedVersion: 0,
+      },
       auditContext,
     );
   });
   it.each(["consumer", "rider"])("derives the %s contact target from the URL", async (target) => {
     await request(app())
       .post(`/v1/admin/orders/${orderId}/contact/${target}/reveal`)
-      .send({ operationId, reason: "Coordinate this order" });
+      .send({ operationId, reason: "Coordinate this order", expectedVersion: 0 });
     expect(repository.command).toHaveBeenCalledWith(
       orderId,
       "a3500000-0000-4000-8000-000000000001",
       "reveal-contact",
-      { operationId, reason: "Coordinate this order", target },
+      { operationId, reason: "Coordinate this order", expectedVersion: 0, target },
       auditContext,
     );
   });
   it("derives the notification from the URL and accepts only a reason", async () => {
     await request(app())
       .post(`/v1/admin/orders/${orderId}/notifications/${notificationId}/resend`)
-      .send({ operationId, reason: "Customer requested another update" });
+      .send({
+        operationId,
+        reason: "Customer requested another update",
+        expectedVersion: 0,
+      });
     expect(repository.command).toHaveBeenCalledWith(
       orderId,
       "a3500000-0000-4000-8000-000000000001",
       "resend-notification",
-      { operationId, reason: "Customer requested another update", notificationId },
+      {
+        operationId,
+        reason: "Customer requested another update",
+        expectedVersion: 0,
+        notificationId,
+      },
       auditContext,
     );
   });
   it("passes optimistic delivery concurrency into dispatch escalation", async () => {
-    await request(app())
-      .post(`/v1/admin/orders/${orderId}/escalate-dispatch`)
-      .send({ operationId, reason: "Order is delayed", expectedDeliveryVersion: 4 });
+    await request(app()).post(`/v1/admin/orders/${orderId}/escalate-dispatch`).send({
+      operationId,
+      reason: "Order is delayed",
+      expectedVersion: 4,
+      expectedDeliveryVersion: 4,
+    });
     expect(repository.command).toHaveBeenCalledWith(
       orderId,
       "a3500000-0000-4000-8000-000000000001",
       "escalate-dispatch",
-      { operationId, reason: "Order is delayed", expectedDeliveryVersion: 4 },
+      {
+        operationId,
+        reason: "Order is delayed",
+        expectedVersion: 4,
+        expectedDeliveryVersion: 4,
+      },
       auditContext,
     );
   });

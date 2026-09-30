@@ -10,6 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "../../infrastructure/supabase/client.js";
 import { ListingHttpError } from "../listings/listings.errors.js";
 import type { AuditWriteContext } from "../admin/workflows/index.js";
+import { mapPostgresAdminMutationError } from "../admin/workflows/admin-mutation.errors.js";
 
 interface StoredImage {
   id: string;
@@ -46,7 +47,12 @@ export interface CatalogueReviewRepository {
   }): Promise<CatalogueReviewResult>;
 }
 
-function mapDatabaseError(error: { code?: string; message: string }): ListingHttpError {
+function mapDatabaseError(
+  error: { code?: string; message: string; details?: string | null },
+  operationId?: string,
+): Error {
+  const mutationError = mapPostgresAdminMutationError(error, operationId);
+  if (mutationError) return mutationError;
   if (error.code === "P0002") return new ListingHttpError(404, "NOT_FOUND", error.message);
   if (error.code === "40001") return new ListingHttpError(409, "CONFLICT", error.message);
   return new ListingHttpError(409, "CONFLICT", error.message);
@@ -120,7 +126,7 @@ export class SupabaseCatalogueReviewRepository implements CatalogueReviewReposit
       p_operation_id: input.operationId,
       p_audit_context: input.auditContext as unknown as Json,
     });
-    if (error) throw mapDatabaseError(error);
+    if (error) throw mapDatabaseError(error, input.operationId);
     return data as unknown as CatalogueReviewResult;
   }
 
@@ -140,7 +146,7 @@ export class SupabaseCatalogueReviewRepository implements CatalogueReviewReposit
       p_operation_id: input.operationId,
       p_audit_context: input.auditContext as unknown as Json,
     });
-    if (error) throw mapDatabaseError(error);
+    if (error) throw mapDatabaseError(error, input.operationId);
     return data as unknown as CatalogueReviewResult;
   }
 }

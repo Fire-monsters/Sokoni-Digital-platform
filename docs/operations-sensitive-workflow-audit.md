@@ -13,8 +13,8 @@ and new state, reason, operation ID, HTTP request ID, IP address, user agent, ti
 and non-sensitive workflow details. Contact values, application private notes, provider
 payloads, and other secrets are deliberately excluded.
 
-The central table has RLS enabled, grants no browser role access, and rejects updates
-and deletes. Eight transaction triggers cover the sensitive workflow sources. Audited
+The central table has RLS enabled, grants no browser role access, gives the API service
+role read-only access, and rejects updates and deletes. Eight transaction triggers cover the sensitive workflow sources. Audited
 RPC wrappers bind API request metadata with `set_config(..., true)` before executing the
 existing authoritative database function, so the command and its audit event commit or
 roll back together.

@@ -3,6 +3,7 @@ import { z } from "zod";
 export * from "./vendor-order.js";
 export * from "./quality-check.js";
 export * from "./delivery.js";
+export * from "./admin-mutation.js";
 
 export const ugandanPhoneNumberSchema = z
   .string()

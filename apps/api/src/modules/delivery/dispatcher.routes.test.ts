@@ -27,7 +27,18 @@ vi.mock("../../middleware/authenticate.js", () => ({
     next();
   },
 }));
-vi.mock("../../infrastructure/supabase/client.js", () => ({ supabase: {} }));
+vi.mock("../../infrastructure/supabase/client.js", () => ({
+  supabase: {
+    rpc: (name: string, input: { p_operation_id?: string }) =>
+      Promise.resolve({
+        data:
+          name === "claim_admin_operation"
+            ? { action: "proceed", operationId: input.p_operation_id }
+            : null,
+        error: null,
+      }),
+  },
+}));
 vi.mock("../../middleware/require-permission.js", () => ({
   requirePermission:
     () => (_request: express.Request, _response: express.Response, next: express.NextFunction) => {

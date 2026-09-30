@@ -166,8 +166,14 @@ export function addOrderSupportNote(
   orderId: string,
   operationId: string,
   note: string,
+  expectedVersion: number,
 ) {
-  return commandOrderInvestigation(options, orderId, "notes", { operationId, note });
+  return commandOrderInvestigation(options, orderId, "notes", {
+    operationId,
+    note,
+    reason: note,
+    expectedVersion,
+  });
 }
 export function revealOrderContact(
   options: ApiClientOptions,
@@ -175,10 +181,12 @@ export function revealOrderContact(
   target: OrderContactTarget,
   operationId: string,
   reason: string,
+  expectedVersion: number,
 ) {
   return commandOrderInvestigation(options, orderId, `contact/${target}/reveal`, {
     operationId,
     reason,
+    expectedVersion,
   });
 }
 export function resendOrderNotification(
@@ -187,12 +195,13 @@ export function resendOrderNotification(
   notificationId: string,
   operationId: string,
   reason: string,
+  expectedVersion: number,
 ) {
   return commandOrderInvestigation(
     options,
     orderId,
     `notifications/${encodeURIComponent(notificationId)}/resend`,
-    { operationId, reason },
+    { operationId, reason, expectedVersion },
   );
 }
 export function escalateOrderToDispatch(
@@ -205,6 +214,7 @@ export function escalateOrderToDispatch(
   return commandOrderInvestigation(options, orderId, "escalate-dispatch", {
     operationId,
     reason,
+    expectedVersion: expectedDeliveryVersion,
     expectedDeliveryVersion,
   });
 }
@@ -213,8 +223,13 @@ export function cancelUnpaidOrder(
   orderId: string,
   operationId: string,
   reason: string,
+  expectedVersion: number,
 ) {
-  return commandOrderInvestigation(options, orderId, "cancel", { operationId, reason });
+  return commandOrderInvestigation(options, orderId, "cancel", {
+    operationId,
+    reason,
+    expectedVersion,
+  });
 }
 
 export function fetchApplicationQueue(
@@ -253,6 +268,9 @@ export class ApiClientError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly details?: ApiErrorResponse["error"]["details"];
+  readonly operationId: string | undefined;
+  readonly currentVersion: number | undefined;
+  readonly retryable: boolean | undefined;
 
   constructor(statusCode: number, error: ApiErrorResponse["error"]) {
     super(error.message);
@@ -260,6 +278,9 @@ export class ApiClientError extends Error {
     this.statusCode = statusCode;
     this.code = error.code;
     this.details = error.details;
+    this.operationId = error.operationId;
+    this.currentVersion = error.currentVersion;
+    this.retryable = error.retryable;
   }
 }
 
@@ -598,6 +619,8 @@ export function resolveDispatcherDeliveryIssue(
   input: {
     resolutionCode: DeliveryIssueResolutionCode;
     resolutionNote: string;
+    reason: string;
+    expectedVersion: number;
     operationId: string;
   },
 ): Promise<DeliveryIssueResult> {
@@ -883,11 +906,11 @@ export function approveAdminListing(
   listingId: string,
   expectedVersion: number,
   operationId: string,
-  reviewNote?: string,
+  reason: string,
 ): Promise<CatalogueReviewResult> {
   return requestApi<CatalogueReviewResult>(options, `/v1/admin/listings/${listingId}/approve`, {
     method: "POST",
-    body: JSON.stringify({ reviewNote, expectedVersion, operationId }),
+    body: JSON.stringify({ reviewNote: reason, reason, expectedVersion, operationId }),
   });
 }
 
@@ -903,7 +926,7 @@ export function requestAdminListingChanges(
     `/v1/admin/listings/${listingId}/request-changes`,
     {
       method: "POST",
-      body: JSON.stringify({ reviewNote, expectedVersion, operationId }),
+      body: JSON.stringify({ reviewNote, reason: reviewNote, expectedVersion, operationId }),
     },
   );
 }
@@ -919,14 +942,15 @@ export function reviewAdminPrice(
   requestId: string,
   decision: "approve" | "reject",
   operationId: string,
-  reviewNote?: string,
+  expectedVersion: number,
+  reason: string,
 ): Promise<CatalogueReviewResult> {
   return requestApi<CatalogueReviewResult>(
     options,
     `/v1/admin/price-requests/${requestId}/${decision}`,
     {
       method: "POST",
-      body: JSON.stringify({ reviewNote, operationId }),
+      body: JSON.stringify({ reviewNote: reason, reason, expectedVersion, operationId }),
     },
   );
 }
@@ -955,19 +979,22 @@ export function recheckPayment(
   options: ApiClientOptions,
   id: string,
   operationId: string,
+  expectedVersion: number,
+  reason: string,
 ): Promise<PaymentRecheckResult> {
   return requestApi<PaymentRecheckResult>(options, `/v1/admin/payments/${id}/reconcile`, {
     method: "POST",
-    body: JSON.stringify({ operationId }),
+    body: JSON.stringify({ operationId, expectedVersion, reason }),
   });
 }
 export function reconcilePendingPayments(
   options: ApiClientOptions,
   operationId: string,
+  reason: string,
 ): Promise<PaymentBatchResult> {
   return requestApi<PaymentBatchResult>(options, "/v1/admin/payments/reconciliation/run", {
     method: "POST",
-    body: JSON.stringify({ operationId, scope: "pending" }),
+    body: JSON.stringify({ operationId, scope: "pending", expectedVersion: 0, reason }),
   });
 }
 export function commandPaymentFinance(

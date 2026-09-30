@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  ApiClientError,
   commandPaymentFinance,
   fetchPaymentFinanceDetail,
   fetchPaymentFinanceQueue,
@@ -114,12 +115,18 @@ export function PaymentsPage() {
     try {
       const options = { baseUrl, accessToken };
       if (action === "batch") {
-        const result = await reconcilePendingPayments(options, operationId);
+        const result = await reconcilePendingPayments(options, operationId, reason.trim());
         setMessage(
           `Batch: ${result.claimed} checked, ${result.resolved} resolved, ${result.pending} pending, ${result.needsReview} need review, ${result.failed} failed.`,
         );
       } else if (action === "reconcile") {
-        const result = await recheckPayment(options, selected, operationId);
+        const result = await recheckPayment(
+          options,
+          selected,
+          operationId,
+          detail!.version,
+          reason.trim(),
+        );
         setMessage(
           `Provider recheck: ${label(result.outcome)}. Payment status: ${label(result.status)}.`,
         );
@@ -127,6 +134,7 @@ export function PaymentsPage() {
         const result = await commandPaymentFinance(options, selected, action, {
           ...input,
           operationId,
+          expectedVersion: detail!.version,
         });
         setMessage(
           action === "request-refund"
@@ -137,6 +145,12 @@ export function PaymentsPage() {
       retry.current = null;
       setRevision((v) => v + 1);
     } catch (e) {
+      if (e instanceof ApiClientError && e.code === "VERSION_CONFLICT") {
+        retry.current = null;
+        setRevision((value) => value + 1);
+        setError(`${e.message} The latest payment has been loaded for review.`);
+        return;
+      }
       setError(
         e instanceof Error
           ? e.message
@@ -165,7 +179,10 @@ export function PaymentsPage() {
             Refresh
           </button>
           {can("payments.reconcile") && (
-            <button disabled={busy} onClick={() => void execute("batch")}>
+            <button
+              disabled={busy || reason.trim().length < 5}
+              onClick={() => void execute("batch")}
+            >
               Recheck pending batch
             </button>
           )}
@@ -265,7 +282,10 @@ export function PaymentsPage() {
                 Provider reference: {detail.providerReference ?? "Missing"}
               </p>
               {can("payments.reconcile") && detail.provider === "pesapal" && (
-                <button disabled={busy} onClick={() => void execute("reconcile")}>
+                <button
+                  disabled={busy || reason.trim().length < 5}
+                  onClick={() => void execute("reconcile")}
+                >
                   Recheck with provider
                 </button>
               )}
@@ -297,7 +317,7 @@ export function PaymentsPage() {
                     </select>
                   </label>
                   <button
-                    disabled={reason.trim().length < 3}
+                    disabled={reason.trim().length < 5}
                     onClick={() => void execute("flag-investigation")}
                   >
                     Flag investigation
@@ -331,7 +351,7 @@ export function PaymentsPage() {
                   </label>
                   <button
                     disabled={
-                      reason.trim().length < 3 ||
+                      reason.trim().length < 5 ||
                       !Number.isSafeInteger(Number(amount)) ||
                       Number(amount) <= 0 ||
                       Number(amount) > detail.amount

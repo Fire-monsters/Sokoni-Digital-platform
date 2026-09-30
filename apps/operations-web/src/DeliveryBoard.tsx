@@ -1,4 +1,5 @@
 import {
+  ApiClientError,
   assignDispatcherDelivery,
   fetchDispatcherDelivery,
   fetchDispatcherNearbyRiders,
@@ -60,6 +61,7 @@ export function DeliveryBoard({
   const [detail, setDetail] = useState<DispatcherDeliveryDetail>();
   const [detailLoading, setDetailLoading] = useState(false);
   const detailRequest = useRef(0);
+  const pendingOperations = useRef(new Map<string, string>());
   const selected = board.deliveries.find((delivery) => delivery.id === selectedId);
   const grouped = useMemo(
     () =>
@@ -92,17 +94,36 @@ export function DeliveryBoard({
     }
   }
 
-  async function run(action: () => Promise<unknown>, success: string): Promise<void> {
+  function operationIdFor(key: string): string {
+    const operationId = pendingOperations.current.get(key) ?? crypto.randomUUID();
+    pendingOperations.current.set(key, operationId);
+    return operationId;
+  }
+
+  async function run(
+    operationKey: string,
+    action: (operationId: string) => Promise<unknown>,
+    success: string,
+  ): Promise<void> {
+    const operationId = operationIdFor(operationKey);
     onBusy(true);
     onMessage("");
     try {
-      await action();
+      await action(operationId);
+      pendingOperations.current.delete(operationKey);
       onMessage(success);
       setReason("");
       setNearby(undefined);
       await onReload();
       if (selected) await loadDetail(selected.id);
     } catch (error) {
+      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+        pendingOperations.current.delete(operationKey);
+        onMessage(`${error.message} The latest delivery has been loaded for review.`);
+        await onReload();
+        if (selected) await loadDetail(selected.id);
+        return;
+      }
       onMessage(error instanceof Error ? error.message : "Dispatcher action failed.");
     } finally {
       onBusy(false);
@@ -111,8 +132,16 @@ export function DeliveryBoard({
 
   async function assignment(reassign: boolean): Promise<void> {
     if (!selected || !riderId) return;
+    const operationKey = JSON.stringify([
+      reassign ? "reassign" : "assign",
+      selected.id,
+      riderId,
+      reason.trim(),
+      selected.version,
+    ]);
     await run(
-      () =>
+      operationKey,
+      (operationId) =>
         assignDispatcherDelivery(
           { baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000", accessToken: token },
           selected.id,
@@ -121,7 +150,7 @@ export function DeliveryBoard({
             transporterId: riderId,
             reason,
             expectedVersion: selected.version,
-            operationId: crypto.randomUUID(),
+            operationId,
           },
         ),
       reassign ? "Delivery reassigned." : "Delivery assigned.",
@@ -130,13 +159,16 @@ export function DeliveryBoard({
 
   async function deliveryAction(action: DispatcherDeliveryAction): Promise<void> {
     if (!selected) return;
+    const operationKey = JSON.stringify([action, selected.id, reason.trim(), selected.version]);
+    const operationId = operationIdFor(operationKey);
     onBusy(true);
     try {
       const result = await performDispatcherDeliveryAction(
         { baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000", accessToken: token },
         selected.id,
-        { action, reason, expectedVersion: selected.version, operationId: crypto.randomUUID() },
+        { action, reason, expectedVersion: selected.version, operationId },
       );
+      pendingOperations.current.delete(operationKey);
       if (result.contactPhoneNumber) window.open(`tel:${result.contactPhoneNumber}`, "_self");
       onMessage(
         result.contactPhoneNumber ? "Contact access audited." : "Delivery action completed.",
@@ -145,6 +177,13 @@ export function DeliveryBoard({
       await onReload();
       await loadDetail(selected.id);
     } catch (error) {
+      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+        pendingOperations.current.delete(operationKey);
+        onMessage(`${error.message} The latest delivery has been loaded for review.`);
+        await onReload();
+        await loadDetail(selected.id);
+        return;
+      }
       onMessage(error instanceof Error ? error.message : "Dispatcher action failed.");
     } finally {
       onBusy(false);
@@ -381,7 +420,7 @@ export function DeliveryBoard({
                   </button>
                   <button
                     className="approve"
-                    disabled={busy || !riderId || reason.trim().length < 3}
+                    disabled={busy || !riderId || reason.trim().length < 5}
                     onClick={() =>
                       void assignment(
                         selected.status === "assigned" || selected.status === "arrived_at_market",
@@ -398,7 +437,7 @@ export function DeliveryBoard({
               <div className="override-actions">
                 {(["assigned", "arrived_at_market"] as string[]).includes(selected.status) ? (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() => void deliveryAction("CANCEL_ASSIGNMENT")}
                   >
                     Cancel assignment
@@ -406,7 +445,7 @@ export function DeliveryBoard({
                 ) : null}
                 {(["in_transit", "arrived_at_customer"] as string[]).includes(selected.status) ? (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() => void deliveryAction("MARK_CUSTOMER_UNAVAILABLE")}
                   >
                     Customer unavailable
@@ -421,7 +460,7 @@ export function DeliveryBoard({
                   ] as string[]
                 ).includes(selected.status) ? (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() => void deliveryAction("RETURN_TO_MARKET")}
                   >
                     Return to market
@@ -429,14 +468,14 @@ export function DeliveryBoard({
                 ) : null}
                 {selected.transporter ? (
                   <button
-                    disabled={busy || reason.trim().length < 3}
+                    disabled={busy || reason.trim().length < 5}
                     onClick={() => void deliveryAction("CONTACT_RIDER")}
                   >
                     Contact rider
                   </button>
                 ) : null}
                 <button
-                  disabled={busy || reason.trim().length < 3}
+                  disabled={busy || reason.trim().length < 5}
                   onClick={() => void deliveryAction("CONTACT_CONSUMER")}
                 >
                   Contact consumer
@@ -486,10 +525,17 @@ export function DeliveryBoard({
                 </select>
                 <button
                   className="approve"
-                  disabled={busy || reason.trim().length < 3}
+                  disabled={busy || reason.trim().length < 5}
                   onClick={() =>
                     void run(
-                      () =>
+                      JSON.stringify([
+                        "resolve",
+                        issue.id,
+                        resolutionCode,
+                        reason.trim(),
+                        issue.reportedVersion,
+                      ]),
+                      (operationId) =>
                         resolveDispatcherDeliveryIssue(
                           {
                             baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
@@ -499,7 +545,9 @@ export function DeliveryBoard({
                           {
                             resolutionCode,
                             resolutionNote: reason,
-                            operationId: crypto.randomUUID(),
+                            reason,
+                            expectedVersion: issue.reportedVersion,
+                            operationId,
                           },
                         ),
                       "Issue resolved.",

@@ -1,25 +1,24 @@
 import { z } from "zod";
+import { operationMetadataShape } from "./admin-mutation.js";
 
 export const reviewListingSchema = z.object({
+  ...operationMetadataShape,
   reviewNote: z.string().trim().max(1000).optional(),
-  expectedVersion: z.number().int().positive(),
-  operationId: z.uuid(),
 });
 
 export const requestChangesSchema = z.object({
+  ...operationMetadataShape,
   reviewNote: z.string().trim().min(3).max(1000),
-  expectedVersion: z.number().int().positive(),
-  operationId: z.uuid(),
 });
 
 export const priceRequestParamsSchema = z.object({ requestId: z.uuid() });
 
 export const reviewPriceSchema = z.object({
+  ...operationMetadataShape,
   reviewNote: z.string().trim().max(1000).optional(),
-  operationId: z.uuid(),
 });
 
 export const rejectPriceSchema = z.object({
+  ...operationMetadataShape,
   reviewNote: z.string().trim().min(3).max(1000),
-  operationId: z.uuid(),
 });

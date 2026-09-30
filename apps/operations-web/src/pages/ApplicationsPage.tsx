@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ApiClientError,
   fetchApplicationQueue,
   fetchApplicationReview,
   reviewApplication,
@@ -105,7 +106,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
     if (!detail || !accessToken || inflight.current) return;
     const input = {
       expectedVersion: detail.version,
-      ...(reason.trim() ? { reason: reason.trim() } : {}),
+      reason: reason.trim() || (action === "notes" ? notes.trim() : ""),
       ...(notes.trim() ? { internalNotes: notes.trim() } : {}),
       issues: issues
         .split(",")
@@ -129,6 +130,12 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
       setMessage(`${label(action)} recorded.`);
       refresh();
     } catch (error) {
+      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+        retry.current = null;
+        setRevision((value) => value + 1);
+        setError(`${error.message} The latest application has been loaded for review.`);
+        return;
+      }
       setError(error instanceof Error ? error.message : "The review failed.");
     } finally {
       inflight.current = false;
@@ -302,26 +309,33 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
                     {can("applications.review") && (
                       <>
                         {detail.status === "pending_review" && (
-                          <button disabled={busy} onClick={() => void execute("start-review")}>
+                          <button
+                            disabled={busy || reason.trim().length < 5}
+                            onClick={() => void execute("start-review")}
+                          >
                             Start review
                           </button>
                         )}
                         {assigned && (
                           <>
                             <button
-                              disabled={busy || detail.missingRequirements.length > 0}
+                              disabled={
+                                busy ||
+                                reason.trim().length < 5 ||
+                                detail.missingRequirements.length > 0
+                              }
                               onClick={() => void execute("approve")}
                             >
                               Approve
                             </button>
                             <button
-                              disabled={busy || reason.trim().length < 3}
+                              disabled={busy || reason.trim().length < 5}
                               onClick={() => void execute("request-changes")}
                             >
                               Request changes
                             </button>
                             <button
-                              disabled={busy || reason.trim().length < 3}
+                              disabled={busy || reason.trim().length < 5}
                               onClick={() => void execute("reject")}
                             >
                               Reject
@@ -329,7 +343,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
                           </>
                         )}
                         <button
-                          disabled={busy || notes.trim().length < 3}
+                          disabled={busy || notes.trim().length < 5}
                           onClick={() => void execute("notes")}
                         >
                           Add private note
@@ -338,7 +352,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
                     )}
                     {can("users.manage") && detail.status === "approved" && (
                       <button
-                        disabled={busy || reason.trim().length < 3}
+                        disabled={busy || reason.trim().length < 5}
                         onClick={() => void execute("suspend")}
                       >
                         Suspend

@@ -48,6 +48,7 @@ describe("payment finance persistence", () => {
     const { rpc, repository } = setup({ status: "awaiting_approval" });
     const input = {
       operationId: "operation",
+      expectedVersion: 3,
       reasonCode: "other",
       reason: "Review refund",
       amount: 1000,
@@ -75,6 +76,7 @@ describe("payment finance persistence", () => {
         "request-refund",
         {
           operationId: "operation",
+          expectedVersion: 3,
           reasonCode: "other",
           reason: "Review refund",
           amount: 1000,

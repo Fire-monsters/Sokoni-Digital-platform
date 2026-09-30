@@ -96,6 +96,77 @@ export type Database = {
           },
         ]
       }
+      admin_operations: {
+        Row: {
+          actor_staff_id: string
+          completed_at: string | null
+          created_at: string
+          current_version: number | null
+          entity_id: string | null
+          entity_type: string
+          error_code: string | null
+          error_message: string | null
+          expected_version: number
+          expires_at: string
+          locked_until: string | null
+          operation_id: string
+          operation_type: string
+          reason: string
+          request_hash: string
+          response_body: Json | null
+          response_status: number | null
+          status: Database["public"]["Enums"]["idempotency_status"]
+        }
+        Insert: {
+          actor_staff_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_version?: number | null
+          entity_id?: string | null
+          entity_type: string
+          error_code?: string | null
+          error_message?: string | null
+          expected_version: number
+          expires_at?: string
+          locked_until?: string | null
+          operation_id: string
+          operation_type: string
+          reason: string
+          request_hash: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: Database["public"]["Enums"]["idempotency_status"]
+        }
+        Update: {
+          actor_staff_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_version?: number | null
+          entity_id?: string | null
+          entity_type?: string
+          error_code?: string | null
+          error_message?: string | null
+          expected_version?: number
+          expires_at?: string
+          locked_until?: string | null
+          operation_id?: string
+          operation_type?: string
+          reason?: string
+          request_hash?: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: Database["public"]["Enums"]["idempotency_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_operations_actor_staff_id_fkey"
+            columns: ["actor_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_members"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       application_documents: {
         Row: {
           application_id: string
@@ -4153,7 +4224,15 @@ export type Database = {
         Args: { p_order_id: string }
         Returns: Json
       }
+      admin_get_order_investigation_without_payment_version: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       admin_get_payment_detail: {
+        Args: { p_payment_id: string }
+        Returns: Json
+      }
+      admin_get_payment_detail_without_version: {
         Args: { p_payment_id: string }
         Returns: Json
       }
@@ -4425,6 +4504,21 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_admin_operation: {
+        Args: {
+          p_actor_staff_id: string
+          p_entity_id: string | null
+          p_entity_type: string
+          p_expected_version: number
+          p_lock_seconds?: number
+          p_operation_id: string
+          p_operation_type: string
+          p_reason: string
+          p_request_hash: string
+          p_ttl_days?: number
+        }
+        Returns: Json
+      }
       claim_notification_deliveries: {
         Args: { p_batch_size: number; p_lease_seconds: number }
         Returns: {
@@ -4455,6 +4549,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_idempotency_records: {
+        Args: { p_batch_size?: number }
+        Returns: number
+      }
+      cleanup_admin_operations: {
         Args: { p_batch_size?: number }
         Returns: number
       }
@@ -4495,6 +4593,15 @@ export type Database = {
         }
         Returns: Json
       }
+      command_payment_finance_without_version_check: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_input: Json
+          p_payment_id: string
+        }
+        Returns: Json
+      }
       command_payment_finance_audited: {
         Args: {
           p_action: string
@@ -4521,6 +4628,14 @@ export type Database = {
       complete_idempotency_record: {
         Args: {
           p_record_id: string
+          p_response_body: Json
+          p_response_status: number
+        }
+        Returns: undefined
+      }
+      complete_admin_operation: {
+        Args: {
+          p_operation_id: string
           p_response_body: Json
           p_response_status: number
         }
@@ -4701,6 +4816,16 @@ export type Database = {
       }
       fail_idempotency_record: {
         Args: { p_record_id: string }
+        Returns: undefined
+      }
+      fail_admin_operation: {
+        Args: {
+          p_current_version?: number
+          p_error_code: string
+          p_error_message: string
+          p_operation_id: string
+          p_response_status: number
+        }
         Returns: undefined
       }
       fail_notification_delivery: {
@@ -5592,4 +5717,3 @@ export const Constants = {
     },
   },
 } as const
-

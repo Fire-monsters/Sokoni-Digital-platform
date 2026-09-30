@@ -33,6 +33,8 @@ interface AssignmentInput {
 interface IssueResolutionInput {
   resolutionCode: string;
   resolutionNote: string;
+  reason: string;
+  expectedVersion: number;
   operationId: string;
 }
 

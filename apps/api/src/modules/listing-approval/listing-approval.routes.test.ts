@@ -33,7 +33,18 @@ vi.mock("../../middleware/require-permission.js", () => ({
       next();
     },
 }));
-vi.mock("../../infrastructure/supabase/client.js", () => ({ supabase: {} }));
+vi.mock("../../infrastructure/supabase/client.js", () => ({
+  supabase: {
+    rpc: (name: string, input: { p_operation_id?: string }) =>
+      Promise.resolve({
+        data:
+          name === "claim_admin_operation"
+            ? { action: "proceed", operationId: input.p_operation_id }
+            : null,
+        error: null,
+      }),
+  },
+}));
 
 describe("listing approval routes", () => {
   const listingId = "20000000-0000-4000-8000-000000000001";
@@ -69,6 +80,7 @@ describe("listing approval routes", () => {
 
     const response = await request(app()).post(`/v1/admin/listings/${listingId}/approve`).send({
       reviewNote: "Images and package verified",
+      reason: "Images and package verified",
       expectedVersion: 3,
       operationId,
     });
@@ -107,7 +119,7 @@ describe("listing approval routes", () => {
     expect(repository.reviewPrice).not.toHaveBeenCalled();
   });
 
-  it("allows an approval note to be omitted", async () => {
+  it("requires and forwards an operational reason for approval", async () => {
     repository.reviewPrice.mockResolvedValue({
       listingId,
       requestId: priceRequestId,
@@ -119,7 +131,11 @@ describe("listing approval routes", () => {
 
     const response = await request(app())
       .post(`/v1/admin/price-requests/${priceRequestId}/approve`)
-      .send({ operationId });
+      .send({
+        operationId,
+        expectedVersion: 0,
+        reason: "Vendor pricing evidence verified",
+      });
 
     expect(response.status).toBe(200);
     expect(repository.reviewPrice).toHaveBeenCalledWith({

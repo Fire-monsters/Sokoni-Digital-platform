@@ -13,7 +13,8 @@
     "./listing-approval": "./src/listing-approval.ts",
     "./vendor-order": "./src/vendor-order.ts",
     "./quality-check": "./src/quality-check.ts",
-    "./delivery": "./src/delivery.ts"
+    "./delivery": "./src/delivery.ts",
+    "./admin-mutation": "./src/admin-mutation.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

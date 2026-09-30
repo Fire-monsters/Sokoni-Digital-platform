@@ -18,6 +18,7 @@ import {
   PaymentRejectedError,
 } from "./payments.errors.js";
 import type { AuditWriteContext } from "../admin/workflows/index.js";
+import { mapPostgresAdminMutationError } from "../admin/workflows/admin-mutation.errors.js";
 
 export interface PaymentAttemptRecord {
   id: string;
@@ -62,7 +63,7 @@ export class PaymentsRepository {
       p_input: toJson(input),
       p_audit_context: auditContext as unknown as Json,
     });
-    if (error) throw mapDatabaseError(error);
+    if (error) throw mapDatabaseError(error, input.operationId);
     return data as unknown as PaymentFinanceResult;
   }
 
@@ -441,7 +442,12 @@ function toJson(value: unknown): Json {
   throw new Error("Value cannot be stored as JSON.");
 }
 
-function mapDatabaseError(error: { code?: string; message: string }): Error {
+function mapDatabaseError(
+  error: { code?: string; message: string; details?: string | null },
+  operationId?: string,
+): Error {
+  const mutationError = mapPostgresAdminMutationError(error, operationId);
+  if (mutationError) return mutationError;
   if (error.code === "P0002") return new PaymentNotFoundError(error.message);
   if (error.code === "42501") return new PaymentOperationForbiddenError(error.message);
   if (["23505", "55000"].includes(error.code ?? "")) return new PaymentConflictError(error.message);

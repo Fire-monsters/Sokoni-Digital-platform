@@ -4,6 +4,7 @@ import { createApp } from "./app.js";
 import { startPaymentReconciliationScheduler } from "./jobs/reconcile-pending-payments.js";
 import { startNotificationScheduler } from "./jobs/retry-notifications.js";
 import { startRiderOfferExpiryScheduler } from "./jobs/expire-rider-offers.js";
+import { closeAdminOperationCoordinator } from "./modules/admin/workflows/admin-operation.redis.js";
 
 const port = Number(process.env.PORT ?? 4000);
 const app = createApp();
@@ -27,7 +28,12 @@ function shutdown(signal: string): void {
       process.exit(1);
     }
 
-    process.exit(0);
+    void closeAdminOperationCoordinator()
+      .then(() => process.exit(0))
+      .catch((closeError: unknown) => {
+        console.error("Redis shutdown failed", closeError);
+        process.exit(1);
+      });
   });
 }
 

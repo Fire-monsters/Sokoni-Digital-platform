@@ -1,12 +1,11 @@
 import { z } from "zod";
+import { operationMetadataShape } from "@sokoni-digital/validation/admin-mutation";
 
 export const applicationParams = z.object({ applicationId: z.uuid() });
 export const applicationType = z.enum(["vendor", "rider"]);
 export const reviewInput = z
   .object({
-    operationId: z.uuid(),
-    expectedVersion: z.number().int().positive(),
-    reason: z.string().trim().min(3).max(1000).optional(),
+    ...operationMetadataShape,
     internalNotes: z.string().trim().min(3).max(2000).optional(),
     issues: z
       .array(z.string().regex(/^[A-Z][A-Z0-9_]{2,79}$/))
@@ -14,7 +13,7 @@ export const reviewInput = z
       .optional(),
   })
   .strict();
-export const reasonInput = reviewInput.extend({ reason: z.string().trim().min(3).max(1000) });
+export const reasonInput = reviewInput;
 export const noteInput = reviewInput.extend({ internalNotes: z.string().trim().min(3).max(2000) });
 const text = z.string().trim().min(1).max(200);
 const personal = z

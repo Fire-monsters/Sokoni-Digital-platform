@@ -1,5 +1,11 @@
 export type { ApiErrorCode, ApiErrorDetail, ApiErrorResponse } from "./api-error.js";
 export type { ApiSuccessResponse } from "./api-success.js";
+export type {
+  AdminMutationCommand,
+  AdminMutationErrorCode,
+  AdminMutationErrorContext,
+  OperationMetadata,
+} from "./admin-mutation.js";
 export {
   staffPermissions,
   type StaffPermission,

@@ -19,6 +19,7 @@ export const refundRequestReasons = [
 ] as const;
 export interface PaymentFinanceInput {
   operationId: string;
+  expectedVersion: number;
   reason: string;
   reasonCode: string;
   amount?: number;
@@ -35,6 +36,7 @@ export interface PaymentFinanceResult {
   paymentAttemptId: string;
   status: string;
   duplicate: boolean;
+  version: number;
 }
 export interface PaymentBatchResult {
   claimed: number;
@@ -45,6 +47,7 @@ export interface PaymentBatchResult {
 }
 export interface PaymentFinanceDetail {
   id: string;
+  version: number;
   checkoutId: string;
   reference: string;
   provider: string;

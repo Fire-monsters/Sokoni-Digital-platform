@@ -5,6 +5,7 @@ import {
   deliveryProofImageContract,
   dispatcherDeliveryActions,
 } from "@sokoni-digital/domain";
+import { operationMetadataShape } from "./admin-mutation.js";
 
 export const riderAvailabilityUpdateSchema = z.object({
   availability: z.enum(["offline", "available"]),
@@ -89,23 +90,19 @@ export const deliveryIssueReportSchema = z.object({
 });
 
 export const dispatcherAssignmentSchema = z.object({
+  ...operationMetadataShape,
   transporterId: z.uuid(),
-  reason: z.string().trim().min(3).max(500),
-  expectedVersion: z.number().int().positive(),
-  operationId: z.uuid(),
 });
 
 export const deliveryIssueResolutionSchema = z.object({
+  ...operationMetadataShape,
   resolutionCode: z.enum(deliveryIssueResolutionCodes),
   resolutionNote: z.string().trim().min(3).max(500),
-  operationId: z.uuid(),
 });
 
 export const dispatcherDeliveryActionSchema = z.object({
+  ...operationMetadataShape,
   action: z.enum(dispatcherDeliveryActions),
-  reason: z.string().trim().min(3).max(500),
-  expectedVersion: z.number().int().positive(),
-  operationId: z.uuid(),
 });
 
 export const dispatcherNearbyRidersQuerySchema = z.object({

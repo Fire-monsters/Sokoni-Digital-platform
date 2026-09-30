@@ -10,8 +10,14 @@ import type { z } from "zod";
 import { supabase } from "../../infrastructure/supabase/client.js";
 import type { reviewInput, uploadInput } from "./applications.schemas.js";
 import type { AuditWriteContext } from "../admin/workflows/index.js";
+import { mapPostgresAdminMutationError } from "../admin/workflows/admin-mutation.errors.js";
 
-export function applicationError(error: { code?: string; message: string }): Error {
+export function applicationError(
+  error: { code?: string; message: string; details?: string | null },
+  operationId?: string,
+): Error {
+  const mutationError = mapPostgresAdminMutationError(error, operationId);
+  if (mutationError) return mutationError;
   const statusCode =
     error.code === "P0002"
       ? 404
@@ -83,12 +89,12 @@ export class SupabaseApplicationRepository implements ApplicationReviewRepositor
       p_action: action,
       p_version: input.expectedVersion,
       p_operation_id: input.operationId,
-      p_reason: input.reason ?? "",
+      p_reason: input.reason,
       p_notes: input.internalNotes ?? "",
       p_issues: input.issues ?? [],
       p_audit_context: auditContext as unknown as Json,
     });
-    if (error) throw applicationError(error);
+    if (error) throw applicationError(error, input.operationId);
     return data as unknown as ApplicationReviewResult;
   }
   async save(userId: string, type: ApplicationType, details: Json) {

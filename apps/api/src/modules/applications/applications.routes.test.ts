@@ -8,7 +8,18 @@ import { errorHandler } from "../../middleware/error-handler.js";
 const auth = vi.hoisted(() => ({
   permissions: ["applications.read", "applications.review"] as string[],
 }));
-vi.mock("../../infrastructure/supabase/client.js", () => ({ supabase: {} }));
+vi.mock("../../infrastructure/supabase/client.js", () => ({
+  supabase: {
+    rpc: (name: string, input: { p_operation_id?: string }) =>
+      Promise.resolve({
+        data:
+          name === "claim_admin_operation"
+            ? { action: "proceed", operationId: input.p_operation_id }
+            : null,
+        error: null,
+      }),
+  },
+}));
 vi.mock("../../middleware/authenticate.js", () => ({
   authenticate: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     req.requestId = "review-test";
@@ -69,13 +80,13 @@ describe("application review boundary", () => {
     });
     const result = await request(app())
       .post(`/v1/admin/applications/${id}/start-review`)
-      .send({ expectedVersion: 1, operationId });
+      .send({ expectedVersion: 1, operationId, reason: "Begin document verification" });
     expect(result.status).toBe(200);
     expect(repository.review).toHaveBeenCalledWith(
       id,
       "a3300000-0000-4000-8000-000000000002",
       "start-review",
-      { expectedVersion: 1, operationId },
+      { expectedVersion: 1, operationId, reason: "Begin document verification" },
       {
         requestId: "review-test",
         ipAddress: "::ffff:127.0.0.1",
@@ -132,7 +143,7 @@ describe("application review boundary", () => {
       (
         await request(app())
           .post(`/v1/admin/applications/${id}/approve`)
-          .send({ expectedVersion: 1, operationId })
+          .send({ expectedVersion: 1, operationId, reason: "Documents verified" })
       ).status,
     ).toBe(409);
   });
