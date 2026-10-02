@@ -9,6 +9,13 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      product_categories: {
+        Row: { code: string; name: string }
+        Insert: { code: string; name: string }
+        Update: { code?: string; name?: string }
+        Relationships: []
+      }
+
       agricultural_products: {
         Row: {
           id: string
@@ -30,7 +37,7 @@ export type Database = {
         }
         Relationships: []
       }
-      agricultural_product_categories: {
+      product_category_memberships: {
         Row: {
           product_id: string
           category: string
@@ -45,7 +52,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "agricultural_product_categories_product_id_fkey"
+            foreignKeyName: "product_category_memberships_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "product_category_memberships_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "agricultural_products"
@@ -121,7 +135,7 @@ export type Database = {
           },
         ]
       }
-      business_crop_categories: {
+      business_category_preferences: {
         Row: {
           business_id: string
           category: string
@@ -136,7 +150,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "business_crop_categories_business_id_fkey"
+            foreignKeyName: "business_category_preferences_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "business_category_preferences_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -4465,6 +4486,9 @@ export type Database = {
       }
     }
     Functions: {
+      list_product_categories: { Args: Record<PropertyKey, never>; Returns: Json }
+      canonical_crop_payload: { Args: { p_input: Json }; Returns: Json }
+
       business_snapshot: { Args: { p_id: string }; Returns: Json }
       read_business_accounts: { Args: { p_actor: string; p_id?: string; p_admin?: boolean; p_limit?: number; p_offset?: number }; Returns: Json }
       list_agricultural_products: { Args: { p_category?: string }; Returns: Json }

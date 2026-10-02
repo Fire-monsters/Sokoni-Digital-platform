@@ -9,7 +9,11 @@ import {
   cropCategorySchema,
   patchBusinessSchema,
 } from "@sokoni-digital/validation";
-import type { BusinessAccount, BusinessAnalyticsContext } from "@sokoni-digital/domain";
+import type {
+  BusinessAccount,
+  BusinessAnalyticsContext,
+  BusinessPreferences,
+} from "@sokoni-digital/domain";
 import { authenticate } from "../../middleware/authenticate.js";
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 import { SupabaseBusinessRepository, type BusinessRepository } from "./business.repository.js";
@@ -21,6 +25,15 @@ function actor(req: Request): string {
       code: "UNAUTHENTICATED",
     });
   return req.auth.userId;
+}
+
+function preferences(business: BusinessAccount): BusinessPreferences {
+  return {
+    businessId: business.id,
+    version: business.version,
+    categories: business.categories,
+    productIds: business.productIds,
+  };
 }
 
 export function createBusinessRouter(
@@ -36,6 +49,26 @@ export function createBusinessRouter(
       next();
     },
   );
+  router.get("/agriculture/categories", async (req, res, next) => {
+    try {
+      sendSuccess(req, res, 200, await repository.categories());
+    } catch (e) {
+      next(e);
+    }
+  });
+  router.get("/me/businesses/:businessId/preferences", async (req, res, next) => {
+    const id = z.uuid().safeParse(req.params.businessId);
+    if (!id.success) {
+      sendZodValidationError(req, res, id.error.issues);
+      return;
+    }
+    try {
+      const business = (await repository.read(actor(req), id.data)) as BusinessAccount;
+      sendSuccess(req, res, 200, preferences(business));
+    } catch (e) {
+      next(e);
+    }
+  });
   router.get("/agriculture/products", async (req, res, next) => {
     const parsed = z
       .object({ category: cropCategorySchema.optional() })
@@ -113,6 +146,7 @@ export function createBusinessRouter(
     }
   });
   const mutations = [
+    ["put", "/me/businesses/:businessId/preferences", "preferences", businessPreferencesSchema],
     ["post", "/me/businesses", "create", createBusinessSchema],
     ["patch", "/me/businesses/:businessId", "profile", patchBusinessSchema],
     [
@@ -141,11 +175,12 @@ export function createBusinessRouter(
       }
       try {
         const { operationId, ...input } = parsed.data;
+        const business = await repository.command(actor(req), action, operationId, input, id.data);
         sendSuccess(
           req,
           res,
           action === "create" ? 201 : 200,
-          await repository.command(actor(req), action, operationId, input, id.data),
+          path === "/me/businesses/:businessId/preferences" ? preferences(business) : business,
         );
       } catch (e) {
         next(e);

@@ -1,4 +1,4 @@
-export type CropCategory = "cash" | "food";
+export type CropCategory = "CASH" | "FOOD";
 export type BusinessKind = "farmer" | "sme" | "warehouse";
 export type BusinessStatus =
   "draft" | "submitted" | "changes_requested" | "approved" | "rejected" | "suspended";
@@ -52,4 +52,15 @@ export interface BusinessPreferencesInput extends BusinessMutation {
 export interface BusinessReviewInput extends BusinessMutation {
   status: "approved" | "rejected" | "changes_requested" | "suspended";
   reason: string;
+}
+
+export interface ProductCategory {
+  code: CropCategory;
+  name: string;
+}
+export interface BusinessPreferences {
+  businessId: string;
+  version: number;
+  categories: CropCategory[];
+  productIds: string[];
 }

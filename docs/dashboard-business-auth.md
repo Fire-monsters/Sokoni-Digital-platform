@@ -7,7 +7,8 @@ new dashboard registration flow.
 
 ## Deployment
 
-1. Apply `20261002000100_business_accounts_crop_preferences.sql` after existing
+1. Apply `20261002000100_business_accounts_crop_preferences.sql` and
+   `20261002000200_canonical_crop_catalogue.sql` after existing
    migrations. The change is additive; do not reset a deployed database.
 2. Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and the
    existing server configuration. Never expose the secret key in the frontend.
@@ -75,18 +76,19 @@ Authorization: Bearer <access-token>
 creation resumes the existing business without overwriting it. Warehouse
 provisioning and employee invitation UI are not included in this slice.
 
-3. Fetch `GET /v1/agriculture/products`, optionally with `?category=cash` or
-   `?category=food`. Use the returned UUIDs, not names, in preferences:
+3. Fetch `GET /v1/agriculture/categories` for categories, then
+   `GET /v1/agriculture/products`, optionally with `?category=CASH` or
+   `?category=FOOD`. Use the returned UUIDs, not names, in preferences:
 
 ```http
-PUT /v1/me/businesses/<id>/product-preferences
+PUT /v1/me/businesses/<id>/preferences
 Content-Type: application/json
 Authorization: Bearer <access-token>
 
 {
   "operationId": "<new-UUID>",
   "expectedVersion": 1,
-  "categories": ["cash", "food"],
+  "categories": ["CASH", "FOOD"],
   "productIds": ["<maize-product-UUID>", "<coffee-product-UUID>"]
 }
 ```
@@ -130,8 +132,9 @@ self-review prevention, approval, suspension, RLS and throttling. Use a dedicate
 test database. Provider-adapter tests use test doubles; live SMS and hosted Auth
 require the staging verification above.
 
-Taxonomy defaults are a starting business classification, not an agronomic rule:
-coffee/maize/coconut are cash; maize/beans/rice/cassava/sweet potatoes/bananas are
-food. Controlled catalogue maintenance uses privileged server/database access;
-public taxonomy editing is not enabled. Archiving products preserves preferences
-and history but blocks submission with inactive selections.
+The canonical catalogue seeds only coffee, maize and coconut. Categories are
+`CASH` and `FOOD`; maize has both memberships under one product UUID. The earlier
+extra seed products are removed only if unreferenced, otherwise archived while
+preserving selections and historical operation snapshots. Product discovery
+excludes archived products. See [Crop catalogue and preferences](crop-catalogue-preferences.md)
+for the canonical tables and preference endpoints.

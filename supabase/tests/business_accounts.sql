@@ -26,7 +26,7 @@ declare
  outsider uuid := 'bc000000-0000-4000-8000-000000000002';
  reviewer uuid := 'bc000000-0000-4000-8000-000000000003';
  unverified uuid := 'bc000000-0000-4000-8000-000000000004';
- op uuid := gen_random_uuid(); b jsonb; b_id uuid; second_id uuid; maize uuid; coffee uuid; beans uuid; preferences jsonb;
+ op uuid := gen_random_uuid(); b jsonb; b_id uuid; second_id uuid; maize uuid; coffee uuid; coconut uuid; preferences jsonb;
 begin
  perform pg_temp.expect_error(format('select public.command_business_account(%L,%L,%L,%L)',unverified,'create',gen_random_uuid(),'{"kind":"farmer","name":"Farm","location":"Entebbe"}'),'42501');
  perform pg_temp.expect_error(format('select public.command_business_account(%L,%L,%L,%L)',owner_id,'create',gen_random_uuid(),'{"kind":"warehouse","name":"Farm","location":"Entebbe"}'),'22023');
@@ -42,12 +42,12 @@ begin
  perform pg_temp.expect_error(format('select public.command_business_account(%L,%L,%L,%L,%L)',owner_id,'submit',gen_random_uuid(),'{"expectedVersion":1}',b_id),'23514');
  select id into maize from public.agricultural_products where slug='maize';
  select id into coffee from public.agricultural_products where slug='coffee';
- select id into beans from public.agricultural_products where slug='beans';
- perform pg_temp.assert_true((select count(*)=2 from public.agricultural_product_categories where product_id=maize),'maize belongs to both categories');
+ select id into coconut from public.agricultural_products where slug='coconut';
+ perform pg_temp.assert_true((select count(*)=2 from public.product_category_memberships where product_id=maize),'maize belongs to both categories');
  perform pg_temp.assert_true((select count(*)=1 from jsonb_array_elements(public.list_agricultural_products()) p where p->>'slug'='maize'),'one maize identity in catalogue');
  preferences:=jsonb_build_object('expectedVersion',1,'categories',jsonb_build_array('food'),'productIds',jsonb_build_array(coffee));
  perform pg_temp.expect_error(format('select public.command_business_account(%L,%L,%L,%L,%L)',owner_id,'preferences',gen_random_uuid(),preferences,b_id),'22023');
- preferences:=jsonb_build_object('expectedVersion',1,'categories',jsonb_build_array('cash','food'),'productIds',jsonb_build_array(maize,coffee,beans));
+ preferences:=jsonb_build_object('expectedVersion',1,'categories',jsonb_build_array('cash','food'),'productIds',jsonb_build_array(maize,coffee,coconut));
  perform pg_temp.expect_error(format('select public.command_business_account(%L,%L,%L,%L,%L)',outsider,'preferences',gen_random_uuid(),preferences,b_id),'42501');
  b:=public.command_business_account(owner_id,'preferences',gen_random_uuid(),preferences,b_id);
  perform pg_temp.assert_true(jsonb_array_length(b->'categories')=2 and jsonb_array_length(b->'productIds')=3,'combined preferences saved');
@@ -63,9 +63,9 @@ begin
  b:=public.command_business_account(owner_id,'submit',gen_random_uuid(),'{"expectedVersion":5}',b_id);
  b:=public.command_business_account(reviewer,'review',gen_random_uuid(),'{"expectedVersion":6,"status":"approved","reason":"Verified account"}',b_id);
  perform pg_temp.assert_true((b->>'canTrade')::boolean,'approved business can trade');
- preferences:=jsonb_build_object('expectedVersion',7,'categories',jsonb_build_array('food'),'productIds',jsonb_build_array(maize,beans));
+ preferences:=jsonb_build_object('expectedVersion',7,'categories',jsonb_build_array('food'),'productIds',jsonb_build_array(maize));
  b:=public.command_business_account(owner_id,'preferences',gen_random_uuid(),preferences,b_id);
- perform pg_temp.assert_true(b->>'status'='approved' and jsonb_array_length(b->'productIds')=2,'preferences editable after approval');
+ perform pg_temp.assert_true(b->>'status'='approved' and jsonb_array_length(b->'productIds')=1,'preferences editable after approval');
  b:=public.command_business_account(reviewer,'review',gen_random_uuid(),'{"expectedVersion":8,"status":"suspended","reason":"Account investigation"}',b_id);
  perform pg_temp.assert_true(not (b->>'canTrade')::boolean,'suspension blocks trading');
  preferences:=jsonb_set(preferences,'{expectedVersion}','9');
@@ -74,7 +74,7 @@ begin
  perform pg_temp.assert_true(second_id<>b_id,'one identity can own farmer and SME businesses');
  preferences:=jsonb_build_object('expectedVersion',1,'categories',jsonb_build_array('cash'),'productIds',jsonb_build_array(coffee));
  b:=public.command_business_account(owner_id,'preferences',gen_random_uuid(),preferences,second_id);
- perform pg_temp.assert_true(b->'categories'='["cash"]'::jsonb,'cash-only selection');
+ perform pg_temp.assert_true(b->'categories'='["CASH"]'::jsonb,'cash-only selection');
  update public.agricultural_products set active=false where id=coffee;
  perform pg_temp.expect_error(format('select public.command_business_account(%L,%L,%L,%L,%L)',owner_id,'submit',gen_random_uuid(),'{"expectedVersion":2}',second_id),'23514');
  perform pg_temp.assert_true((select count(*)>5 from public.business_audit_events where business_id=b_id),'audit history retained');

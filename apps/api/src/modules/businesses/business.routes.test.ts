@@ -16,11 +16,15 @@ function setup() {
     status: "draft" as const,
     version: 1,
     canTrade: false,
-    categories: ["cash" as const],
+    categories: ["CASH" as const],
     productIds: [id],
     reviewReason: null,
   };
   const repository = {
+    categories: vi.fn().mockResolvedValue([
+      { code: "CASH", name: "Cash crops" },
+      { code: "FOOD", name: "Food crops" },
+    ]),
     products: vi.fn().mockResolvedValue([]),
     read: vi.fn().mockResolvedValue(business),
     command: vi.fn().mockResolvedValue(business),
@@ -36,6 +40,73 @@ function setup() {
   return { app, repository };
 }
 describe("business account routes", () => {
+  it("lists canonical categories", async () => {
+    const { app, repository } = setup();
+    const result = await request(app).get("/agriculture/categories");
+    expect(result.status).toBe(200);
+    expect(result.body as unknown).toMatchObject({ data: [{ code: "CASH" }, { code: "FOOD" }] });
+    expect(repository.categories).toHaveBeenCalledOnce();
+  });
+  it("accepts canonical and legacy category filters and passes canonical values", async () => {
+    const { app, repository } = setup();
+    for (const category of ["CASH", "cash"]) {
+      expect((await request(app).get(`/agriculture/products?category=${category}`)).status).toBe(
+        200,
+      );
+      expect(repository.products).toHaveBeenLastCalledWith("CASH");
+    }
+    expect((await request(app).get("/agriculture/products?category=OTHER")).status).toBe(400);
+  });
+  it("reads preferences without leaking business profile fields", async () => {
+    const { app, repository } = setup();
+    const result = await request(app).get(`/me/businesses/${id}/preferences`);
+    expect(result.status).toBe(200);
+    expect((result.body as { data: unknown }).data).toEqual({
+      businessId: id,
+      version: 1,
+      categories: ["CASH"],
+      productIds: [id],
+    });
+    expect(repository.read).toHaveBeenCalledWith("actor-from-token", id);
+  });
+  it("writes preferences via the new endpoint and retains the legacy alias", async () => {
+    const { app, repository } = setup();
+    const input = {
+      operationId,
+      expectedVersion: 1,
+      categories: ["cash", "FOOD"],
+      productIds: [id],
+    };
+    const result = await request(app).put(`/me/businesses/${id}/preferences`).send(input);
+    expect(result.status).toBe(200);
+    expect((result.body as { data: unknown }).data).toMatchObject({
+      businessId: id,
+      categories: ["CASH"],
+    });
+    expect(repository.command).toHaveBeenCalledWith(
+      "actor-from-token",
+      "preferences",
+      operationId,
+      { expectedVersion: 1, categories: ["CASH", "FOOD"], productIds: [id] },
+      id,
+    );
+    expect(
+      (await request(app).put(`/me/businesses/${id}/product-preferences`).send(input)).status,
+    ).toBe(200);
+  });
+  it("denies reads and writes for another business", async () => {
+    const { app, repository } = setup();
+    repository.read.mockRejectedValue(businessDatabaseError({ code: "42501" }));
+    repository.command.mockRejectedValue(businessDatabaseError({ code: "42501" }));
+    expect((await request(app).get(`/me/businesses/${id}/preferences`)).status).toBe(403);
+    expect(
+      (
+        await request(app)
+          .put(`/me/businesses/${id}/preferences`)
+          .send({ operationId, expectedVersion: 1, categories: ["CASH"], productIds: [id] })
+      ).status,
+    ).toBe(403);
+  });
   it("uses authenticated actor and passes repeat-safe operation ID", async () => {
     const { app, repository } = setup();
     const input = { operationId, kind: "farmer", name: "Farm", location: "Entebbe" };
@@ -65,6 +136,7 @@ describe("business account routes", () => {
     const { app, repository } = setup();
     for (const preferences of [
       { categories: ["cash", "cash"], productIds: [id] },
+      { categories: ["CASH", "cash"], productIds: [id] },
       { categories: ["food"], productIds: [] },
       { categories: ["food"], productIds: [id, id] },
     ]) {

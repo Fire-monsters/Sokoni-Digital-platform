@@ -1,4 +1,4 @@
-import type { AgriculturalProduct, BusinessAccount } from "@sokoni-digital/domain";
+import type { AgriculturalProduct, BusinessAccount, ProductCategory } from "@sokoni-digital/domain";
 import type { Json } from "@sokoni-digital/database-types";
 import { supabase } from "../../infrastructure/supabase/client.js";
 
@@ -24,6 +24,7 @@ export function businessDatabaseError(error: { code: string }): Error {
   return Object.assign(new Error(message), { statusCode, code });
 }
 export interface BusinessRepository {
+  categories(): Promise<ProductCategory[]>;
   products(category?: string): Promise<AgriculturalProduct[]>;
   read(
     actor: string,
@@ -41,6 +42,11 @@ export interface BusinessRepository {
   ): Promise<BusinessAccount>;
 }
 export class SupabaseBusinessRepository implements BusinessRepository {
+  async categories(): Promise<ProductCategory[]> {
+    const { data, error } = await supabase.rpc("list_product_categories");
+    if (error) throw businessDatabaseError(error);
+    return data as unknown as ProductCategory[];
+  }
   async products(category?: string): Promise<AgriculturalProduct[]> {
     const { data, error } = await supabase.rpc("list_agricultural_products", {
       ...(category ? { p_category: category } : {}),

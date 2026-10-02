@@ -22,7 +22,9 @@ export const businessResendSchema = z.object({ phoneNumber: businessPhoneSchema 
 export const businessRefreshSchema = z
   .object({ refreshToken: z.string().min(1).max(4096) })
   .strict();
-export const cropCategorySchema = z.enum(["cash", "food"]);
+export const cropCategorySchema = z
+  .enum(["CASH", "FOOD", "cash", "food"])
+  .transform((value): "CASH" | "FOOD" => (value === "cash" || value === "CASH" ? "CASH" : "FOOD"));
 export const businessMutationSchema = z
   .object({ operationId: z.uuid(), expectedVersion: z.number().int().positive() })
   .strict();

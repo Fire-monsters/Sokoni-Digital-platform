@@ -5,6 +5,8 @@ import type {
   BusinessAuthSession,
   BusinessMutation,
   BusinessPreferencesInput,
+  BusinessPreferences,
+  ProductCategory,
   BusinessReviewInput,
   CreateBusinessInput,
   CropCategory,
@@ -1104,12 +1106,21 @@ export function updateBusiness(
     body: JSON.stringify(input),
   });
 }
+export function fetchAgriculturalCategories(options: ApiClientOptions): Promise<ProductCategory[]> {
+  return requestApi(options, "/v1/agriculture/categories");
+}
+export function fetchBusinessPreferences(
+  options: ApiClientOptions,
+  id: string,
+): Promise<BusinessPreferences> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}/preferences`);
+}
 export function updateBusinessPreferences(
   options: ApiClientOptions,
   id: string,
   input: BusinessPreferencesInput,
-): Promise<BusinessAccount> {
-  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}/product-preferences`, {
+): Promise<BusinessPreferences> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}/preferences`, {
     method: "PUT",
     body: JSON.stringify(input),
   });
