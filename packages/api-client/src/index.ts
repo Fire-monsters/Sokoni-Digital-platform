@@ -1,4 +1,13 @@
 import type {
+  AgriculturalProduct,
+  BusinessAccount,
+  BusinessAnalyticsContext,
+  BusinessAuthSession,
+  BusinessMutation,
+  BusinessPreferencesInput,
+  BusinessReviewInput,
+  CreateBusinessInput,
+  CropCategory,
   PaymentFinanceDetail,
   PaymentFinanceQueue,
   PaymentFinanceInput,
@@ -1007,4 +1016,142 @@ export function commandPaymentFinance(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+// Dashboard business APIs intentionally do not alter existing mobile auth contracts.
+export function registerBusinessIdentity(
+  options: ApiClientOptions,
+  input: { phoneNumber: string; password: string },
+): Promise<{ phoneVerificationRequired: true }> {
+  return requestApi(options, "/v1/business-auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export function loginBusinessIdentity(
+  options: ApiClientOptions,
+  input: { phoneNumber: string; password: string },
+): Promise<BusinessAuthSession> {
+  return requestApi(options, "/v1/business-auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export function verifyBusinessOtp(
+  options: ApiClientOptions,
+  input: { phoneNumber: string; otpCode: string },
+): Promise<BusinessAuthSession> {
+  return requestApi(options, "/v1/business-auth/verify-otp", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export function resendBusinessOtp(
+  options: ApiClientOptions,
+  phoneNumber: string,
+): Promise<{ phoneVerificationRequired: true }> {
+  return requestApi(options, "/v1/business-auth/resend-otp", {
+    method: "POST",
+    body: JSON.stringify({ phoneNumber }),
+  });
+}
+export function refreshBusinessSession(
+  options: ApiClientOptions,
+  refreshToken: string,
+): Promise<BusinessAuthSession> {
+  return requestApi(options, "/v1/business-auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+export function logoutBusinessIdentity(options: ApiClientOptions): Promise<{ signedOut: true }> {
+  return requestApi(options, "/v1/business-auth/logout", { method: "POST" });
+}
+export function fetchAgriculturalProducts(
+  options: ApiClientOptions,
+  category?: CropCategory,
+): Promise<AgriculturalProduct[]> {
+  return requestApi(
+    options,
+    `/v1/agriculture/products${category ? `?category=${encodeURIComponent(category)}` : ""}`,
+  );
+}
+export function fetchBusinesses(
+  options: ApiClientOptions,
+  pagination: { limit?: number; offset?: number } = {},
+): Promise<BusinessAccount[]> {
+  return requestApi(
+    options,
+    `/v1/me/businesses?limit=${String(pagination.limit ?? 50)}&offset=${String(pagination.offset ?? 0)}`,
+  );
+}
+export function fetchBusiness(options: ApiClientOptions, id: string): Promise<BusinessAccount> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}`);
+}
+export function createBusiness(
+  options: ApiClientOptions,
+  input: CreateBusinessInput,
+): Promise<BusinessAccount> {
+  return requestApi(options, "/v1/me/businesses", { method: "POST", body: JSON.stringify(input) });
+}
+export function updateBusiness(
+  options: ApiClientOptions,
+  id: string,
+  input: BusinessMutation & { name?: string; location?: string },
+): Promise<BusinessAccount> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+export function updateBusinessPreferences(
+  options: ApiClientOptions,
+  id: string,
+  input: BusinessPreferencesInput,
+): Promise<BusinessAccount> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}/product-preferences`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+export function submitBusiness(
+  options: ApiClientOptions,
+  id: string,
+  input: BusinessMutation,
+): Promise<BusinessAccount> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}/submit`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export function fetchBusinessApplications(
+  options: ApiClientOptions,
+  pagination: { limit?: number; offset?: number } = {},
+): Promise<BusinessAccount[]> {
+  return requestApi(
+    options,
+    `/v1/admin/business-applications?limit=${String(pagination.limit ?? 50)}&offset=${String(pagination.offset ?? 0)}`,
+  );
+}
+export function fetchBusinessApplication(
+  options: ApiClientOptions,
+  id: string,
+): Promise<BusinessAccount> {
+  return requestApi(options, `/v1/admin/business-applications/${encodeURIComponent(id)}`);
+}
+export function reviewBusiness(
+  options: ApiClientOptions,
+  id: string,
+  input: BusinessReviewInput,
+): Promise<BusinessAccount> {
+  return requestApi(options, `/v1/admin/business-applications/${encodeURIComponent(id)}/review`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export function fetchBusinessAnalyticsContext(
+  options: ApiClientOptions,
+  id: string,
+): Promise<BusinessAnalyticsContext> {
+  return requestApi(options, `/v1/me/businesses/${encodeURIComponent(id)}/analytics-context`);
 }

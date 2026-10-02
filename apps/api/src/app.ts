@@ -1,3 +1,5 @@
+import { createBusinessAuthRouter } from "./modules/business-auth/business-auth.routes.js";
+import { createBusinessRouter } from "./modules/businesses/business.routes.js";
 import cors from "cors";
 import express from "express";
 import type { Request } from "express";
@@ -42,6 +44,13 @@ export function createApp(): express.Express {
   app.use(requestContext);
   app.use(
     pinoHttp({
+      redact: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "req.body.password",
+        "req.body.otpCode",
+        "req.body.refreshToken",
+      ],
       customProps: (request: Request) => ({
         requestId: request.requestId,
       }),
@@ -64,6 +73,8 @@ export function createApp(): express.Express {
     });
   });
 
+  app.use("/v1/business-auth", createBusinessAuthRouter());
+  app.use("/v1", createBusinessRouter());
   app.use("/v1/auth", createAuthHookRouter());
   app.use("/v1/auth", authRouter);
   app.use("/v1/catalogue", createCatalogueRouter());
