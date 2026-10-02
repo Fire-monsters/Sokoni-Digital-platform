@@ -5,11 +5,13 @@ create table public.agricultural_products (
   name text not null,
   active boolean not null default true
 );
+
 create table public.agricultural_product_categories (
   product_id uuid not null references public.agricultural_products(id),
   category text not null check (category in ('cash','food')),
   primary key(product_id, category)
 );
+
 create table public.businesses (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id),
@@ -24,6 +26,7 @@ create table public.businesses (
   updated_at timestamptz not null default now(),
   unique(owner_id, kind)
 );
+
 create table public.business_memberships (
   business_id uuid not null references public.businesses(id),
   user_id uuid not null references auth.users(id),
@@ -31,6 +34,7 @@ create table public.business_memberships (
   active boolean not null default true,
   primary key (business_id, user_id)
 );
+
 create index business_memberships_user_idx on public.business_memberships(user_id, business_id) where active;
 create index businesses_status_idx on public.businesses(status, created_at, id);
 create table public.business_crop_categories (
@@ -38,11 +42,13 @@ create table public.business_crop_categories (
   category text not null check (category in ('cash','food')),
   primary key(business_id, category)
 );
+
 create table public.business_product_preferences (
   business_id uuid not null references public.businesses(id),
   product_id uuid not null references public.agricultural_products(id),
   primary key(business_id, product_id)
 );
+
 create table public.business_audit_events (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id),
@@ -54,6 +60,7 @@ create table public.business_audit_events (
   operation_id uuid not null unique,
   created_at timestamptz not null default now()
 );
+
 create table public.business_operations (
   operation_id uuid primary key,
   actor_id uuid not null references auth.users(id),
@@ -62,6 +69,7 @@ create table public.business_operations (
   input jsonb not null,
   result jsonb not null
 );
+
 create table public.business_auth_limits (
   key_hash text primary key,
   window_start timestamptz not null,
@@ -82,6 +90,7 @@ language sql stable security definer set search_path = '' as $$
  select exists(select 1 from public.business_memberships
  where business_id=p_business_id and user_id=auth.uid() and active);
 $$;
+
 revoke all on function public.is_business_member(uuid) from public, anon;
 grant execute on function public.is_business_member(uuid) to authenticated;
 
@@ -102,6 +111,7 @@ revoke all on public.agricultural_products, public.agricultural_product_categori
 grant select on public.agricultural_products, public.agricultural_product_categories,
  public.businesses, public.business_memberships, public.business_crop_categories,
  public.business_product_preferences to authenticated;
+ 
 create policy agricultural_products_read on public.agricultural_products for select to authenticated using (active);
 create policy agricultural_categories_read on public.agricultural_product_categories for select to authenticated
  using (exists(select 1 from public.agricultural_products p where p.id=product_id and p.active));

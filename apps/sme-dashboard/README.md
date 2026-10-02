@@ -23,8 +23,8 @@ Architecture:
 - UI components must call the service layer, not import fixtures directly.
 - Use local mock data and localStorage for demo changes.
 - Include reset-demo functionality.
-- Do not create a database, real authentication, payment integration,
-  server functions
+- Business authentication uses the API; inventory, trading and analytics remain
+  local demo workflows. Do not add payment integration or database provisioning.
 - Keep business calculations and status transitions out of presentation
   components so they can later be replaced by server-backed services.
 
@@ -70,3 +70,30 @@ cd <repository-name>
 pnpm install
 pnpm --filter sme-dashboard dev
 ```
+
+## Business authentication
+
+Copy `.env.example` to `.env.local` and set `VITE_API_URL` to the API origin.
+Start the API with the Supabase migrations and SMS provider configuration described
+in [Dashboard business authentication](../../docs/dashboard-business-auth.md).
+No Supabase secret belongs in a `VITE_*` variable.
+
+Routes: `/auth/register` → `/auth/verify` → workspace; existing users use
+`/auth/login`. Dashboard pages require a verified session and preserve the requested
+page and filters through login. Unverified users can resume verification from the
+login screen without storing their password. SMS resends use a 60-second cooldown
+and respect the API's `Retry-After` response.
+
+The service stores rotated tokens in **sessionStorage** for the current browser
+tab, validates restored sessions through the refresh endpoint, refreshes before
+expiry and revokes the current session on logout. Tokens are accessible to the
+application's JavaScript; deploy over HTTPS and protect against XSS. Closing the
+tab ends local persistence. Passwords and SMS codes are never persisted.
+
+Authentication is real; the workspace still displays explicitly labelled demo
+business data. Phone verification does not create a business application or grant
+business approval. Business profile/crop onboarding is a separate implementation.
+
+Checks: `pnpm --filter sme-dashboard typecheck`, `pnpm --filter sme-dashboard test`,
+`pnpm --filter sme-dashboard build`. Test live SMS delivery, expired codes, login,
+refresh and logout with a controlled staging account before release.

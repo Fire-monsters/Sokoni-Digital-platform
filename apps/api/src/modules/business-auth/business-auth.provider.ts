@@ -15,6 +15,11 @@ export function authProviderError(error: {
   code?: string | undefined;
 }): Error {
   const status = error.status ?? 503;
+  if (error.code === "phone_provider_disabled" || error.code === "signup_disabled")
+    return Object.assign(
+      new Error("Phone registration is unavailable. Contact support."),
+      { statusCode: 503, code: "INTERNAL_ERROR" },
+    );
   if (status === 429)
     return Object.assign(new Error("Too many attempts. Please try again later."), {
       statusCode: 429,

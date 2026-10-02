@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AppShell } from "@/components/AppShell";
+import { AuthBoundary } from "@/components/auth/AuthBoundary";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -124,9 +124,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
+      <AuthBoundary>
         <Outlet />
-      </AppShell>
+      </AuthBoundary>
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
