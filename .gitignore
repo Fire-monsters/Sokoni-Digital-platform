@@ -43,3 +43,5 @@ pnpm-debug.log*
 # Test output
 test-results/
 playwright-report/
+# pnpm local store
+.pnpm-store/
