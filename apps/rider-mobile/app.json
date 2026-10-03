@@ -53,7 +53,9 @@
           "locationWhenInUsePermission": "Allow E-Katale Rider to use your location while you update availability and active delivery progress."
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

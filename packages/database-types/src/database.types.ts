@@ -4389,7 +4389,1073 @@ export type Database = {
           },
         ]
       }
-    }
+      farmer_listing_photos: {
+        Row: {
+          byte_size: number
+          created_at: string
+          id: string
+          listing_id: string
+          mime_type: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          byte_size: number
+          created_at?: string
+          id?: string
+          listing_id: string
+          mime_type: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          byte_size?: number
+          created_at?: string
+          id?: string
+          listing_id?: string
+          mime_type?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_listing_photos_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_listings: {
+        Row: {
+          asking_price_ugx_per_kg: number | null
+          availability: string
+          created_at: string
+          description: string | null
+          farmer_business_id: string
+          id: string
+          location: string
+          product_id: string
+          published_at: string | null
+          quantity_kg: number
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          asking_price_ugx_per_kg?: number | null
+          availability?: string
+          created_at?: string
+          description?: string | null
+          farmer_business_id: string
+          id?: string
+          location: string
+          product_id: string
+          published_at?: string | null
+          quantity_kg: number
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          asking_price_ugx_per_kg?: number | null
+          availability?: string
+          created_at?: string
+          description?: string | null
+          farmer_business_id?: string
+          id?: string
+          location?: string
+          product_id?: string
+          published_at?: string | null
+          quantity_kg?: number
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_listings_farmer_business_id_fkey"
+            columns: ["farmer_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_listings_farmer_business_id_fkey"
+            columns: ["farmer_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_listings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_information_requests: {
+        Row: {
+          created_at: string
+          id: string
+          question: string
+          responded_at: string | null
+          responded_by: string | null
+          response: string | null
+          review_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question: string
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          review_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_information_requests_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "listing_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_reviews: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          listing_id: string
+          reason: string | null
+          warehouse_business_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          reason?: string | null
+          warehouse_business_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          reason?: string | null
+          warehouse_business_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_reviews_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_reviews_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_offer_grade_prices: {
+        Row: {
+          grade: string
+          offer_id: string
+          price_ugx_per_kg: number
+        }
+        Insert: {
+          grade: string
+          offer_id: string
+          price_ugx_per_kg: number
+        }
+        Update: {
+          grade?: string
+          offer_id?: string
+          price_ugx_per_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_offer_grade_prices_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_offers: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          expires_at: string | null
+          farmer_business_id: string
+          id: string
+          listing_id: string
+          product_id: string
+          quantity_kg: number
+          review_id: string | null
+          status: string
+          submitted_at: string | null
+          terms: string | null
+          updated_at: string
+          version: number
+          warehouse_business_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          expires_at?: string | null
+          farmer_business_id: string
+          id?: string
+          listing_id: string
+          product_id: string
+          quantity_kg: number
+          review_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          terms?: string | null
+          updated_at?: string
+          version?: number
+          warehouse_business_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          expires_at?: string | null
+          farmer_business_id?: string
+          id?: string
+          listing_id?: string
+          product_id?: string
+          quantity_kg?: number
+          review_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          terms?: string | null
+          updated_at?: string
+          version?: number
+          warehouse_business_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_offers_listing_id_farmer_business_id_fkey"
+            columns: ["listing_id", "farmer_business_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_listings"
+            referencedColumns: ["id", "farmer_business_id"]
+          },
+          {
+            foreignKeyName: "procurement_offers_listing_id_product_id_fkey"
+            columns: ["listing_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_listings"
+            referencedColumns: ["id", "product_id"]
+          },
+          {
+            foreignKeyName: "procurement_offers_review_id_listing_id_warehouse_business_fkey"
+            columns: ["review_id", "listing_id", "warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "listing_reviews"
+            referencedColumns: ["id", "listing_id", "warehouse_business_id"]
+          },
+          {
+            foreignKeyName: "procurement_offers_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_offers_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_grade_prices: {
+        Row: {
+          grade: string
+          price_ugx_per_kg: number
+          purchase_order_line_id: string
+        }
+        Insert: {
+          grade: string
+          price_ugx_per_kg: number
+          purchase_order_line_id: string
+        }
+        Update: {
+          grade?: string
+          price_ugx_per_kg?: number
+          purchase_order_line_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_grade_prices_purchase_order_line_id_fkey"
+            columns: ["purchase_order_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_lines: {
+        Row: {
+          created_at: string
+          id: string
+          ordered_quantity_kg: number
+          product_id: string
+          purchase_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordered_quantity_kg: number
+          product_id: string
+          purchase_order_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordered_quantity_kg?: number
+          product_id?: string
+          purchase_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_purchase_order_id_product_id_fkey"
+            columns: ["purchase_order_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id", "product_id"]
+          },
+        ]
+      }
+      purchase_order_status_history: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          new_status: string
+          operation_id: string
+          previous_status: string | null
+          purchase_order_id: string
+          reason: string | null
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          new_status: string
+          operation_id: string
+          previous_status?: string | null
+          purchase_order_id: string
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          new_status?: string
+          operation_id?: string
+          previous_status?: string | null
+          purchase_order_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_status_history_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          accepted_at: string
+          created_at: string
+          currency_code: string
+          farmer_business_id: string
+          id: string
+          listing_id: string
+          offer_id: string
+          offer_terms: string | null
+          operation_id: string
+          product_id: string
+          status: string
+          updated_at: string
+          warehouse_business_id: string
+        }
+        Insert: {
+          accepted_at: string
+          created_at?: string
+          currency_code?: string
+          farmer_business_id: string
+          id?: string
+          listing_id: string
+          offer_id: string
+          offer_terms?: string | null
+          operation_id: string
+          product_id: string
+          status?: string
+          updated_at?: string
+          warehouse_business_id: string
+        }
+        Update: {
+          accepted_at?: string
+          created_at?: string
+          currency_code?: string
+          farmer_business_id?: string
+          id?: string
+          listing_id?: string
+          offer_id?: string
+          offer_terms?: string | null
+          operation_id?: string
+          product_id?: string
+          status?: string
+          updated_at?: string
+          warehouse_business_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_farmer_business_id_fkey"
+            columns: ["farmer_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_farmer_business_id_fkey"
+            columns: ["farmer_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_offer_id_farmer_business_id_warehouse_busi_fkey"
+            columns: ["offer_id", "farmer_business_id", "warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_offers"
+            referencedColumns: [
+              "id",
+              "farmer_business_id",
+              "warehouse_business_id",
+            ]
+          },
+          {
+            foreignKeyName: "purchase_orders_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "procurement_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_offer_id_listing_id_product_id_fkey"
+            columns: ["offer_id", "listing_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_offers"
+            referencedColumns: ["id", "listing_id", "product_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_audit_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          operation_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          details?: Json
+          entity_id: string
+          entity_type: string
+          id?: string
+          operation_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          details?: Json
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          operation_id?: string
+        }
+        Relationships: []
+      }
+      wholesale_catalogue_items: {
+        Row: {
+          available_packages: number
+          base_unit: string
+          created_at: string
+          grade: string
+          id: string
+          minimum_packages: number
+          name: string
+          package_unit: string
+          price_ugx_per_package: number
+          product_id: string
+          sku: string
+          status: string
+          units_per_package: number
+          updated_at: string
+          version: number
+          warehouse_business_id: string
+        }
+        Insert: {
+          available_packages?: number
+          base_unit: string
+          created_at?: string
+          grade: string
+          id?: string
+          minimum_packages?: number
+          name: string
+          package_unit: string
+          price_ugx_per_package: number
+          product_id: string
+          sku: string
+          status?: string
+          units_per_package: number
+          updated_at?: string
+          version?: number
+          warehouse_business_id: string
+        }
+        Update: {
+          available_packages?: number
+          base_unit?: string
+          created_at?: string
+          grade?: string
+          id?: string
+          minimum_packages?: number
+          name?: string
+          package_unit?: string
+          price_ugx_per_package?: number
+          product_id?: string
+          sku?: string
+          status?: string
+          units_per_package?: number
+          updated_at?: string
+          version?: number
+          warehouse_business_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_catalogue_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_catalogue_items_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_catalogue_items_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_invoice_documents: {
+        Row: {
+          error_code: string | null
+          invoice_id: string
+          sha256: string | null
+          status: string
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          error_code?: string | null
+          invoice_id: string
+          sha256?: string | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          error_code?: string | null
+          invoice_id?: string
+          sha256?: string | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_invoice_documents_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: true
+            referencedRelation: "wholesale_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_invoice_lines: {
+        Row: {
+          grade: string
+          id: string
+          invoice_id: string
+          line_total_ugx: number
+          name: string
+          package_unit: string
+          quantity_packages: number
+          unit_price_ugx: number
+        }
+        Insert: {
+          grade: string
+          id?: string
+          invoice_id: string
+          line_total_ugx: number
+          name: string
+          package_unit: string
+          quantity_packages: number
+          unit_price_ugx: number
+        }
+        Update: {
+          grade?: string
+          id?: string
+          invoice_id?: string
+          line_total_ugx?: number
+          name?: string
+          package_unit?: string
+          quantity_packages?: number
+          unit_price_ugx?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_invoices: {
+        Row: {
+          buyer_name: string
+          id: string
+          issued_at: string
+          order_id: string
+          reference: string
+          seller_name: string
+          sme_business_id: string
+          total_ugx: number
+          warehouse_business_id: string
+        }
+        Insert: {
+          buyer_name: string
+          id?: string
+          issued_at?: string
+          order_id: string
+          reference?: string
+          seller_name: string
+          sme_business_id: string
+          total_ugx: number
+          warehouse_business_id: string
+        }
+        Update: {
+          buyer_name?: string
+          id?: string
+          issued_at?: string
+          order_id?: string
+          reference?: string
+          seller_name?: string
+          sme_business_id?: string
+          total_ugx?: number
+          warehouse_business_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "wholesale_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_invoices_sme_business_id_fkey"
+            columns: ["sme_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_invoices_sme_business_id_fkey"
+            columns: ["sme_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_invoices_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_invoices_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_operations: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          input: Json
+          operation_id: string
+          result: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          input: Json
+          operation_id: string
+          result: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          input?: Json
+          operation_id?: string
+          result?: Json
+        }
+        Relationships: []
+      }
+      wholesale_order_lines: {
+        Row: {
+          base_unit: string
+          catalogue_item_id: string
+          grade: string
+          id: string
+          line_total_ugx: number | null
+          name: string
+          order_id: string
+          package_unit: string
+          product_id: string
+          quantity_packages: number
+          sku: string
+          unit_price_ugx: number
+          units_per_package: number
+        }
+        Insert: {
+          base_unit: string
+          catalogue_item_id: string
+          grade: string
+          id?: string
+          line_total_ugx?: number | null
+          name: string
+          order_id: string
+          package_unit: string
+          product_id: string
+          quantity_packages: number
+          sku: string
+          unit_price_ugx: number
+          units_per_package: number
+        }
+        Update: {
+          base_unit?: string
+          catalogue_item_id?: string
+          grade?: string
+          id?: string
+          line_total_ugx?: number | null
+          name?: string
+          order_id?: string
+          package_unit?: string
+          product_id?: string
+          quantity_packages?: number
+          sku?: string
+          unit_price_ugx?: number
+          units_per_package?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_order_lines_catalogue_item_id_fkey"
+            columns: ["catalogue_item_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_catalogue_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_order_status_history: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          new_status: string
+          operation_id: string
+          order_id: string
+          previous_status: string | null
+          reason: string | null
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          new_status: string
+          operation_id: string
+          order_id: string
+          previous_status?: string | null
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          new_status?: string
+          operation_id?: string
+          order_id?: string
+          previous_status?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_orders: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          reference: string
+          sme_business_id: string
+          status: string
+          total_ugx: number
+          updated_at: string
+          warehouse_business_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference?: string
+          sme_business_id: string
+          status?: string
+          total_ugx: number
+          updated_at?: string
+          warehouse_business_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference?: string
+          sme_business_id?: string
+          status?: string
+          total_ugx?: number
+          updated_at?: string
+          warehouse_business_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_orders_sme_business_id_fkey"
+            columns: ["sme_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_orders_sme_business_id_fkey"
+            columns: ["sme_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_orders_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "business_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_orders_warehouse_business_id_fkey"
+            columns: ["warehouse_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_payment_allocations: {
+        Row: {
+          amount_ugx: number
+          created_at: string
+          invoice_id: string
+          payment_id: string
+        }
+        Insert: {
+          amount_ugx: number
+          created_at?: string
+          invoice_id: string
+          payment_id: string
+        }
+        Update: {
+          amount_ugx?: number
+          created_at?: string
+          invoice_id?: string
+          payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_payment_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "wholesale_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_payment_allocations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "wholesale_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wholesale_payments: {
+        Row: {
+          amount_ugx: number
+          evidence_path: string | null
+          external_reference: string
+          id: string
+          paid_at: string
+          provider: string
+          provider_account: string
+          verified_at: string
+          verified_by: string
+        }
+        Insert: {
+          amount_ugx: number
+          evidence_path?: string | null
+          external_reference: string
+          id?: string
+          paid_at: string
+          provider: string
+          provider_account: string
+          verified_at?: string
+          verified_by: string
+        }
+        Update: {
+          amount_ugx?: number
+          evidence_path?: string | null
+          external_reference?: string
+          id?: string
+          paid_at?: string
+          provider?: string
+          provider_account?: string
+          verified_at?: string
+          verified_by?: string
+        }
+        Relationships: []
+      }    }
     Views: {
       admin_audit_event_projection: {
         Row: {
@@ -4483,6 +5549,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      business_applications: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          kind: string | null
+          location: string | null
+          name: string | null
+          owner_id: string | null
+          review_reason: string | null
+          status: string | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          kind?: string | null
+          location?: string | null
+          name?: string | null
+          owner_id?: string | null
+          review_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          kind?: string | null
+          location?: string | null
+          name?: string | null
+          owner_id?: string | null
+          review_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -5530,6 +6635,91 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      create_purchase_order_from_offer: {
+        Args: { p_actor: string; p_offer_id: string; p_operation_id: string }
+        Returns: string
+      }
+      wholesale_command_order: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_operation: string
+          p_order: string
+          p_reason?: string
+        }
+        Returns: string
+      }
+      wholesale_replay: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_input: Json
+          p_operation: string
+        }
+        Returns: Json
+      }
+      wholesale_require_business: {
+        Args: {
+          p_actor: string
+          p_business: string
+          p_kind: string
+          p_owner?: boolean
+        }
+        Returns: undefined
+      }
+      wholesale_require_finance: {
+        Args: { p_actor: string }
+        Returns: undefined
+      }
+      wholesale_save_catalogue_item: {
+        Args: {
+          p_actor: string
+          p_id?: string
+          p_input: Json
+          p_operation: string
+          p_warehouse: string
+        }
+        Returns: string
+      }
+      wholesale_set_invoice_document: {
+        Args: {
+          p_error: string
+          p_invoice: string
+          p_path: string
+          p_sha256: string
+          p_status: string
+        }
+        Returns: undefined
+      }
+      wholesale_submit_order: {
+        Args: {
+          p_actor: string
+          p_lines: Json
+          p_notes?: string
+          p_operation: string
+          p_sme: string
+        }
+        Returns: string
+      }
+      wholesale_verify_payment: {
+        Args: {
+          p_actor: string
+          p_input: Json
+          p_invoice: string
+          p_operation: string
+        }
+        Returns: string
+      }
+      wholesale_provision_warehouse: {
+        Args: {
+          p_admin: string
+          p_owner: string
+          p_name: string
+          p_location: string
+          p_operation: string
+        }
+        Returns: string
       }
     }
     Enums: {

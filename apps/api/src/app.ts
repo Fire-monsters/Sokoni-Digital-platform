@@ -30,6 +30,7 @@ import { createVendorOrdersRouter } from "./modules/orders/index.js";
 import { createQualityChecksRouter } from "./modules/quality/index.js";
 import { createNotificationsRouter } from "./modules/notifications/index.js";
 import { createOrderInvestigationRouter } from "./modules/order-investigation/index.js";
+import { createWholesaleRouter } from "./modules/wholesale/wholesale.routes.js";
 import {
   createConsumerDeliveryRouter,
   createDispatcherRouter,
@@ -75,6 +76,7 @@ export function createApp(): express.Express {
 
   app.use("/v1/business-auth", createBusinessAuthRouter());
   app.use("/v1", createBusinessRouter());
+  app.use("/v1", createWholesaleRouter());
   app.use("/v1/auth", createAuthHookRouter());
   app.use("/v1/auth", authRouter);
   app.use("/v1/catalogue", createCatalogueRouter());
