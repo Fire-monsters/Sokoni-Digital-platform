@@ -4,6 +4,7 @@ const serverEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     PORT: z.coerce.number().int().positive().default(4000),
+    
 
     SUPABASE_URL: z.url(),
     SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
