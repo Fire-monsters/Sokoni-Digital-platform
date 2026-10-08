@@ -42,7 +42,7 @@ jobs:
         service: [api, sme, warehouse]
     steps:
       - uses: actions/checkout@v6
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v3
       - name: Require public production configuration
         if: github.event_name == 'workflow_dispatch'
