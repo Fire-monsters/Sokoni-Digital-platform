@@ -7,51 +7,70 @@ selling, dispatch and SME inventory receipt are outside this release.
 
 ## Current state (2026-10-03)
 
-- Local Supabase has the agriculture and wholesale migrations installed. The
-  rollback-only `supabase/tests/wholesale_orders.sql` verifies membership,
-  price snapshots, order replay, stock commitment, insufficient stock, decline,
-  cancellation, invoices and partial/full verified payments.
-- The linked hosted database has conflicting schema and migration history; see
-  [hosted-schema-reconciliation.md](hosted-schema-reconciliation.md). No wholesale
-  or agriculture migration has been applied there.
-- Read-only hosted **public schema and data** exports were saved at
-  `/private/tmp/sokoni-hosted-pre-wholesale-20261003.sql` and
-  `/private/tmp/sokoni-hosted-data-pre-wholesale-20261003.sql` (mode 600). Both
-  restored with `ON_ERROR_STOP=1` to a fresh database in the local Supabase
-  PostgreSQL 17.6 image. These exports do **not** include Auth users, Storage
-  objects or a full project backup. Obtain and restore-test those separately
-  before changing production.
-- The production UI is gated by `VITE_WHOLESALE_ENABLED=true` in SME Dashboard
-  and `NEXT_PUBLIC_WHOLESALE_ENABLED=true` in Agro-Warehouse. The default is off.
+- The existing hosted project has the five focused migrations installed:
+  staff identity, business accounts, canonical crops, agriculture procurement,
+  and wholesale orders. The corresponding five versions are recorded in hosted
+  migration history. The earlier repository migrations remain unreconciled;
+  `supabase db push` is still unsafe. See
+  [hosted-schema-reconciliation.md](hosted-schema-reconciliation.md).
+- Before applying SQL, roles, schema (including `auth` and `storage` metadata),
+  and data were exported to mode-600 files under `/private/tmp`:
+  `sokoni-hosted-roles-20261003.sql`,
+  `sokoni-hosted-pre-wholesale-20261003.sql`, and
+  `sokoni-hosted-full-data-20261003.sql`. The restored copy retained the existing
+  Auth user. Storage objects were empty at export. Database exports do not back
+  up Storage file bytes or project settings.
+- All five migrations and the rollback-only SQL test passed on the restored
+  copy. The same SQL test passed on hosted after deployment; its fixture rows
+  were rolled back. Hosted Auth user count remained one, the invoice bucket
+  exists, and the canonical crop catalogue contains three active crops.
+- A local API journey passed: approved SME submits, warehouse confirms, PDF
+  downloads, finance records a partial external payment, and the SME sees the
+  outstanding balance. No real provider transaction or dispatch was created.
+- Localhost UI flags are enabled in ignored `.env.local` files. Production UI
+  flags remain off. The hosted project has no approved SME, warehouse offer, or
+  finance staff fixture, so a real hosted dashboard journey is still pending.
+
+## Try it on localhost
+
+1. Keep local Supabase running. Start the API with `pnpm --filter
+@sokoni-digital/api dev`; `apps/api/.env` points it to local Supabase on port 4000. Start SME Dashboard and Agro-Warehouse with their existing dev scripts.
+2. Restart the dashboard dev servers after changing `.env.local`, then refresh
+   both browser tabs. The ignored SME and Agro-Warehouse env files set their API
+   URL to `http://localhost:4000` and their wholesale flag to `true`.
+3. Sign in using the local-only accounts in
+   `/private/tmp/sokoni-local-wholesale-logins.txt`. The local fixture creates
+   one approved SME, one approved warehouse, finance staff, and a published
+   maize offer. The fixture script is `pnpm --filter @sokoni-digital/api
+wholesale:seed:local`; it refuses non-local Supabase, reuses saved credentials, and resumes existing
+   business setup. Repeated runs preserve the existing offer and its stock. The
+   password file is private and must not be committed.
+
+Local phone/password sign-in currently depends on the running local Auth
+container having SMS sign-up enabled. A fresh local Supabase restart with the
+checked-in config disables phone Auth until a local SMS provider is configured.
 
 ## Hosted sequence
 
-1. Create a full hosted backup covering `auth`, `storage`, `public`, roles and
-   existing data. Verify recovery in an isolated Supabase project. Preserve the
-   existing hosted users and their identifiers.
-2. Reconcile the hosted schema against repository migrations on that copy.
-   Existing `listing_status`, `listings`, `sellers`, `markets` and migration
-   history conflict with the repository. Build explicit data-preserving repair
-   migrations; do not bulk-mark migrations as applied.
-3. Apply `20261002000300_agriculture_procurement_foundation.sql` and
-   `20261003000100_wholesale_orders.sql` to staging. Confirm the private
-   `wholesale-invoices` bucket and service-role-only function/table grants.
-4. Run the SQL test on staging inside a transaction. Then test real approved
-   SME and warehouse memberships, staff with `wholesale.payments.verify`,
-   cross-business denial, invoice PDF download and retries, concurrent
-   confirmations, and external payment references. Never create a payment as a
-   substitute for provider verification.
-5. Deploy API and both dashboards with the flags off. Configure the SME API
+1. For a real hosted journey, provision a verified warehouse owner and approve
+   a genuine SME account. Grant a separate active finance staff account
+   `wholesale.payments.verify`. Publish a real warehouse offer. Do not create a
+   payment as a substitute for provider verification.
+2. Deploy API and both dashboards with the flags off. Configure the SME API
    origin; configure Agro-Warehouse API origin, Supabase URL and publishable key.
    Provision a verified warehouse owner using `pnpm --filter @sokoni-digital/api
-   warehouse:provision -- --admin-user-id=<uuid> --owner-user-id=<uuid>
-   --name=<name> --location=<place>`. The owner signs in with a verified phone
+warehouse:provision -- --admin-user-id=<uuid> --owner-user-id=<uuid>
+--name=<name> --location=<place>`. The owner signs in with a verified phone
    account. Finance staff sign in separately by email and need an active staff
    record with the dedicated permission.
-6. Publish an offer for an active canonical crop. Confirm an SME submission
-   appears only in the intended warehouse. Verify frozen prices, quantity
-   commitment, PDF, partial payment and balance. Repeat this on production
-   after the reconciled migration; then turn both flags on.
+3. Confirm an SME submission appears only in the intended warehouse. Verify
+   frozen prices, quantity commitment, PDF, partial payment and balance. Test
+   cross-business denial, concurrent confirmations and reference duplication.
+   Then turn both production dashboard flags on.
+4. Reconcile the remaining legacy migrations separately with explicit
+   data-preserving repairs. Do not mark older migrations applied solely because
+   some of their objects already exist, and do not run `supabase db push` until
+   this work is complete.
 
 The invoice PDF is generated on first authorized download from frozen invoice
 rows. Its private object is retrieved through a 120-second signed URL. A failed

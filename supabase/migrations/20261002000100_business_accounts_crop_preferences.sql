@@ -70,7 +70,9 @@ create table public.business_operations (
   result jsonb not null
 );
 
-create table public.business_auth_limits (
+-- The hosted project received this table through the standalone auth repair.
+-- Preserve its existing counters when reconciling migration history.
+create table if not exists public.business_auth_limits (
   key_hash text primary key,
   window_start timestamptz not null,
   attempts integer not null
@@ -252,11 +254,12 @@ end;
 $$;
 
 -- Database-backed throttling works across API replicas and stores no raw phone/IP.
-create function public.consume_business_auth_limit(p_key text,p_max integer,p_seconds integer) returns boolean
+create or replace function public.consume_business_auth_limit(p_key text,p_max integer,p_seconds integer) returns boolean
 language plpgsql security definer set search_path='' as $$
 declare n integer;
 begin
- if p_key !~ '^[a-f0-9]{64}$' or p_max not between 1 and 1000 or p_seconds not between 1 and 3600 then
+ if p_key is null or p_max is null or p_seconds is null or
+   p_key !~ '^[a-f0-9]{64}$' or p_max not between 1 and 1000 or p_seconds not between 1 and 3600 then
  raise exception 'Invalid rate limit' using errcode='22023'; end if;
  insert into public.business_auth_limits as l values(p_key,clock_timestamp(),1)
  on conflict(key_hash) do update set
