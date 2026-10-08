@@ -37,10 +37,15 @@ import {
   createRiderOperationsRouter,
 } from "./modules/delivery/index.js";
 
+import { supabase } from "./infrastructure/supabase/client.js";
+import { parseServerEnvironment } from "./config/index.js";
+
 export function createApp(): express.Express {
+  const env = parseServerEnvironment();
   const app = express();
 
   app.disable("x-powered-by");
+  app.set("trust proxy", env.TRUST_PROXY_HOPS);
 
   app.use(requestContext);
   app.use(
@@ -58,7 +63,15 @@ export function createApp(): express.Express {
     }),
   );
   app.use(helmet());
-  app.use(cors());
+  const allowedOrigins = env.CORS_ORIGINS.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.use(
+    cors({
+      origin: env.NODE_ENV === "production" ? allowedOrigins : true,
+    }),
+  );
   app.use(express.json({ limit: "250kb", verify: captureSignedWebhookRawBody }));
 
   app.get("/health", (request, response) => {
@@ -74,32 +87,45 @@ export function createApp(): express.Express {
     });
   });
 
+  app.get("/readyz", async (_request, response) => {
+    try {
+      const { error } = await supabase
+        .rpc("list_product_categories")
+        .abortSignal(AbortSignal.timeout(5000));
+      response.status(error ? 503 : 200).json({ ready: !error });
+    } catch {
+      response.status(503).json({ ready: false });
+    }
+  });
+
   app.use("/v1/business-auth", createBusinessAuthRouter());
   app.use("/v1", createBusinessRouter());
   app.use("/v1", createWholesaleRouter());
   app.use("/v1/auth", createAuthHookRouter());
-  app.use("/v1/auth", authRouter);
-  app.use("/v1/catalogue", createCatalogueRouter());
-  app.use("/v1/carts", createCartRouter());
-  app.use("/v1/checkouts", createCheckoutRouter());
-  app.use("/v1/orders", createConsumerOrdersRouter());
-  app.use("/v1/orders/deliveries", createConsumerDeliveryRouter());
-  app.use("/v1/notifications", createNotificationsRouter());
-  app.use("/v1", createPaymentsRouter());
-  app.use("/v1/operations", createPaymentOperationsRouter());
-  app.use("/v1/me", createApplicantRouter());
-  app.use("/v1/me", meRouter);
-  app.use("/v1/vendor/listings", createListingsRouter());
-  app.use("/v1/vendor/orders", createVendorOrdersRouter());
-  app.use("/v1/vendor/orders", createQualityChecksRouter());
-  app.use("/v1/rider", createRiderOperationsRouter());
-  app.use("/v1/admin", createListingApprovalRouter());
-  app.use("/v1/admin", createAdminReadModelsRouter());
-  app.use("/v1/admin", createOrderInvestigationRouter());
-  app.use("/v1/admin", createPaymentAdminRouter());
-  app.use("/v1/admin", createDispatcherRouter());
-  app.use("/v1/admin", createApplicationReviewRouter());
-  app.use("/v1/admin", adminRouter);
+  if (env.APP_MODE === "full") {
+    app.use("/v1/auth", authRouter);
+    app.use("/v1/catalogue", createCatalogueRouter());
+    app.use("/v1/carts", createCartRouter());
+    app.use("/v1/checkouts", createCheckoutRouter());
+    app.use("/v1/orders", createConsumerOrdersRouter());
+    app.use("/v1/orders/deliveries", createConsumerDeliveryRouter());
+    app.use("/v1/notifications", createNotificationsRouter());
+    app.use("/v1", createPaymentsRouter());
+    app.use("/v1/operations", createPaymentOperationsRouter());
+    app.use("/v1/me", createApplicantRouter());
+    app.use("/v1/me", meRouter);
+    app.use("/v1/vendor/listings", createListingsRouter());
+    app.use("/v1/vendor/orders", createVendorOrdersRouter());
+    app.use("/v1/vendor/orders", createQualityChecksRouter());
+    app.use("/v1/rider", createRiderOperationsRouter());
+    app.use("/v1/admin", createListingApprovalRouter());
+    app.use("/v1/admin", createAdminReadModelsRouter());
+    app.use("/v1/admin", createOrderInvestigationRouter());
+    app.use("/v1/admin", createPaymentAdminRouter());
+    app.use("/v1/admin", createDispatcherRouter());
+    app.use("/v1/admin", createApplicationReviewRouter());
+    app.use("/v1/admin", adminRouter);
+  }
 
   app.use(notFound);
   app.use(errorHandler);

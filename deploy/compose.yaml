@@ -1,0 +1,91 @@
+name: sokoni
+
+x-service: &service
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 30s
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  api:
+    <<: *service
+    image: ${API_IMAGE:?Set API_IMAGE to a tested release digest}
+    platform: linux/arm64
+    env_file:
+      - ${API_ENV_FILE:-/opt/sokoni/secrets/api.env}
+    environment:
+      NODE_ENV: production
+      APP_MODE: wholesale
+      PAYMENTS_ENV: disabled
+      PORT: "4000"
+      TRUST_PROXY_HOPS: "1"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 8s
+      start_period: 30s
+      retries: 3
+  sme:
+    <<: *service
+    image: ${SME_IMAGE:?Set SME_IMAGE to a tested release digest}
+    platform: linux/arm64
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.status<400?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 8s
+      start_period: 30s
+      retries: 3
+  warehouse:
+    <<: *service
+    image: ${WAREHOUSE_IMAGE:?Set WAREHOUSE_IMAGE to a tested release digest}
+    platform: linux/arm64
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.status<400?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 8s
+      start_period: 30s
+      retries: 3
+  caddy:
+    <<: *service
+    image: caddy:2.10.2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      sme:
+        condition: service_healthy
+      warehouse:
+        condition: service_healthy
+volumes:
+  caddy_data:
+  caddy_config:

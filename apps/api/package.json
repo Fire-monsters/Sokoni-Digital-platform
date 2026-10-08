@@ -16,7 +16,9 @@
     "warehouse:provision": "tsx src/scripts/provision-warehouse.ts",
     "wholesale:seed:local": "tsx src/scripts/seed-local-wholesale.ts",
     "staff:provision:test": "tsx src/scripts/provision-test-staff.ts",
-    "clean": "rimraf dist coverage"
+    "clean": "rimraf dist coverage",
+    "build:production": "node scripts/build-production.mjs",
+    "start:production": "node dist/server.mjs"
   },
   "keywords": [],
   "author": "",
@@ -47,6 +49,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "@types/supertest": "^7.2.1",
+    "esbuild": "0.28.1",
     "supertest": "^7.2.2",
     "tsx": "^4.23.7",
     "typescript": "catalog:",

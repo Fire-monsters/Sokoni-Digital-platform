@@ -1,0 +1,11 @@
+api.solgemtradecomp.online {
+  reverse_proxy api:4000 {
+    header_up X-Forwarded-For {remote_host}
+  }
+}
+sme.solgemtradecomp.online {
+  reverse_proxy sme:3000
+}
+warehouse.solgemtradecomp.online {
+  reverse_proxy warehouse:3000
+}

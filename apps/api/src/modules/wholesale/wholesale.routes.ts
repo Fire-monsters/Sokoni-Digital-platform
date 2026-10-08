@@ -320,7 +320,15 @@ async function signedInvoice(invoice: Record<string, unknown>) {
 
 export function createWholesaleRouter() {
   const router = Router();
-  router.use(authenticate);
+  router.use(
+    [
+      "/sme/businesses/:businessId/wholesale",
+      "/warehouse/businesses/:businessId/wholesale",
+      "/finance/wholesale",
+      "/wholesale",
+    ],
+    authenticate,
+  );
   router.use((_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     next();
