@@ -31,6 +31,8 @@ apps/
   vendor-mobile/       Vendor Expo application
   rider-mobile/        Rider Expo application
   operations-web/      Operations dashboard
+  agro-warehouse/      Agro warehouse dashboard (Next.js)
+  sme-dashboard/       SME marketplace dashboard (Vite)
 packages/              Shared domain, UI, auth, validation, and API packages
 tooling/               Shared TypeScript and ESLint configuration
 supabase/              Local Supabase configuration, migrations, and DB tests
@@ -222,3 +224,15 @@ then restart Expo with `--clear`.
 **Dependencies differ from CI:** use Node.js 22 and rerun
 `pnpm install --frozen-lockfile`; the repository pins its pnpm version through
 the root `package.json`.
+
+## Additional dashboards
+
+Both dashboards use the root pnpm workspace and `pnpm-lock.yaml`. Run
+`pnpm install` from the repository root after changing dependencies.
+
+```bash
+pnpm --filter agro-warehouse dev
+pnpm --filter sme-dashboard dev
+```
+
+To build either dashboard, replace `dev` with `build`.

@@ -8,7 +8,16 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", ".expo/**", "web-build/**", "coverage/**"]
+      "outputs": [
+        "dist/**",
+        "build/**",
+        ".expo/**",
+        "web-build/**",
+        "coverage/**",
+        ".output/**",
+        ".next/**",
+        "!.next/cache/**"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
