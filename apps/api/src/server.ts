@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/array-type */
 import "dotenv/config";
+
+import { parseServerEnvironment } from "./config/index.js";
 
 import { createApp } from "./app.js";
 import { startPaymentReconciliationScheduler } from "./jobs/reconcile-pending-payments.js";
@@ -6,22 +9,26 @@ import { startNotificationScheduler } from "./jobs/retry-notifications.js";
 import { startRiderOfferExpiryScheduler } from "./jobs/expire-rider-offers.js";
 import { closeAdminOperationCoordinator } from "./modules/admin/workflows/admin-operation.redis.js";
 
-const port = Number(process.env.PORT ?? 4000);
+const env = parseServerEnvironment();
+const port = env.PORT;
 const app = createApp();
 
 const server = app.listen(port, () => {
   console.log(`E-Katale API listening on http://localhost:${String(port)}`);
 });
-const stopPaymentReconciliation = startPaymentReconciliationScheduler();
-const stopNotifications = startNotificationScheduler();
-const stopRiderOfferExpiry = startRiderOfferExpiryScheduler();
+const stopSchedulers: Array<() => void> = [];
+if (env.APP_MODE === "full") {
+  stopSchedulers.push(
+    startPaymentReconciliationScheduler(),
+    startNotificationScheduler(),
+    startRiderOfferExpiryScheduler(),
+  );
+}
 
 function shutdown(signal: string): void {
   console.log(`${signal} received. Closing HTTP server.`);
 
-  stopPaymentReconciliation();
-  stopNotifications();
-  stopRiderOfferExpiry();
+  for (const stop of stopSchedulers) stop();
   server.close((error) => {
     if (error) {
       console.error("HTTP server shutdown failed", error);

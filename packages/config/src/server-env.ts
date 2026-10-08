@@ -4,7 +4,8 @@ const serverEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     PORT: z.coerce.number().int().positive().default(4000),
-    
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(1).default(0),
+    APP_MODE: z.enum(["full", "wholesale"]).default("full"),
 
     SUPABASE_URL: z.url(),
     SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
@@ -18,7 +19,9 @@ const serverEnvSchema = z
     REDIS_URL: z.url().optional(),
 
     CHECKOUT_RESERVATION_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
-    PAYMENTS_ENV: z.enum(["fake", "sandbox", "production"]).default("fake"),
+
+    PAYMENTS_ENV: z.enum(["disabled", "fake", "sandbox", "production"]).default("fake"),
+
     PAYMENT_CALLBACK_BASE_URL: z.url().default("http://localhost:4000/v1/payments"),
     PAYMENT_APP_RETURN_URL: z.string().min(1).default("consumermobile://payments/return"),
     PAYMENT_PENDING_MAX_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
@@ -46,6 +49,25 @@ const serverEnvSchema = z
       .optional(),
   })
   .superRefine((environment, context) => {
+    if (environment.APP_MODE === "wholesale") {
+      if (environment.PAYMENTS_ENV !== "disabled") {
+        context.addIssue({
+          code: "custom",
+          path: ["PAYMENTS_ENV"],
+          message: "Wholesale mode requires PAYMENTS_ENV=disabled.",
+        });
+      }
+      return;
+    }
+
+    if (environment.PAYMENTS_ENV === "disabled") {
+      context.addIssue({
+        code: "custom",
+        path: ["PAYMENTS_ENV"],
+        message: "Disabled provider payments require wholesale mode.",
+      });
+      return;
+    }
     if (environment.NODE_ENV === "production" && environment.PAYMENTS_ENV === "fake") {
       context.addIssue({
         code: "custom",
@@ -81,9 +103,9 @@ export type ServerEnvironment = z.infer<typeof serverEnvSchema>;
 export function parseServerEnvironment(source: NodeJS.ProcessEnv = process.env): ServerEnvironment {
   const normalizedSource = {
     ...source,
-    PESAPAL_CONSUMER_KEY: source.PESAPAL_CONSUMER_KEY || undefined,
-    PESAPAL_CONSUMER_SECRET: source.PESAPAL_CONSUMER_SECRET || undefined,
-    PESAPAL_IPN_ID: source.PESAPAL_IPN_ID || undefined,
+    PESAPAL_CONSUMER_KEY: source.PESAPAL_CONSUMER_KEY ?? undefined,
+    PESAPAL_CONSUMER_SECRET: source.PESAPAL_CONSUMER_SECRET ?? undefined,
+    PESAPAL_IPN_ID: source.PESAPAL_IPN_ID ?? undefined,
     SUPABASE_PUBLISHABLE_KEY: source.SUPABASE_PUBLISHABLE_KEY ?? source.SUPABASE_ANON_KEY,
     SUPABASE_SECRET_KEY: source.SUPABASE_SECRET_KEY ?? source.SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_JWKS_URL:

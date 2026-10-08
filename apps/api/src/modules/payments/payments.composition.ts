@@ -12,8 +12,11 @@ import { PaymentsService } from "./payments.service.js";
 let sharedService: PaymentsService | undefined;
 
 export function createPaymentsService(): PaymentsService {
-  if (sharedService) return sharedService;
   const environment = parseServerEnvironment();
+  if (environment.APP_MODE === "wholesale" || environment.PAYMENTS_ENV === "disabled") {
+    throw new Error("Consumer payment services are disabled in wholesale mode.");
+  }
+  if (sharedService) return sharedService;
   let adapter: PaymentProviderAdapter;
   if (environment.PAYMENTS_ENV === "fake") {
     adapter = new FakePaymentAdapter({ callbackSecret: "local-fake-payment-callback-secret" });

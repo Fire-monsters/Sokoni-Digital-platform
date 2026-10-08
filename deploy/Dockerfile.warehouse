@@ -1,0 +1,25 @@
+FROM node:22.23.2-bookworm-slim AS build
+RUN npm install --global pnpm@11.20.0
+WORKDIR /repo
+COPY . .
+RUN pnpm --filter agro-warehouse... install --frozen-lockfile
+ARG NEXT_PUBLIC_API_URL=https://api.solgemtradecomp.online
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_WHOLESALE_ENABLED=true
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+    NEXT_PUBLIC_WHOLESALE_ENABLED=$NEXT_PUBLIC_WHOLESALE_ENABLED \
+    NEXT_TELEMETRY_DISABLED=1
+RUN pnpm --filter agro-warehouse build
+
+FROM node:22.23.2-bookworm-slim AS runtime
+ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1
+WORKDIR /app
+COPY --from=build --chown=node:node /repo/apps/agro-warehouse/.next/standalone ./
+COPY --from=build --chown=node:node /repo/apps/agro-warehouse/.next/static ./apps/agro-warehouse/.next/static
+COPY --from=build --chown=node:node /repo/apps/agro-warehouse/public ./apps/agro-warehouse/public
+USER node
+EXPOSE 3000
+CMD ["node", "apps/agro-warehouse/server.js"]
