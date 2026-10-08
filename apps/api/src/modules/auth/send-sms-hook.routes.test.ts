@@ -32,9 +32,9 @@ function signedHeaders(body: string): Record<string, string> {
 }
 
 describe("POST /v1/auth/hooks/send-sms", () => {
-  it("verifies the hook and sends the Supabase OTP through Yoola", async () => {
+  it.each(["+256704487563", "256704487563"])("verifies and normalizes phone %s", async (phone) => {
     const send = vi.fn<SmsAdapter["send"]>().mockResolvedValue({ providerReference: "YL-1" });
-    const body = JSON.stringify({ user: { phone: "+256704487563" }, sms: { otp: "561166" } });
+    const body = JSON.stringify({ user: { phone }, sms: { otp: "561166" } });
 
     const response = await request(createServer({ send }))
       .post("/v1/auth/hooks/send-sms")
@@ -50,6 +50,22 @@ describe("POST /v1/auth/hooks/send-sms", () => {
       data: { purpose: "authentication" },
     });
   });
+
+  it.each(["0704487563", "++256704487563", "25670abc7563", ""])(
+    "rejects invalid phone %s without sending an SMS",
+    async (phone) => {
+      const send = vi.fn<SmsAdapter["send"]>();
+      const body = JSON.stringify({ user: { phone }, sms: { otp: "561166" } });
+      const response = await request(createServer({ send }))
+        .post("/v1/auth/hooks/send-sms")
+        .set(signedHeaders(body))
+        .set("content-type", "application/json")
+        .send(body);
+
+      expect(response.status).toBe(400);
+      expect(send).not.toHaveBeenCalled();
+    },
+  );
 
   it("rejects an unsigned request without contacting Yoola", async () => {
     const send = vi.fn<SmsAdapter["send"]>();

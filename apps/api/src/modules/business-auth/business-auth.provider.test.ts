@@ -67,6 +67,21 @@ describe("Supabase business auth adapter", () => {
       code: "UNAUTHENTICATED",
     });
   });
+  it.each(["phone_provider_disabled", "signup_disabled"])(
+    "reports %s as a configuration failure rather than invalid credentials",
+    async (code) => {
+      const { auth, provider } = setup();
+      auth.signUp.mockResolvedValue({
+        data: { session: null },
+        error: { status: 400, code, message: "internal provider details" },
+      });
+      await expect(provider.register("+256772123456", "Password123")).rejects.toMatchObject({
+        statusCode: 503,
+        code: "INTERNAL_ERROR",
+        message: "Phone registration is unavailable. Contact support.",
+      });
+    },
+  );
   it("requires a phone-confirmed session even on a provider success", async () => {
     const { auth, provider } = setup();
     auth.signInWithPassword.mockResolvedValue({

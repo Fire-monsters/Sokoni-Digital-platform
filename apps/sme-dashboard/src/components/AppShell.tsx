@@ -13,7 +13,7 @@ import {
   ShoppingBasket,
   Store,
   Truck,
-  Sprout,
+  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { resetDemo, getProfile } from "@/services/api";
 import { useDemoQuery } from "@/hooks/use-demo";
+import { Brand } from "@/components/Brand";
+import { useAuthActions } from "@/hooks/use-auth-actions";
+import { authErrorMessage } from "@/services/business-auth";
 
 const NAV = [
   { group: null, items: [{ to: "/", label: "Overview", icon: LayoutDashboard }] },
@@ -89,20 +92,6 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function Brand() {
-  return (
-    <div className="flex items-center gap-2 px-3">
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-accent-foreground">
-        <Sprout className="h-5 w-5" aria-hidden />
-      </span>
-      <div className="leading-tight">
-        <p className="font-display text-base font-bold text-sidebar-foreground">Sokoni Digital</p>
-        <p className="text-xs text-sidebar-muted">SME workspace</p>
-      </div>
-    </div>
-  );
-}
-
 function ResetDemo() {
   const qc = useQueryClient();
   return (
@@ -141,6 +130,7 @@ function ResetDemo() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const { logout } = useAuthActions();
   const profile = useDemoQuery(["profile"], getProfile);
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[256px_1fr]">
@@ -151,14 +141,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <aside className="sticky top-0 hidden h-screen flex-col gap-6 overflow-y-auto bg-sidebar py-5 px-2 lg:flex">
-        <Brand />
+        <Brand inverse />
         <NavList />
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-72 border-none bg-sidebar p-4">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div className="flex flex-col gap-6">
-            <Brand />
+            <Brand inverse />
             <NavList onNavigate={() => setOpen(false)} />
           </div>
         </SheetContent>
@@ -191,6 +181,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             Demo mode
           </span>
           <ResetDemo />
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={logout.isPending}
+            onClick={async () => {
+              try {
+                await logout.mutateAsync();
+              } catch (error) {
+                toast.error(authErrorMessage(error));
+              }
+            }}
+            aria-label="Log out"
+          >
+            <LogOut className="h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">
+              {logout.isPending ? "Logging out…" : "Log out"}
+            </span>
+          </Button>
         </header>
         <main id="main" className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
           {children}

@@ -14,6 +14,9 @@ import { Route as FinanceRouteImport } from './routes/finance'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthRegisterRouteImport } from './routes/auth.register'
+import { Route as AuthVerifyRouteImport } from './routes/auth.verify'
 import { Route as BuyCatalogueRouteImport } from './routes/buy.catalogue'
 import { Route as BuyOrdersRouteImport } from './routes/buy.orders'
 import { Route as SellListingsRouteImport } from './routes/sell.listings'
@@ -44,6 +47,21 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthVerifyRoute = AuthVerifyRouteImport.update({
+  id: '/auth/verify',
+  path: '/auth/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyCatalogueRoute = BuyCatalogueRouteImport.update({
   id: '/buy/catalogue',
   path: '/buy/catalogue',
@@ -71,6 +89,9 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/buy/catalogue': typeof BuyCatalogueRoute
   '/buy/orders': typeof BuyOrdersRoute
   '/sell/listings': typeof SellListingsRoute
@@ -82,6 +103,9 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/buy/catalogue': typeof BuyCatalogueRoute
   '/buy/orders': typeof BuyOrdersRoute
   '/sell/listings': typeof SellListingsRoute
@@ -94,6 +118,9 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/buy/catalogue': typeof BuyCatalogueRoute
   '/buy/orders': typeof BuyOrdersRoute
   '/sell/listings': typeof SellListingsRoute
@@ -107,6 +134,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/reports'
     | '/settings'
+    | '/auth/login'
+    | '/auth/register'
+    | '/auth/verify'
     | '/buy/catalogue'
     | '/buy/orders'
     | '/sell/listings'
@@ -118,6 +148,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/reports'
     | '/settings'
+    | '/auth/login'
+    | '/auth/register'
+    | '/auth/verify'
     | '/buy/catalogue'
     | '/buy/orders'
     | '/sell/listings'
@@ -129,6 +162,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/reports'
     | '/settings'
+    | '/auth/login'
+    | '/auth/register'
+    | '/auth/verify'
     | '/buy/catalogue'
     | '/buy/orders'
     | '/sell/listings'
@@ -141,6 +177,9 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthVerifyRoute: typeof AuthVerifyRoute
   BuyCatalogueRoute: typeof BuyCatalogueRoute
   BuyOrdersRoute: typeof BuyOrdersRoute
   SellListingsRoute: typeof SellListingsRoute
@@ -184,6 +223,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/verify': {
+      id: '/auth/verify'
+      path: '/auth/verify'
+      fullPath: '/auth/verify'
+      preLoaderRoute: typeof AuthVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buy/catalogue': {
       id: '/buy/catalogue'
       path: '/buy/catalogue'
@@ -221,6 +281,9 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
+  AuthVerifyRoute: AuthVerifyRoute,
   BuyCatalogueRoute: BuyCatalogueRoute,
   BuyOrdersRoute: BuyOrdersRoute,
   SellListingsRoute: SellListingsRoute,

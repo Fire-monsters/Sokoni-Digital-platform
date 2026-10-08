@@ -68,5 +68,14 @@ The local `config.toml` does not configure a hosted project automatically.
 5. Enable phone sign-ups under **Authentication > Sign In / Providers > Phone**.
 6. Send an OTP to a test number and inspect API logs and the Yoola delivery dashboard.
 
+When the Send SMS hook is enabled, it replaces the built-in SMS provider settings;
+the Yoola API key belongs in the API environment. Hosted Supabase can reach a local
+API through a public HTTPS tunnel forwarding to port `4000`.
+
+The hook accepts Supabase's international phone numbers both with and without a
+leading `+`, and passes a normalized `+` number to Yoola. A Supabase Auth log entry
+of `Invalid payload sent to hook` indicates a hook HTTP `400`; inspect the hook
+response in the API or tunnel logs. Do not log the payload, which contains the OTP.
+
 HTTP hooks have a five-second total execution budget. The endpoint therefore sends through
 Yoola synchronously and returns `503` with `Retry-After` when Yoola is temporarily unavailable.

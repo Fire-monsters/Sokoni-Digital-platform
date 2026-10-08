@@ -7,7 +7,12 @@ import { verifyStandardWebhook } from "./standard-webhook.js";
 
 const sendSmsHookSchema = z.object({
   user: z.object({
-    phone: z.string().regex(/^\+[1-9][0-9]{7,14}$/),
+    // Supabase stores international numbers without '+'. Normalize only after
+    // verifying the signature against the original, unmodified request body.
+    phone: z
+      .string()
+      .regex(/^\+?[1-9][0-9]{7,14}$/)
+      .transform((phone) => (phone.startsWith("+") ? phone : `+${phone}`)),
   }),
   sms: z.object({
     otp: z.string().regex(/^[0-9]{6,10}$/),

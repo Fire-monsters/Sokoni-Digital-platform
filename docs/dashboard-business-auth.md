@@ -121,6 +121,67 @@ the server; `canTrade` is an informational UI field, not authorization proof.
 
 ## Verification
 
+### Registration returns 503 while `/health` succeeds
+
+`/health` is a process liveness check; it does not verify Supabase Auth or database
+dependencies. Inspect the registration response's `error.message`:
+
+- **Authentication rate limiter unavailable.** The database RPC
+  `public.consume_business_auth_limit` is missing, inaccessible to the configured
+  service role, or the database cannot be reached. It is created by
+  `20261002000100_business_accounts_crop_preferences.sql`. Do not bypass throttling.
+  Check that the linked project matches `SUPABASE_URL`, then inspect and apply
+  pending migrations from the repository root:
+
+  ```sh
+  pnpm exec supabase migration list --linked
+  pnpm exec supabase db push --linked --dry-run
+  pnpm exec supabase db push --linked
+  ```
+
+  Review the dry run before applying it; `db push` applies all pending migrations.
+  If the migration is already applied, verify the API's `SUPABASE_SECRET_KEY`
+  belongs to this project and has service-role access. Check the PostgREST schema
+  cache and database connectivity. Never reset the hosted database to fix this.
+
+- **Authentication provider unavailable.** Check hosted Auth logs and the SMS hook
+  delivery path. Hosted Supabase needs a publicly reachable HTTPS hook URL; it
+  cannot call your laptop's `localhost:4000` or `host.docker.internal`.
+- **Phone confirmations must be enabled for business registration.** Enable phone
+  confirmations in the hosted project's Auth settings. Phone signups must also
+  be enabled. The local `supabase/config.toml` does not update hosted settings.
+
+See [Yoola SMS setup](yoola-supabase-auth-sms.md#hosted-supabase-setup) for the hosted
+phone provider and hook configuration. Restart the API after changing its `.env`.
+
+### `db push` stops with `type "listing_status" already exists`
+
+The push has stopped at the older catalogue migration, before the business-auth
+migration can create its rate limiter. Some existing database objects overlap
+with pending migration SQL. This can happen when schema changes were made outside
+the CLI migration history or when the hosted database uses an older baseline.
+The existing enum alone does not prove that the whole migration was applied.
+
+Inspect history and export the current schema before making a repair:
+
+```sh
+pnpm exec supabase migration list --linked
+pnpm exec supabase db dump --linked --schema public,storage --file hosted-schema.sql
+```
+
+Compare the export against
+`supabase/migrations/20260806000400_catalogue_listings_storage.sql`, including enum
+values, tables and columns, constraints, functions, views, indexes, triggers,
+permissions and RLS policies. If the entire migration's effects are already
+present (accounting for later changes), repair that specific history entry as
+applied, then review a new push dry run. If only some objects are present, prepare
+a reconciliation for the missing or incompatible definitions instead of marking
+the migration applied. Repeat the check for any subsequent conflict.
+
+Do not bulk-mark pending migrations as applied: this would leave the missing
+business-auth function absent while telling the CLI not to create it. Do not drop
+the existing enum or reset the hosted database to get past the conflict.
+
 - API tests: `pnpm --filter @sokoni-digital/api test`
 - Type checks: `pnpm --filter @sokoni-digital/api typecheck`
 - SQL assertions after migrations:
