@@ -9,6 +9,290 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      product_categories: {
+        Row: { code: string; name: string }
+        Insert: { code: string; name: string }
+        Update: { code?: string; name?: string }
+        Relationships: []
+      }
+
+      agricultural_products: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          active: boolean
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name: string
+          active?: boolean
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name?: string
+          active?: boolean
+        }
+        Relationships: []
+      }
+      product_category_memberships: {
+        Row: {
+          product_id: string
+          category: string
+        }
+        Insert: {
+          product_id: string
+          category: string
+        }
+        Update: {
+          product_id?: string
+          category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_category_memberships_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "product_category_memberships_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          id: string
+          owner_id: string
+          kind: string
+          name: string
+          location: string
+          status: string
+          review_reason: string | null
+          version: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          kind: string
+          name: string
+          location: string
+          status?: string
+          review_reason?: string | null
+          version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          kind?: string
+          name?: string
+          location?: string
+          status?: string
+          review_reason?: string | null
+          version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      business_memberships: {
+        Row: {
+          business_id: string
+          user_id: string
+          role: string
+          active: boolean
+        }
+        Insert: {
+          business_id: string
+          user_id: string
+          role: string
+          active?: boolean
+        }
+        Update: {
+          business_id?: string
+          user_id?: string
+          role?: string
+          active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_memberships_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_category_preferences: {
+        Row: {
+          business_id: string
+          category: string
+        }
+        Insert: {
+          business_id: string
+          category: string
+        }
+        Update: {
+          business_id?: string
+          category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_category_preferences_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "business_category_preferences_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_product_preferences: {
+        Row: {
+          business_id: string
+          product_id: string
+        }
+        Insert: {
+          business_id: string
+          product_id: string
+        }
+        Update: {
+          business_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_product_preferences_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_product_preferences_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_audit_events: {
+        Row: {
+          id: string
+          business_id: string
+          actor_id: string
+          action: string
+          previous_status: string | null
+          new_status: string
+          reason: string | null
+          operation_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          actor_id: string
+          action: string
+          previous_status?: string | null
+          new_status: string
+          reason?: string | null
+          operation_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          actor_id?: string
+          action?: string
+          previous_status?: string | null
+          new_status?: string
+          reason?: string | null
+          operation_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_audit_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_operations: {
+        Row: {
+          operation_id: string
+          actor_id: string
+          action: string
+          business_id: string
+          input: Json
+          result: Json
+        }
+        Insert: {
+          operation_id: string
+          actor_id: string
+          action: string
+          business_id: string
+          input: Json
+          result: Json
+        }
+        Update: {
+          operation_id?: string
+          actor_id?: string
+          action?: string
+          business_id?: string
+          input?: Json
+          result?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_operations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_auth_limits: {
+        Row: {
+          key_hash: string
+          window_start: string
+          attempts: number
+        }
+        Insert: {
+          key_hash: string
+          window_start: string
+          attempts: number
+        }
+        Update: {
+          key_hash?: string
+          window_start?: string
+          attempts?: number
+        }
+        Relationships: []
+      }
+
       account_applications: {
         Row: {
           details: Json
@@ -4202,6 +4486,15 @@ export type Database = {
       }
     }
     Functions: {
+      list_product_categories: { Args: Record<PropertyKey, never>; Returns: Json }
+      canonical_crop_payload: { Args: { p_input: Json }; Returns: Json }
+
+      business_snapshot: { Args: { p_id: string }; Returns: Json }
+      read_business_accounts: { Args: { p_actor: string; p_id?: string; p_admin?: boolean; p_limit?: number; p_offset?: number }; Returns: Json }
+      list_agricultural_products: { Args: { p_category?: string }; Returns: Json }
+      command_business_account: { Args: { p_actor: string; p_action: string; p_operation: string; p_input: Json; p_id?: string }; Returns: Json }
+      consume_business_auth_limit: { Args: { p_key: string; p_max: number; p_seconds: number }; Returns: boolean }
+
       accept_delivery_offer: {
         Args: {
           p_expected_delivery_version: number
