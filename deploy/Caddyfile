@@ -4,7 +4,7 @@ api.solgemtradecomp.online {
   }
 }
 sme.solgemtradecomp.online {
-  reverse_proxy sme:8080
+  reverse_proxy sme:3000
 }
 warehouse.solgemtradecomp.online {
   reverse_proxy warehouse:3000
