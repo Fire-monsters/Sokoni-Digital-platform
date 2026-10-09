@@ -1,16 +1,14 @@
 import { useEffect } from "react";
 import { DeliveryBoard } from "../DeliveryBoard";
 import { useOperations } from "../operations/OperationsContext";
-import { useAuth } from "../auth/AuthContext";
 import { ErrorPage, LoadingPage } from "./PageStates";
 
 export function DeliveriesPage() {
   const o = useOperations();
-  const { loadDeliveries, token } = o;
-  const { can } = useAuth();
+  const { loadDeliveries } = o;
   useEffect(() => {
-    if (token) void loadDeliveries();
-  }, [token, loadDeliveries]);
+    void loadDeliveries();
+  }, [loadDeliveries]);
   if (o.loading && o.deliveryBoard.deliveries.length === 0)
     return <LoadingPage title="Loading delivery control room…" />;
   if (o.message && o.deliveryBoard.deliveries.length === 0)
@@ -30,14 +28,12 @@ export function DeliveriesPage() {
         </p>
       ) : null}
       <DeliveryBoard
-        token={o.token}
         board={o.deliveryBoard}
         riders={o.riders}
         busy={o.loading}
         onBusy={o.setLoading}
         onMessage={o.setMessage}
         onReload={o.loadDeliveries}
-        canManage={can("deliveries.manage")}
       />
     </>
   );

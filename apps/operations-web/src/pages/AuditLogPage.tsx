@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { fetchAuditEvent, fetchAuditEvents } from "@sokoni-digital/api-client";
+import { fetchAuditEvent, fetchAuditEvents } from "../demo/service";
 import type { AuditEventDetail, AuditEventPage, AuditEventQuery } from "@sokoni-digital/domain";
-import { useAuth } from "../auth/AuthContext";
 
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 const label = (value: string) => value.replaceAll("_", " ").replaceAll(".", " · ");
 const displayDate = (value: string) => new Date(value).toLocaleString();
 const emptyPage: AuditEventPage = {
@@ -17,7 +15,6 @@ interface AuditLogPageProps {
 }
 
 export function AuditLogPage({ initialPage, initialDetail }: AuditLogPageProps = {}) {
-  const { accessToken } = useAuth();
   const [page, setPage] = useState(1);
   const [draft, setDraft] = useState({ q: "", action: "", entityType: "", from: "", to: "" });
   const [filters, setFilters] = useState(draft);
@@ -38,14 +35,14 @@ export function AuditLogPage({ initialPage, initialDetail }: AuditLogPageProps =
     }),
     [filters, page],
   );
-  const queryKey = JSON.stringify([accessToken, query]);
+  const queryKey = JSON.stringify([query]);
   const selectedDetail = detail?.id === selectedId ? detail : null;
   const detailLoading = Boolean(selectedId && !selectedDetail);
 
   useEffect(() => {
-    if (initialPage || !accessToken) return;
+    if (initialPage) return;
     const controller = new AbortController();
-    fetchAuditEvents({ baseUrl, accessToken }, query, controller.signal)
+    fetchAuditEvents(query, controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return;
         setResult(data);
@@ -61,12 +58,12 @@ export function AuditLogPage({ initialPage, initialDetail }: AuditLogPageProps =
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [accessToken, initialPage, query, queryKey]);
+  }, [initialPage, query, queryKey]);
 
   useEffect(() => {
-    if (!selectedId || !accessToken || initialDetail?.id === selectedId) return;
+    if (!selectedId || initialDetail?.id === selectedId) return;
     const controller = new AbortController();
-    fetchAuditEvent({ baseUrl, accessToken }, selectedId, controller.signal)
+    fetchAuditEvent(selectedId, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) setDetail(data);
       })
@@ -75,7 +72,7 @@ export function AuditLogPage({ initialPage, initialDetail }: AuditLogPageProps =
           setError(reason instanceof Error ? reason.message : "Could not load audit details.");
       });
     return () => controller.abort();
-  }, [accessToken, initialDetail, selectedId]);
+  }, [initialDetail, selectedId]);
 
   function search(event: FormEvent) {
     event.preventDefault();

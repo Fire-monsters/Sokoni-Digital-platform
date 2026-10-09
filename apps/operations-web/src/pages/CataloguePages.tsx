@@ -1,27 +1,24 @@
 import {
-  ApiClientError,
+  DemoError,
   approveAdminListing,
   requestAdminListingChanges,
   reviewAdminPrice,
-} from "@sokoni-digital/api-client";
+} from "../demo/service";
 import type { AdminListingReview, AdminPriceReview } from "@sokoni-digital/domain";
 import { useEffect, useRef, useState } from "react";
 import { useOperations } from "../operations/OperationsContext";
-import { useAuth } from "../auth/AuthContext";
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 export function CatalogueListingsPage() {
   const operations = useOperations();
-  const { loadCatalogue, token } = operations;
-  const { can } = useAuth();
+  const { loadCatalogue } = operations;
   const [selected, setSelected] = useState<AdminListingReview>();
   const [note, setNote] = useState("");
   const pendingOperations = useRef(new Map<string, string>());
   const listing =
     operations.listings.find((item) => item.id === selected?.id) ?? operations.listings[0];
   useEffect(() => {
-    if (token) void loadCatalogue();
-  }, [token, loadCatalogue]);
+    void loadCatalogue();
+  }, [loadCatalogue]);
   async function decide(decision: "approve" | "changes") {
     if (!listing) return;
     const operationKey = `${listing.id}:${decision}`;
@@ -30,27 +27,14 @@ export function CatalogueListingsPage() {
     operations.setLoading(true);
     try {
       if (decision === "approve")
-        await approveAdminListing(
-          { baseUrl, accessToken: operations.token },
-          listing.id,
-          listing.version,
-          operationId,
-          note,
-        );
-      else
-        await requestAdminListingChanges(
-          { baseUrl, accessToken: operations.token },
-          listing.id,
-          listing.version,
-          operationId,
-          note,
-        );
+        await approveAdminListing(listing.id, listing.version, operationId, note);
+      else await requestAdminListingChanges(listing.id, listing.version, operationId, note);
       setNote("");
       pendingOperations.current.delete(operationKey);
       operations.setMessage(decision === "approve" ? "Listing approved." : "Changes requested.");
       await operations.loadCatalogue();
     } catch (error) {
-      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
         pendingOperations.current.delete(operationKey);
         operations.setMessage(`${error.message} The latest listing has been loaded for review.`);
         await operations.loadCatalogue();
@@ -82,9 +66,7 @@ export function CatalogueListingsPage() {
               <span>{item.vendorName}</span>
             </button>
           ))}
-          {!operations.listings.length ? (
-            <Empty token={operations.token} load={operations.loadCatalogue} />
-          ) : null}
+          {!operations.listings.length ? <Empty load={operations.loadCatalogue} /> : null}
         </aside>
         <section className="review-card">
           {listing ? (
@@ -127,33 +109,29 @@ export function CatalogueListingsPage() {
                 </dd>
               </dl>
               <ReviewHistory listing={listing} />
-              {can("catalogue.review") ? (
-                <>
-                  <textarea
-                    aria-label="Review note"
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder="Review note or required changes"
-                  />
-                  <div className="actions">
-                    <button
-                      className="approve"
-                      disabled={operations.loading || note.trim().length < 5}
-                      onClick={() => void decide("approve")}
-                    >
-                      Approve listing
-                    </button>
-                    <button
-                      disabled={operations.loading || note.trim().length < 5}
-                      onClick={() => void decide("changes")}
-                    >
-                      Request changes
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <p className="read-only-notice">You have read-only access to catalogue reviews.</p>
-              )}
+              <>
+                <textarea
+                  aria-label="Review note"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Review note or required changes"
+                />
+                <div className="actions">
+                  <button
+                    className="approve"
+                    disabled={operations.loading || note.trim().length < 5}
+                    onClick={() => void decide("approve")}
+                  >
+                    Approve listing
+                  </button>
+                  <button
+                    disabled={operations.loading || note.trim().length < 5}
+                    onClick={() => void decide("changes")}
+                  >
+                    Request changes
+                  </button>
+                </div>
+              </>
             </>
           ) : (
             <p>Select a pending listing to review.</p>
@@ -166,8 +144,7 @@ export function CatalogueListingsPage() {
 
 export function PriceChangesPage() {
   const operations = useOperations();
-  const { loadCatalogue, token } = operations;
-  const { can } = useAuth();
+  const { loadCatalogue } = operations;
   const [selected, setSelected] = useState<AdminPriceReview>();
   const [note, setNote] = useState("");
   const pendingOperations = useRef(new Map<string, string>());
@@ -175,8 +152,8 @@ export function PriceChangesPage() {
     operations.prices.find((item) => item.requestId === selected?.requestId) ??
     operations.prices[0];
   useEffect(() => {
-    if (token) void loadCatalogue();
-  }, [token, loadCatalogue]);
+    void loadCatalogue();
+  }, [loadCatalogue]);
 
   async function decide(id: string, decision: "approve" | "reject") {
     const operationKey = `${id}:${decision}`;
@@ -184,20 +161,13 @@ export function PriceChangesPage() {
     pendingOperations.current.set(operationKey, operationId);
     operations.setLoading(true);
     try {
-      await reviewAdminPrice(
-        { baseUrl, accessToken: operations.token },
-        id,
-        decision,
-        operationId,
-        0,
-        note,
-      );
+      await reviewAdminPrice(id, decision, operationId, 0, note);
       setNote("");
       pendingOperations.current.delete(operationKey);
       operations.setMessage(`Price request ${decision === "approve" ? "approved" : "rejected"}.`);
       await operations.loadCatalogue();
     } catch (error) {
-      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
         pendingOperations.current.delete(operationKey);
         operations.setMessage(`${error.message} The latest price request has been loaded.`);
         await operations.loadCatalogue();
@@ -228,9 +198,7 @@ export function PriceChangesPage() {
               <span>{item.vendorName}</span>
             </button>
           ))}
-          {!operations.prices.length ? (
-            <Empty token={operations.token} load={operations.loadCatalogue} />
-          ) : null}
+          {!operations.prices.length ? <Empty load={operations.loadCatalogue} /> : null}
         </aside>
         <section className="review-card">
           {price ? (
@@ -277,33 +245,29 @@ export function PriceChangesPage() {
                 <dd>{new Date(price.createdAt).toLocaleString()}</dd>
               </dl>
               <AuditHistory entries={price.auditHistory} />
-              {can("catalogue.review") ? (
-                <>
-                  <textarea
-                    aria-label="Review note"
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder="Review note (required when rejecting)"
-                  />
-                  <div className="actions">
-                    <button
-                      className="approve"
-                      disabled={operations.loading || note.trim().length < 5}
-                      onClick={() => void decide(price.requestId, "approve")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      disabled={operations.loading || note.trim().length < 5}
-                      onClick={() => void decide(price.requestId, "reject")}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <p className="read-only-notice">You have read-only access to price changes.</p>
-              )}
+              <>
+                <textarea
+                  aria-label="Review note"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Review note (required when rejecting)"
+                />
+                <div className="actions">
+                  <button
+                    className="approve"
+                    disabled={operations.loading || note.trim().length < 5}
+                    onClick={() => void decide(price.requestId, "approve")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    disabled={operations.loading || note.trim().length < 5}
+                    onClick={() => void decide(price.requestId, "reject")}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </>
             </>
           ) : (
             <p>Select a pending price change to review.</p>
@@ -365,16 +329,12 @@ function Title({
     </div>
   );
 }
-function Empty({ token, load }: { token: string; load: () => Promise<void> }) {
+function Empty({ load }: { load: () => Promise<void> }) {
   return (
     <div className="empty-state">
       <strong>No queue data</strong>
-      <p>
-        {token
-          ? "Refresh to check for pending work."
-          : "Sign in again to reconnect to the operations API."}
-      </p>
-      {token ? <button onClick={() => void load()}>Refresh queue</button> : null}
+      <p>No pending sample records.</p>
+      <button onClick={() => void load()}>Refresh queue</button>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  ApiClientError,
+  DemoError,
   addOrderSupportNote,
   cancelUnpaidOrder,
   commandPaymentFinance,
@@ -9,7 +9,7 @@ import {
   fetchOrderInvestigation,
   resendOrderNotification,
   revealOrderContact,
-} from "@sokoni-digital/api-client";
+} from "../demo/service";
 
 import {
   refundRequestReasons,
@@ -17,15 +17,11 @@ import {
   type OrderInvestigation,
 } from "@sokoni-digital/domain";
 
-import { useAuth } from "../auth/AuthContext";
-
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 const label = (value: string) => value.replaceAll("_", " ").replaceAll(".", " · ");
 const when = (value: string) => new Date(value).toLocaleString();
 
 export function OrderInvestigationPage({ initialData }: { initialData?: OrderInvestigation } = {}) {
   const { orderId = "" } = useParams();
-  const { accessToken, can } = useAuth();
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState<{ key: string; data: OrderInvestigation } | null>(null);
   const [loaded, setLoaded] = useState("");
@@ -41,13 +37,13 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
   const [busy, setBusy] = useState(false);
   const inflight = useRef(false);
   const retry = useRef<{ key: string; operationId: string } | null>(null);
-  const key = JSON.stringify([accessToken, orderId, revision]);
+  const key = JSON.stringify([orderId, revision]);
   const data = initialData ?? (result?.key === key ? result.data : null);
   const loading = !initialData && loaded !== key;
   useEffect(() => {
-    if (!accessToken || !orderId) return;
+    if (!orderId) return;
     const controller = new AbortController();
-    fetchOrderInvestigation({ baseUrl, accessToken }, orderId, controller.signal)
+    fetchOrderInvestigation(orderId, controller.signal)
       .then((value) => {
         if (!controller.signal.aborted) setResult({ key, data: value });
       })
@@ -59,7 +55,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
         if (!controller.signal.aborted) setLoaded(key);
       });
     return () => controller.abort();
-  }, [accessToken, orderId, key]);
+  }, [orderId, key]);
 
   async function execute(
     action: string,
@@ -99,7 +95,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
       setRevision((value) => value + 1);
       if (action === "note") setNote("");
     } catch (cause) {
-      if (cause instanceof ApiClientError && cause.code === "VERSION_CONFLICT") {
+      if (cause instanceof DemoError && cause.code === "VERSION_CONFLICT") {
         retry.current = null;
         setRevision((value) => value + 1);
         setError(`${cause.message} The latest order has been loaded for review.`);
@@ -115,7 +111,6 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
       setBusy(false);
     }
   }
-  const options = accessToken ? { baseUrl, accessToken } : null;
   const payment = data?.payment as
     | { id?: string; status?: string; amount?: number; currency?: string; version?: number }
     | null
@@ -204,29 +199,25 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
               {data.consumer.phoneMasked}
             </p>
             {data.deliveryAddress && <pre>{JSON.stringify(data.deliveryAddress, null, 2)}</pre>}
-            {can("orders.support") && (
-              <button
-                disabled={busy || reason.trim().length < 5}
-                onClick={() =>
-                  options &&
-                  void execute(
-                    "contact-consumer",
-                    (op) =>
-                      revealOrderContact(
-                        options,
-                        orderId,
-                        "consumer",
-                        op,
-                        reason.trim(),
-                        data.delivery?.version ?? 0,
-                      ),
-                    "Contact access recorded.",
-                  )
-                }
-              >
-                Reveal phone number
-              </button>
-            )}
+            <button
+              disabled={busy || reason.trim().length < 5}
+              onClick={() =>
+                void execute(
+                  "contact-consumer",
+                  (op) =>
+                    revealOrderContact(
+                      orderId,
+                      "consumer",
+                      op,
+                      reason.trim(),
+                      data.delivery?.version ?? 0,
+                    ),
+                  "Contact access recorded.",
+                )
+              }
+            >
+              Reveal phone number
+            </button>
           </section>
           <section className="review-card">
             <h2>Payment</h2>
@@ -253,16 +244,14 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   Rider: {data.delivery.rider?.name ?? "Unassigned"} ·{" "}
                   {data.delivery.rider?.phoneMasked ?? "No contact"}
                 </p>
-                {can("orders.support") && data.delivery.rider && (
+                {data.delivery.rider && (
                   <button
                     disabled={busy || reason.trim().length < 5}
                     onClick={() =>
-                      options &&
                       void execute(
                         "contact-rider",
                         (op) =>
                           revealOrderContact(
-                            options,
                             orderId,
                             "rider",
                             op,
@@ -343,29 +332,25 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   {when(notification.createdAt)} ·{" "}
                   {notification.deliveries.map((d) => `${d.channel}: ${d.status}`).join(" · ")}
                 </p>
-                {can("notifications.manage") && (
-                  <button
-                    disabled={busy || reason.trim().length < 5}
-                    onClick={() =>
-                      options &&
-                      void execute(
-                        `notification-${notification.id}`,
-                        (op) =>
-                          resendOrderNotification(
-                            options,
-                            orderId,
-                            notification.id,
-                            op,
-                            reason.trim(),
-                            data.delivery?.version ?? 0,
-                          ),
-                        "Approved notification template queued again.",
-                      )
-                    }
-                  >
-                    Resend current template
-                  </button>
-                )}
+                <button
+                  disabled={busy || reason.trim().length < 5}
+                  onClick={() =>
+                    void execute(
+                      `notification-${notification.id}`,
+                      (op) =>
+                        resendOrderNotification(
+                          orderId,
+                          notification.id,
+                          op,
+                          reason.trim(),
+                          data.delivery?.version ?? 0,
+                        ),
+                      "Demo notification resend simulated. Nothing was sent.",
+                    )
+                  }
+                >
+                  Resend current template
+                </button>
               </article>
             ))}
           </section>
@@ -392,152 +377,126 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                 </li>
               ))}
             </ol>
-            {can("orders.support") && (
-              <>
-                <label>
-                  New internal note
-                  <textarea
-                    disabled={busy}
-                    maxLength={2000}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
-                </label>
+            <>
+              <label>
+                New internal note
+                <textarea
+                  disabled={busy}
+                  maxLength={2000}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </label>
+              <button
+                disabled={busy || note.trim().length < 5}
+                onClick={() =>
+                  void execute(
+                    "note",
+                    (op) =>
+                      addOrderSupportNote(orderId, op, note.trim(), data.delivery?.version ?? 0),
+                    "Support note recorded.",
+                  )
+                }
+              >
+                Add note
+              </button>
+            </>
+          </section>
+          <section className="review-card investigation-wide">
+            <h2>Controlled actions</h2>
+            <label>
+              Reason and context
+              <textarea
+                disabled={busy}
+                maxLength={500}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+            <div className="actions">
+              {data.delivery && (
                 <button
-                  disabled={busy || note.trim().length < 5}
+                  disabled={busy || reason.trim().length < 5}
                   onClick={() =>
-                    options &&
                     void execute(
-                      "note",
+                      "escalate",
                       (op) =>
-                        addOrderSupportNote(
-                          options,
-                          orderId,
-                          op,
-                          note.trim(),
-                          data.delivery?.version ?? 0,
-                        ),
-                      "Support note recorded.",
+                        escalateOrderToDispatch(orderId, op, reason.trim(), data.delivery!.version),
+                      "Dispatch investigation opened.",
                     )
                   }
                 >
-                  Add note
+                  Escalate to dispatch
                 </button>
-              </>
+              )}
+              {canCancel && (
+                <button
+                  disabled={busy || reason.trim().length < 5}
+                  onClick={() =>
+                    void execute(
+                      "cancel",
+                      (op) =>
+                        cancelUnpaidOrder(orderId, op, reason.trim(), data.delivery?.version ?? 0),
+                      "Unpaid order cancelled and inventory released.",
+                    )
+                  }
+                >
+                  Cancel unpaid order
+                </button>
+              )}
+            </div>
+            {payment?.id && payment.status === "paid" && (
+              <fieldset disabled={busy}>
+                <legend>Initiate refund approval</legend>
+                <p>This creates a review case; it does not send money.</p>
+                <label>
+                  Reason code
+                  <select value={refundReason} onChange={(e) => setRefundReason(e.target.value)}>
+                    {refundRequestReasons.map((value) => (
+                      <option key={value} value={value}>
+                        {label(value)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Amount ({payment.currency})
+                  <input
+                    type="number"
+                    min="1"
+                    max={payment.amount}
+                    step="1"
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                  />
+                </label>
+                <button
+                  disabled={
+                    reason.trim().length < 5 ||
+                    !Number.isSafeInteger(Number(refundAmount)) ||
+                    Number(refundAmount) <= 0 ||
+                    Number(refundAmount) > (payment.amount ?? 0)
+                  }
+                  onClick={() =>
+                    void execute(
+                      "refund",
+                      (op) =>
+                        commandPaymentFinance(payment.id!, "request-refund", {
+                          operationId: op,
+                          expectedVersion: Number(payment.version ?? 0),
+                          reason: reason.trim(),
+                          reasonCode: refundReason,
+                          amount: Number(refundAmount),
+                        }),
+                      "Demo refund request recorded locally.",
+                    )
+                  }
+                >
+                  Submit refund for approval
+                </button>
+              </fieldset>
             )}
           </section>
-          {(can("orders.support") || can("refunds.manage")) && (
-            <section className="review-card investigation-wide">
-              <h2>Controlled actions</h2>
-              <label>
-                Reason and context
-                <textarea
-                  disabled={busy}
-                  maxLength={500}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-              </label>
-              <div className="actions">
-                {can("orders.support") && data.delivery && (
-                  <button
-                    disabled={busy || reason.trim().length < 5}
-                    onClick={() =>
-                      options &&
-                      void execute(
-                        "escalate",
-                        (op) =>
-                          escalateOrderToDispatch(
-                            options,
-                            orderId,
-                            op,
-                            reason.trim(),
-                            data.delivery!.version,
-                          ),
-                        "Dispatch investigation opened.",
-                      )
-                    }
-                  >
-                    Escalate to dispatch
-                  </button>
-                )}
-                {can("orders.support") && canCancel && (
-                  <button
-                    disabled={busy || reason.trim().length < 5}
-                    onClick={() =>
-                      options &&
-                      void execute(
-                        "cancel",
-                        (op) =>
-                          cancelUnpaidOrder(
-                            options,
-                            orderId,
-                            op,
-                            reason.trim(),
-                            data.delivery?.version ?? 0,
-                          ),
-                        "Unpaid order cancelled and inventory released.",
-                      )
-                    }
-                  >
-                    Cancel unpaid order
-                  </button>
-                )}
-              </div>
-              {can("refunds.manage") && payment?.id && payment.status === "paid" && (
-                <fieldset disabled={busy}>
-                  <legend>Initiate refund approval</legend>
-                  <p>This creates a review case; it does not send money.</p>
-                  <label>
-                    Reason code
-                    <select value={refundReason} onChange={(e) => setRefundReason(e.target.value)}>
-                      {refundRequestReasons.map((value) => (
-                        <option key={value} value={value}>
-                          {label(value)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Amount ({payment.currency})
-                    <input
-                      type="number"
-                      min="1"
-                      max={payment.amount}
-                      step="1"
-                      value={refundAmount}
-                      onChange={(e) => setRefundAmount(e.target.value)}
-                    />
-                  </label>
-                  <button
-                    disabled={
-                      reason.trim().length < 5 ||
-                      !Number.isSafeInteger(Number(refundAmount)) ||
-                      Number(refundAmount) <= 0 ||
-                      Number(refundAmount) > (payment.amount ?? 0)
-                    }
-                    onClick={() =>
-                      options &&
-                      void execute(
-                        "refund",
-                        (op) =>
-                          commandPaymentFinance(options, payment.id!, "request-refund", {
-                            operationId: op,
-                            expectedVersion: Number(payment.version ?? 0),
-                            reason: reason.trim(),
-                            reasonCode: refundReason,
-                            amount: Number(refundAmount),
-                          }),
-                        "Refund request sent for approval.",
-                      )
-                    }
-                  >
-                    Submit refund for approval
-                  </button>
-                </fieldset>
-              )}
-            </section>
-          )}
         </div>
       )}
     </>

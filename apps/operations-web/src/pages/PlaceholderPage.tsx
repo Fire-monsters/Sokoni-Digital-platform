@@ -5,6 +5,13 @@ export function PlaceholderPage({ title }: { title: string }) {
       <p className="eyebrow">Sokoni operations</p>
       <h1>{title}</h1>
       <p>This workspace is ready for its feature slice.</p>
+      {title === "Orders" && (
+        <p>
+          <Link to="/dashboard/orders/demo-order-0">Inspect demo unpaid order</Link>
+          {" · "}
+          <Link to="/dashboard/orders/demo-order-1">Inspect demo paid order</Link>
+        </p>
+      )}
       <div className="placeholder-card">
         <span>Coming in a later slice</span>
         <h2>{title} workspace</h2>

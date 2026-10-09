@@ -1,24 +1,18 @@
 import { useState } from "react";
-import type { StaffRole } from "@sokoni-digital/domain";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { navigation, routeTitles, visibleNavigation } from "../app/navigation";
-import { useOperations } from "../operations/OperationsContext";
+import { navigation, routeTitles } from "../app/navigation";
 import { Icon } from "./Icon";
-import { useAuth } from "../auth/AuthContext";
 import { RouteErrorBoundary } from "../errors/RouteErrorBoundary";
 
 export function DashboardLayout() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const operations = useOperations();
-  const { state, signOut, can } = useAuth();
-  const staff = state.status === "authenticated" ? state.staff : null;
-  const permittedNavigation = visibleNavigation(navigation, can);
+  const permittedNavigation = navigation;
   const title =
     routeTitles.get(location.pathname) ??
     (location.pathname.includes("/orders/") ? "Order details" : "Dashboard");
 
-    return (
+  return (
     <div className="dashboard-shell">
       <aside className={`sidebar ${open ? "sidebar-open" : ""}`} aria-label="Main navigation">
         <div className="brand">
@@ -56,8 +50,8 @@ export function DashboardLayout() {
         <div className="sidebar-footer">
           <span className="avatar">SO</span>
           <span>
-            <strong>{staff?.displayName ?? "Staff member"}</strong>
-            <small>{staff ? roleLabel(staff.role) : "Operations staff"}</small>
+            <strong>Demo operator</strong>
+            <small>Local workspace</small>
           </span>
         </div>
       </aside>
@@ -82,28 +76,7 @@ export function DashboardLayout() {
             <strong>{title}</strong>
           </div>
           <div className="topbar-actions">
-            <span className="environment">Pilot</span>
-            <span className={`api-status ${operations.connected ? "online" : ""}`}>
-              <i />
-              {operations.connected ? "API connected" : "API not connected"}
-            </span>
-            <details className="session-menu">
-              <summary>
-                <span className="avatar">SO</span>
-                <span className="staff-copy">
-                  <strong>{staff?.displayName ?? "Staff member"}</strong>
-                  <small>{staff ? roleLabel(staff.role) : "Operations staff"}</small>
-                </span>
-              </summary>
-              <div className="session-popover">
-                <strong>{staff?.displayName}</strong>
-                <small>{staff?.email}</small>
-                <p className="session-role">{staff?.role}</p>
-                <button className="logout-button" onClick={() => void signOut()}>
-                  Sign out
-                </button>
-              </div>
-            </details>
+            <span className="environment">Demo mode — changes reset on reload.</span>
           </div>
         </header>
         <main className="page-content">
@@ -114,14 +87,4 @@ export function DashboardLayout() {
       </div>
     </div>
   );
-}
-
-function roleLabel(role: StaffRole): string {
-  return {
-    admin: "Administrator",
-    agent: "Operations agent",
-    dispatcher: "Dispatcher",
-    finance: "Finance",
-    viewer: "Viewer",
-  }[role];
 }

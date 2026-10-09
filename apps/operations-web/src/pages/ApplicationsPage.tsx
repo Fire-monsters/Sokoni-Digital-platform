@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ApiClientError,
+  DemoError,
   fetchApplicationQueue,
   fetchApplicationReview,
   reviewApplication,
-} from "@sokoni-digital/api-client";
+} from "../demo/service";
 import type {
   ApplicationAction,
   ApplicationQueue,
@@ -12,9 +12,7 @@ import type {
   ApplicationStatus,
   ApplicationType,
 } from "@sokoni-digital/domain";
-import { useAuth } from "../auth/AuthContext";
 
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 const statuses: ApplicationStatus[] = [
   "pending_review",
   "in_review",
@@ -30,7 +28,6 @@ const label = (value: string) =>
     .replaceAll("-", " ");
 
 export function ApplicationsPage({ type }: { type: ApplicationType }) {
-  const { accessToken, can, state } = useAuth();
   const [status, setStatus] = useState<ApplicationStatus>("pending_review");
   const [page, setPage] = useState(1);
   const [queueResult, setQueue] = useState<{ key: string; data: ApplicationQueue } | null>(null);
@@ -44,8 +41,8 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
   const [notes, setNotes] = useState("");
   const [issues, setIssues] = useState("");
   const [revision, setRevision] = useState(0);
-  const queueKey = JSON.stringify([accessToken, type, status, page, revision]);
-  const detailKey = JSON.stringify([accessToken, selected, revision]);
+  const queueKey = JSON.stringify([type, status, page, revision]);
+  const detailKey = JSON.stringify([selected, revision]);
   const queue = queueResult?.key === queueKey ? queueResult.data : null;
   const detail =
     queue?.data.some((item) => item.id === selected) && detailResult?.key === detailKey
@@ -60,8 +57,8 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
   }, []);
   useEffect(() => {
     let cancelled = false;
-    if (!accessToken) return;
-    fetchApplicationQueue({ baseUrl, accessToken }, { type, status, page })
+
+    fetchApplicationQueue({ type, status, page })
       .then((data) => {
         if (cancelled) return;
         setQueue({ key: queueKey, data });
@@ -82,11 +79,11 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, type, status, page, revision, queueKey]);
+  }, [type, status, page, revision, queueKey]);
   useEffect(() => {
     const controller = new AbortController();
-    if (accessToken && selected) {
-      fetchApplicationReview({ baseUrl, accessToken }, selected, controller.signal)
+    if (selected) {
+      fetchApplicationReview(selected, controller.signal)
         .then((data) => {
           if (!controller.signal.aborted) {
             setDetail({ key: detailKey, data });
@@ -101,9 +98,9 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
         });
     }
     return () => controller.abort();
-  }, [accessToken, selected, revision, detailKey]);
+  }, [selected, revision, detailKey]);
   async function execute(action: ApplicationAction) {
-    if (!detail || !accessToken || inflight.current) return;
+    if (!detail || inflight.current) return;
     const input = {
       expectedVersion: detail.version,
       reason: reason.trim() || (action === "notes" ? notes.trim() : ""),
@@ -122,7 +119,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
     setError("");
     setMessage("");
     try {
-      await reviewApplication({ baseUrl, accessToken }, detail.id, action, {
+      await reviewApplication(detail.id, action, {
         ...input,
         operationId,
       });
@@ -130,7 +127,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
       setMessage(`${label(action)} recorded.`);
       refresh();
     } catch (error) {
-      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
         retry.current = null;
         setRevision((value) => value + 1);
         setError(`${error.message} The latest application has been loaded for review.`);
@@ -142,7 +139,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
       setBusy(false);
     }
   }
-  const reviewer = state.status === "authenticated" ? state.staff.userId : null;
+  const reviewer = "demo-operator";
   const assigned = detail?.status === "in_review" && detail.reviewerId === reviewer;
   return (
     <>
@@ -265,7 +262,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
                 </section>
               ))}
               <h3>Verification documents</h3>
-              <p>Document links expire after five minutes. Refresh to renew them.</p>
+              <p>Demo documents contain fictional information.</p>
               <div className="image-row">
                 {detail.documents.map((document) => (
                   <a key={document.id} href={document.url} target="_blank" rel="noreferrer">
@@ -276,93 +273,87 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
                   </a>
                 ))}
               </div>
-              {can("applications.review") || can("users.manage") ? (
-                <>
-                  <label>
-                    Applicant feedback
-                    <textarea
-                      maxLength={1000}
-                      value={reason}
-                      disabled={busy}
-                      onChange={(event) => setReason(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Issue codes (comma separated)
-                    <input
-                      value={issues}
-                      disabled={busy}
-                      placeholder="NATIONAL_ID_IMAGE_UNREADABLE"
-                      onChange={(event) => setIssues(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Private staff note
-                    <textarea
-                      maxLength={2000}
-                      value={notes}
-                      disabled={busy}
-                      onChange={(event) => setNotes(event.target.value)}
-                    />
-                  </label>
-                  <div className="actions">
-                    {can("applications.review") && (
+              <>
+                <label>
+                  Applicant feedback
+                  <textarea
+                    maxLength={1000}
+                    value={reason}
+                    disabled={busy}
+                    onChange={(event) => setReason(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Issue codes (comma separated)
+                  <input
+                    value={issues}
+                    disabled={busy}
+                    placeholder="NATIONAL_ID_IMAGE_UNREADABLE"
+                    onChange={(event) => setIssues(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Private staff note
+                  <textarea
+                    maxLength={2000}
+                    value={notes}
+                    disabled={busy}
+                    onChange={(event) => setNotes(event.target.value)}
+                  />
+                </label>
+                <div className="actions">
+                  <>
+                    {detail.status === "pending_review" && (
+                      <button
+                        disabled={busy || reason.trim().length < 5}
+                        onClick={() => void execute("start-review")}
+                      >
+                        Start review
+                      </button>
+                    )}
+                    {assigned && (
                       <>
-                        {detail.status === "pending_review" && (
-                          <button
-                            disabled={busy || reason.trim().length < 5}
-                            onClick={() => void execute("start-review")}
-                          >
-                            Start review
-                          </button>
-                        )}
-                        {assigned && (
-                          <>
-                            <button
-                              disabled={
-                                busy ||
-                                reason.trim().length < 5 ||
-                                detail.missingRequirements.length > 0
-                              }
-                              onClick={() => void execute("approve")}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              disabled={busy || reason.trim().length < 5}
-                              onClick={() => void execute("request-changes")}
-                            >
-                              Request changes
-                            </button>
-                            <button
-                              disabled={busy || reason.trim().length < 5}
-                              onClick={() => void execute("reject")}
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
                         <button
-                          disabled={busy || notes.trim().length < 5}
-                          onClick={() => void execute("notes")}
+                          disabled={
+                            busy ||
+                            reason.trim().length < 5 ||
+                            detail.missingRequirements.length > 0
+                          }
+                          onClick={() => void execute("approve")}
                         >
-                          Add private note
+                          Approve
+                        </button>
+                        <button
+                          disabled={busy || reason.trim().length < 5}
+                          onClick={() => void execute("request-changes")}
+                        >
+                          Request changes
+                        </button>
+                        <button
+                          disabled={busy || reason.trim().length < 5}
+                          onClick={() => void execute("reject")}
+                        >
+                          Reject
                         </button>
                       </>
                     )}
-                    {can("users.manage") && detail.status === "approved" && (
-                      <button
-                        disabled={busy || reason.trim().length < 5}
-                        onClick={() => void execute("suspend")}
-                      >
-                        Suspend
-                      </button>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <p>You have read-only access.</p>
-              )}
+                    <button
+                      disabled={busy || notes.trim().length < 5}
+                      onClick={() => void execute("notes")}
+                    >
+                      Add private note
+                    </button>
+                  </>
+                  {detail.status === "approved" && (
+                    <button
+                      disabled={busy || reason.trim().length < 5}
+                      onClick={() => void execute("suspend")}
+                    >
+                      Suspend
+                    </button>
+                  )}
+                </div>
+              </>
               <h3>Review timeline</h3>
               <ol className="delivery-timeline">
                 {detail.timeline.map((event) => (

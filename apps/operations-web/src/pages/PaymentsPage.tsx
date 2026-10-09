@@ -1,26 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ApiClientError,
+  DemoError,
   commandPaymentFinance,
   fetchPaymentFinanceDetail,
   fetchPaymentFinanceQueue,
   recheckPayment,
   reconcilePendingPayments,
-} from "@sokoni-digital/api-client";
+} from "../demo/service";
 import {
   paymentInvestigationReasons,
   refundRequestReasons,
   type PaymentFinanceDetail,
   type PaymentFinanceQueue,
 } from "@sokoni-digital/domain";
-import { useAuth } from "../auth/AuthContext";
 
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 const label = (s: string) => s.replaceAll("_", " ");
 const date = (s: string) => new Date(s).toLocaleString();
 
 export function PaymentsPage() {
-  const { accessToken, can } = useAuth();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -43,8 +40,8 @@ export function PaymentsPage() {
   const [amount, setAmount] = useState("");
   const inflight = useRef(false);
   const retry = useRef<{ key: string; operationId: string } | null>(null);
-  const queueKey = JSON.stringify([accessToken, page, query, filter, revision]);
-  const detailKey = JSON.stringify([accessToken, selected, revision]);
+  const queueKey = JSON.stringify([page, query, filter, revision]);
+  const detailKey = JSON.stringify([selected, revision]);
   const queue = queueResult?.key === queueKey ? queueResult.data : null;
   const detail =
     queue?.data.some((p) => p.paymentId === selected) && detailResult?.key === detailKey
@@ -52,13 +49,8 @@ export function PaymentsPage() {
       : null;
   const loading = loaded !== queueKey;
   useEffect(() => {
-    if (!accessToken) return;
     const controller = new AbortController();
-    fetchPaymentFinanceQueue(
-      { baseUrl, accessToken },
-      { page, q: query, reconciliationStatus: filter },
-      controller.signal,
-    )
+    fetchPaymentFinanceQueue({ page, q: query, reconciliationStatus: filter }, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) {
           setQueue({ key: queueKey, data });
@@ -75,11 +67,11 @@ export function PaymentsPage() {
         if (!controller.signal.aborted) setLoaded(queueKey);
       });
     return () => controller.abort();
-  }, [accessToken, page, query, filter, queueKey]);
+  }, [page, query, filter, queueKey]);
   useEffect(() => {
-    if (!accessToken || !selected) return;
+    if (!selected) return;
     const controller = new AbortController();
-    fetchPaymentFinanceDetail({ baseUrl, accessToken }, selected, controller.signal)
+    fetchPaymentFinanceDetail(selected, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) {
           setDetail({ key: detailKey, data });
@@ -92,9 +84,9 @@ export function PaymentsPage() {
           setError(e instanceof Error ? e.message : "Could not load payment history.");
       });
     return () => controller.abort();
-  }, [accessToken, selected, detailKey]);
+  }, [selected, detailKey]);
   async function execute(action: "reconcile" | "batch" | "flag-investigation" | "request-refund") {
-    if (!accessToken || inflight.current || (action !== "batch" && !detail)) return;
+    if (inflight.current || (action !== "batch" && !detail)) return;
     const input = {
       reason: reason.trim(),
       reasonCode: action === "request-refund" ? refundReason : investigationReason,
@@ -113,25 +105,18 @@ export function PaymentsPage() {
     setError("");
     setMessage("");
     try {
-      const options = { baseUrl, accessToken };
       if (action === "batch") {
-        const result = await reconcilePendingPayments(options, operationId, reason.trim());
+        const result = await reconcilePendingPayments(operationId, reason.trim());
         setMessage(
-          `Batch: ${result.claimed} checked, ${result.resolved} resolved, ${result.pending} pending, ${result.needsReview} need review, ${result.failed} failed.`,
+          `Simulated batch: ${result.claimed} checked, ${result.resolved} resolved, ${result.pending} pending, ${result.needsReview} need review, ${result.failed} failed.`,
         );
       } else if (action === "reconcile") {
-        const result = await recheckPayment(
-          options,
-          selected,
-          operationId,
-          detail!.version,
-          reason.trim(),
-        );
+        const result = await recheckPayment(selected, operationId, detail!.version, reason.trim());
         setMessage(
-          `Provider recheck: ${label(result.outcome)}. Payment status: ${label(result.status)}.`,
+          `Simulated provider recheck: ${label(result.outcome)}. Payment status: ${label(result.status)}.`,
         );
       } else {
-        const result = await commandPaymentFinance(options, selected, action, {
+        const result = await commandPaymentFinance(selected, action, {
           ...input,
           operationId,
           expectedVersion: detail!.version,
@@ -145,7 +130,7 @@ export function PaymentsPage() {
       retry.current = null;
       setRevision((v) => v + 1);
     } catch (e) {
-      if (e instanceof ApiClientError && e.code === "VERSION_CONFLICT") {
+      if (e instanceof DemoError && e.code === "VERSION_CONFLICT") {
         retry.current = null;
         setRevision((value) => value + 1);
         setError(`${e.message} The latest payment has been loaded for review.`);
@@ -178,17 +163,12 @@ export function PaymentsPage() {
           >
             Refresh
           </button>
-          {can("payments.reconcile") && (
-            <button
-              disabled={busy || reason.trim().length < 5}
-              onClick={() => void execute("batch")}
-            >
-              Recheck pending batch
-            </button>
-          )}
+          <button disabled={busy || reason.trim().length < 5} onClick={() => void execute("batch")}>
+            Recheck pending batch
+          </button>
         </div>
       </div>
-      <p>Rechecks query the provider. They never accept a manually entered payment status.</p>
+      <p>Rechecks simulate provider responses locally. No provider is contacted.</p>
       {error && (
         <p role="alert" className="message">
           {error}
@@ -281,50 +261,46 @@ export function PaymentsPage() {
                 <br />
                 Provider reference: {detail.providerReference ?? "Missing"}
               </p>
-              {can("payments.reconcile") && detail.provider === "pesapal" && (
+              {detail.provider === "pesapal" && (
                 <button
                   disabled={busy || reason.trim().length < 5}
                   onClick={() => void execute("reconcile")}
                 >
-                  Recheck with provider
+                  Simulate provider recheck
                 </button>
               )}
-              {(can("payments.reconcile") || can("refunds.manage")) && (
+              <label>
+                Reason
+                <textarea
+                  disabled={busy}
+                  maxLength={1000}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </label>
+              <fieldset disabled={busy}>
+                <legend>Financial investigation</legend>
                 <label>
-                  Reason
-                  <textarea
-                    disabled={busy}
-                    maxLength={1000}
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                  />
-                </label>
-              )}
-              {can("payments.reconcile") && (
-                <fieldset disabled={busy}>
-                  <legend>Financial investigation</legend>
-                  <label>
-                    Issue
-                    <select
-                      value={investigationReason}
-                      onChange={(e) => setInvestigationReason(e.target.value)}
-                    >
-                      {paymentInvestigationReasons.map((s) => (
-                        <option key={s} value={s}>
-                          {label(s)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    disabled={reason.trim().length < 5}
-                    onClick={() => void execute("flag-investigation")}
+                  Issue
+                  <select
+                    value={investigationReason}
+                    onChange={(e) => setInvestigationReason(e.target.value)}
                   >
-                    Flag investigation
-                  </button>
-                </fieldset>
-              )}
-              {can("refunds.manage") && detail.status === "successful" && (
+                    {paymentInvestigationReasons.map((s) => (
+                      <option key={s} value={s}>
+                        {label(s)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  disabled={reason.trim().length < 5}
+                  onClick={() => void execute("flag-investigation")}
+                >
+                  Flag investigation
+                </button>
+              </fieldset>
+              {detail.status === "successful" && (
                 <fieldset disabled={busy}>
                   <legend>Request a refund</legend>
                   <p>This creates an approval request only. It does not execute a refund.</p>
@@ -363,7 +339,7 @@ export function PaymentsPage() {
                 </fieldset>
               )}
               <h3>Reconciliation history</h3>
-              <p>Latest 100 records. Provider payloads and credentials are not exposed.</p>
+              <p>Local demo reconciliation history.</p>
               {!detail.reconciliations.length && <p>No rechecks yet.</p>}
               <ol className="delivery-timeline">
                 {detail.reconciliations.map((r) => (

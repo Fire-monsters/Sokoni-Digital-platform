@@ -3,7 +3,7 @@ import {
   fetchAdminPriceQueue,
   fetchDispatcherDeliveryBoard,
   fetchDispatcherRiders,
-} from "@sokoni-digital/api-client";
+} from "../demo/service";
 import type {
   AdminListingReview,
   AdminPriceReview,
@@ -11,12 +11,8 @@ import type {
   DispatcherRider,
 } from "@sokoni-digital/domain";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { useAuth } from "../auth/AuthContext";
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 type State = {
-  token: string;
   loading: boolean;
-  connected: boolean;
   message: string;
   setMessage: (value: string) => void;
   setLoading: (value: boolean) => void;
@@ -29,10 +25,7 @@ type State = {
 };
 const Context = createContext<State | null>(null);
 export function OperationsProvider({ children }: { children: ReactNode }) {
-  const { accessToken } = useAuth();
-  const tokenValue = accessToken ?? "";
   const [loading, setLoading] = useState(false);
-  const [connected, setConnected] = useState(false);
   const [message, setMessage] = useState("");
   const [listings, setListings] = useState<AdminListingReview[]>([]);
   const [prices, setPrices] = useState<AdminPriceReview[]>([]);
@@ -41,54 +34,43 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     issues: [],
   });
   const [riders, setRiders] = useState<DispatcherRider[]>([]);
-  const runLoad = useCallback(
-    async (request: () => Promise<void>) => {
-      if (!tokenValue) return;
-      setLoading(true);
-      setMessage("");
-      try {
-        await request();
-        setConnected(true);
-      } catch (error) {
-        setConnected(false);
-        setMessage(
-          error instanceof Error ? error.message : "Could not connect to the operations API.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [tokenValue],
-  );
+  const runLoad = useCallback(async (request: () => Promise<void>) => {
+    setLoading(true);
+    try {
+      await request();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not load demo data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   const loadDeliveries = useCallback(
     () =>
       runLoad(async () => {
         const [board, availableRiders] = await Promise.all([
-          fetchDispatcherDeliveryBoard({ baseUrl, accessToken: tokenValue }),
-          fetchDispatcherRiders({ baseUrl, accessToken: tokenValue }),
+          fetchDispatcherDeliveryBoard(),
+          fetchDispatcherRiders(),
         ]);
         setDeliveryBoard(board);
         setRiders(availableRiders);
       }),
-    [runLoad, tokenValue],
+    [runLoad],
   );
   const loadCatalogue = useCallback(
     () =>
       runLoad(async () => {
         const [listingQueue, priceQueue] = await Promise.all([
-          fetchAdminListingQueue({ baseUrl, accessToken: tokenValue }),
-          fetchAdminPriceQueue({ baseUrl, accessToken: tokenValue }),
+          fetchAdminListingQueue(),
+          fetchAdminPriceQueue(),
         ]);
         setListings(listingQueue.listings);
         setPrices(priceQueue.requests);
       }),
-    [runLoad, tokenValue],
+    [runLoad],
   );
   const value = useMemo(
     () => ({
-      token: tokenValue,
       loading,
-      connected,
       message,
       setMessage,
       setLoading,
@@ -99,18 +81,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       deliveryBoard,
       riders,
     }),
-    [
-      tokenValue,
-      loading,
-      connected,
-      message,
-      loadDeliveries,
-      loadCatalogue,
-      listings,
-      prices,
-      deliveryBoard,
-      riders,
-    ],
+    [loading, message, loadDeliveries, loadCatalogue, listings, prices, deliveryBoard, riders],
   );
   return <Context value={value}>{children}</Context>;
 }

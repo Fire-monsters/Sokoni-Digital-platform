@@ -1,11 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { AuditEventDetail, AuditEventPage } from "@sokoni-digital/domain";
 import { AuditLogPage } from "./AuditLogPage";
-
-vi.mock("../auth/AuthContext", () => ({
-  useAuth: () => ({ accessToken: "test-token" }),
-}));
 
 const detail: AuditEventDetail = {
   id: "payment:10000000-0000-4000-8000-000000000001",

@@ -1,11 +1,11 @@
 import {
-  ApiClientError,
+  DemoError,
   assignDispatcherDelivery,
   fetchDispatcherDelivery,
   fetchDispatcherNearbyRiders,
   performDispatcherDeliveryAction,
   resolveDispatcherDeliveryIssue,
-} from "@sokoni-digital/api-client";
+} from "./demo/service";
 import {
   deliveryIssueResolutionCodes,
   type DeliveryIssueResolutionCode,
@@ -34,23 +34,19 @@ function age(updatedAt: string): string {
 }
 
 export function DeliveryBoard({
-  token,
   board,
   riders,
   busy,
   onBusy,
   onMessage,
   onReload,
-  canManage,
 }: {
-  token: string;
   board: DispatcherDeliveryBoard;
   riders: DispatcherRider[];
   busy: boolean;
   onBusy: (busy: boolean) => void;
   onMessage: (message: string) => void;
   onReload: () => Promise<void>;
-  canManage: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string>();
   const [riderId, setRiderId] = useState("");
@@ -79,10 +75,7 @@ export function DeliveryBoard({
     const requestNumber = ++detailRequest.current;
     setDetailLoading(true);
     try {
-      const result = await fetchDispatcherDelivery(
-        { baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000", accessToken: token },
-        deliveryId,
-      );
+      const result = await fetchDispatcherDelivery(deliveryId);
       if (requestNumber === detailRequest.current) setDetail(result);
     } catch (error) {
       if (requestNumber === detailRequest.current) {
@@ -117,7 +110,7 @@ export function DeliveryBoard({
       await onReload();
       if (selected) await loadDetail(selected.id);
     } catch (error) {
-      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
         pendingOperations.current.delete(operationKey);
         onMessage(`${error.message} The latest delivery has been loaded for review.`);
         await onReload();
@@ -142,17 +135,12 @@ export function DeliveryBoard({
     await run(
       operationKey,
       (operationId) =>
-        assignDispatcherDelivery(
-          { baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000", accessToken: token },
-          selected.id,
-          reassign,
-          {
-            transporterId: riderId,
-            reason,
-            expectedVersion: selected.version,
-            operationId,
-          },
-        ),
+        assignDispatcherDelivery(selected.id, reassign, {
+          transporterId: riderId,
+          reason,
+          expectedVersion: selected.version,
+          operationId,
+        }),
       reassign ? "Delivery reassigned." : "Delivery assigned.",
     );
   }
@@ -163,21 +151,19 @@ export function DeliveryBoard({
     const operationId = operationIdFor(operationKey);
     onBusy(true);
     try {
-      const result = await performDispatcherDeliveryAction(
-        { baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000", accessToken: token },
-        selected.id,
-        { action, reason, expectedVersion: selected.version, operationId },
-      );
+      const result = await performDispatcherDeliveryAction(selected.id, {
+        action,
+        reason,
+        expectedVersion: selected.version,
+        operationId,
+      });
       pendingOperations.current.delete(operationKey);
-      if (result.contactPhoneNumber) window.open(`tel:${result.contactPhoneNumber}`, "_self");
-      onMessage(
-        result.contactPhoneNumber ? "Contact access audited." : "Delivery action completed.",
-      );
+      onMessage(result.contactPhoneNumber ?? "Demo delivery action completed.");
       setReason("");
       await onReload();
       await loadDetail(selected.id);
     } catch (error) {
-      if (error instanceof ApiClientError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
         pendingOperations.current.delete(operationKey);
         onMessage(`${error.message} The latest delivery has been loaded for review.`);
         await onReload();
@@ -368,7 +354,7 @@ export function DeliveryBoard({
               </section>
             </div>
           ) : null}
-          {canManage ? (
+          {
             <>
               <label>
                 Required operations reason
@@ -401,13 +387,7 @@ export function DeliveryBoard({
                   <button
                     disabled={busy}
                     onClick={() =>
-                      void fetchDispatcherNearbyRiders(
-                        {
-                          baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
-                          accessToken: token,
-                        },
-                        selected.id,
-                      )
+                      void fetchDispatcherNearbyRiders(selected.id)
                         .then(setNearby)
                         .catch((error: unknown) =>
                           onMessage(
@@ -482,7 +462,7 @@ export function DeliveryBoard({
                 </button>
               </div>
             </>
-          ) : null}
+          }
           {detail?.evidence.images.length ? (
             <div className="evidence-gallery">
               {detail.evidence.images.map((image) => (
@@ -509,7 +489,7 @@ export function DeliveryBoard({
               <p>{issue.note || "No rider note"}</p>
               <small>{new Date(issue.createdAt).toLocaleString()}</small>
             </div>
-            {canManage ? (
+            {
               <div className="resolution-controls">
                 <select
                   value={resolutionCode}
@@ -536,20 +516,13 @@ export function DeliveryBoard({
                         issue.reportedVersion,
                       ]),
                       (operationId) =>
-                        resolveDispatcherDeliveryIssue(
-                          {
-                            baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:4000",
-                            accessToken: token,
-                          },
-                          issue.id,
-                          {
-                            resolutionCode,
-                            resolutionNote: reason,
-                            reason,
-                            expectedVersion: issue.reportedVersion,
-                            operationId,
-                          },
-                        ),
+                        resolveDispatcherDeliveryIssue(issue.id, {
+                          resolutionCode,
+                          resolutionNote: reason,
+                          reason,
+                          expectedVersion: issue.reportedVersion,
+                          operationId,
+                        }),
                       "Issue resolved.",
                     )
                   }
@@ -557,7 +530,7 @@ export function DeliveryBoard({
                   Resolve issue
                 </button>
               </div>
-            ) : null}
+            }
           </div>
         ))}
         {board.issues.length === 0 ? <p>No open delivery exceptions.</p> : null}

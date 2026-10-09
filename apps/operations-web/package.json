@@ -13,7 +13,6 @@
   "dependencies": {
     "@sokoni-digital/api-client": "workspace:*",
     "@sokoni-digital/domain": "workspace:*",
-    "@supabase/supabase-js": "^2.112.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3"
@@ -31,6 +30,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.65.0",
     "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "jsdom": "^20.0.3"
   }
 }
