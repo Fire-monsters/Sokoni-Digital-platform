@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PaymentsPage } from "./PaymentsPage";
 describe("payment finance page", () => {
   it("renders without authentication and exposes simulated batch actions", () => {
@@ -20,3 +20,5 @@ describe("payment finance page", () => {
     expect(html).not.toContain("Submit refund for approval");
   });
 });
+
+vi.mock("../lib/api", () => ({ frontendConfig: { apiUrl: "", demoEnabled: true } }));

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 import { authenticate } from "../../middleware/authenticate.js";
@@ -19,9 +19,10 @@ export function createPaymentAdminRouter(
     PaymentsService,
     "getFinanceDetail" | "commandFinance" | "reconcileAttempt" | "reconcilePendingBatch"
   > = createPaymentsService(),
+  boundary: RequestHandler = authenticate,
 ): Router {
   const router = Router();
-  router.use(authenticate);
+  router.use(boundary);
   router.use((_request, response, next) => {
     response.setHeader("Cache-Control", "no-store");
     next();

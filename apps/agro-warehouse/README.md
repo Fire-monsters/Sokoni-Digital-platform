@@ -1,11 +1,11 @@
 # agro-warehouse
 
-This app opens as a local demo without login or API configuration. Sample records and simulated actions are held in memory and reset on reload. Live API and Supabase environment variables are not used.
+Operational screens show “Not connected yet” until the later API integration slices. The shared typed HTTP client and TanStack Query provider are ready for those integrations; domain workflows are not connected in this slice.
 
-Run `pnpm --filter agro-warehouse dev` from the repository root.
+Run `pnpm --filter agro-warehouse dev`. Set `NEXT_PUBLIC_API_URL` to the public backend origin (blank means same-origin). For local demo development only, set `NEXT_PUBLIC_DEMO_ENABLED=true`. Production builds always disable demo records and local mutations, even if this flag is set.
 
-No live payments, notifications, or business records are changed. Invoice PDF downloads are unavailable in the warehouse demo. Existing placeholder pages remain placeholders. SME and mobile authentication and backend authorization are unchanged.
+No live payments, notifications or business records are changed. Operations provider rechecks and notification sends are unavailable even in demo mode. SME authentication and backend authorization are unchanged.
 
-Restoring live workflows requires reconnecting the app-local data services and introducing the revised authentication and business rules.
+See [the Epic 2 implementation report](../../docs/implementation/epic-2-api-foundation.md) for client/hook examples, the fake-success audit, security checks and validation results.
 
-Validation: `pnpm --filter agro-warehouse test` and `pnpm --filter agro-warehouse build`. Run `pnpm --filter agro-warehouse typecheck` for type checks.
+Validation: `pnpm --filter agro-warehouse typecheck`, `pnpm --filter agro-warehouse test`, and `pnpm --filter agro-warehouse build`.

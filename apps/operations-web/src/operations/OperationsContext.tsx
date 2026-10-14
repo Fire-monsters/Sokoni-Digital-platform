@@ -3,7 +3,7 @@ import {
   fetchAdminPriceQueue,
   fetchDispatcherDeliveryBoard,
   fetchDispatcherRiders,
-} from "../demo/service";
+} from "../operations/service";
 import type {
   AdminListingReview,
   AdminPriceReview,
@@ -39,7 +39,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     try {
       await request();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not load demo data.");
+      setMessage(error instanceof Error ? error.message : "Could not load operations data.");
     } finally {
       setLoading(false);
     }

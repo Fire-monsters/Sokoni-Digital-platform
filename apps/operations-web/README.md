@@ -1,11 +1,9 @@
 # operations-web
 
-This app opens as a local demo without login or API configuration. Sample records and simulated actions are held in memory and reset on reload. Live API and Supabase environment variables are not used.
+The Operations screens for applications, catalogue, price changes, deliveries, orders, payment records and refund requests use the public Operations API and persisted Supabase data. Set `VITE_API_URL` to the backend origin (blank means same-origin). The backend must run in `APP_MODE=full` with its public Operations workspace configured to an active staff actor. The browser never supplies actor credentials.
 
-Run `pnpm --filter operations-web dev` from the repository root.
+Run `pnpm --filter operations-web dev`. For local fixture development only, set `VITE_DEMO_ENABLED=true`; production builds always disable fixtures and local mutations. Provider payment rechecks, refund execution, notifications and external fleet functions remain unavailable.
 
-No live payments, notifications, or business records are changed. Invoice PDF downloads are unavailable in the warehouse demo. Existing placeholder pages remain placeholders. SME and mobile authentication and backend authorization are unchanged.
+See [the Epic 3 implementation report](../../docs/implementation/epic-3-operations-reconnection.md) for routes, persistence and audit details.
 
-Restoring live workflows requires reconnecting the app-local data services and introducing the revised authentication and business rules.
-
-Validation: `pnpm --filter operations-web test` and `pnpm --filter operations-web build`. Run `pnpm --filter operations-web lint` for lint checks.
+Validation: `pnpm --filter operations-web typecheck`, `pnpm --filter operations-web test`, and `pnpm --filter operations-web build`.

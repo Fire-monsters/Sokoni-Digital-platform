@@ -1,3 +1,5 @@
+import { unavailable } from "@sokoni-digital/api-client";
+import { frontendConfig } from "./api";
 export type WarehouseBusiness = { id: string; kind: string; status: string; name: string };
 export type CatalogueItem = {
   id: string;
@@ -112,18 +114,23 @@ const records: Order[] = ["submitted", "confirmed"].map((status, i) => ({
   history: [{ status, at: new Date().toISOString(), reason: "Sample order" }],
 }));
 export async function demoWarehouse() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   return copy(warehouse);
 }
 export async function crops() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   return copy(products);
 }
 export async function catalogue(warehouseId: string) {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   return copy(offers.filter((o) => o.warehouse_business_id === warehouseId));
 }
 export async function orders(warehouseId: string) {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   return warehouseId === warehouse.id ? copy(records) : [];
 }
 export async function financeInvoices(): Promise<FinanceInvoice[]> {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   return copy(
     records.flatMap((o) =>
       o.invoice ? [{ ...o.invoice, orderId: o.id, issuedAt: o.createdAt }] : [],
@@ -131,6 +138,7 @@ export async function financeInvoices(): Promise<FinanceInvoice[]> {
   );
 }
 export async function decideOrder(id: string, action: "confirm" | "decline", reason?: string) {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   const order = records.find((o) => o.id === id);
   if (!order || order.status !== "submitted") throw new Error("Select a submitted demo order.");
   if (action === "decline" && (!reason || reason.trim().length < 3))
@@ -166,6 +174,7 @@ type OfferInput = {
   expectedVersion?: number;
 };
 export async function saveOffer(id: string | undefined, input: OfferInput) {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   const existing = id ? offers.find((o) => o.id === id) : undefined;
   if (id && (!existing || existing.version !== input.expectedVersion))
     throw new Error("The demo offer changed. Select it again.");
@@ -201,6 +210,7 @@ export async function saveOffer(id: string | undefined, input: OfferInput) {
 }
 const references = new Set<string>();
 export async function allocatePayment(invoiceId: string, amount: number, reference: string) {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
   const invoice = records.find((o) => o.invoice?.id === invoiceId)?.invoice;
   if (!invoice) throw new Error("Select a demo invoice.");
   if (!Number.isFinite(amount) || amount <= 0 || amount > invoice.balanceUgx)

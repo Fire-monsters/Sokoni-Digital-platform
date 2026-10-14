@@ -51,3 +51,5 @@ describe("warehouse demo", () => {
     expect((await s.catalogue(warehouse.id))[0].name).toBe("Demo beans");
   });
 });
+
+vi.mock("./api", () => ({ frontendConfig: { apiUrl: "", demoEnabled: true } }));

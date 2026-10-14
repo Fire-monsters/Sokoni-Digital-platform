@@ -1,5 +1,8 @@
+import { ApiError, apiErrorMessage } from "@sokoni-digital/api-client";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { InvestigationPanel } from "../operations/RecordPanels";
+import { frontendConfig } from "../lib/api";
 import {
   DemoError,
   addOrderSupportNote,
@@ -9,7 +12,7 @@ import {
   fetchOrderInvestigation,
   resendOrderNotification,
   revealOrderContact,
-} from "../demo/service";
+} from "../operations/service";
 
 import {
   refundRequestReasons,
@@ -95,16 +98,18 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
       setRevision((value) => value + 1);
       if (action === "note") setNote("");
     } catch (cause) {
-      if (cause instanceof DemoError && cause.code === "VERSION_CONFLICT") {
+      if (cause instanceof DemoError && (cause.code === "VERSION_CONFLICT" || cause.status === 409)) {
         retry.current = null;
         setRevision((value) => value + 1);
         setError(`${cause.message} The latest order has been loaded for review.`);
         return;
       }
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "The order operation failed. A retry will use the same operation key.",
+        cause instanceof ApiError
+          ? apiErrorMessage(cause)
+          : cause instanceof Error
+            ? cause.message
+            : "The order operation failed. A retry will use the same operation key.",
       );
     } finally {
       inflight.current = false;
@@ -115,6 +120,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
     | { id?: string; status?: string; amount?: number; currency?: string; version?: number }
     | null
     | undefined;
+  const demoView = frontendConfig.demoEnabled || Boolean(initialData);
   const canCancel =
     data?.order.status === "awaiting_payment" &&
     (!payment?.status || ["failed", "cancelled", "expired"].includes(payment.status));
@@ -199,7 +205,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
               {data.consumer.phoneMasked}
             </p>
             {data.deliveryAddress && <pre>{JSON.stringify(data.deliveryAddress, null, 2)}</pre>}
-            <button
+            {demoView && <button
               disabled={busy || reason.trim().length < 5}
               onClick={() =>
                 void execute(
@@ -217,7 +223,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
               }
             >
               Reveal phone number
-            </button>
+            </button>}
           </section>
           <section className="review-card">
             <h2>Payment</h2>
@@ -244,7 +250,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   Rider: {data.delivery.rider?.name ?? "Unassigned"} ·{" "}
                   {data.delivery.rider?.phoneMasked ?? "No contact"}
                 </p>
-                {data.delivery.rider && (
+                {demoView && data.delivery.rider && (
                   <button
                     disabled={busy || reason.trim().length < 5}
                     onClick={() =>
@@ -333,7 +339,8 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   {notification.deliveries.map((d) => `${d.channel}: ${d.status}`).join(" · ")}
                 </p>
                 <button
-                  disabled={busy || reason.trim().length < 5}
+                  disabled
+                  title="UNAVAILABLE: Notification delivery is not enabled"
                   onClick={() =>
                     void execute(
                       `notification-${notification.id}`,
@@ -345,7 +352,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                           reason.trim(),
                           data.delivery?.version ?? 0,
                         ),
-                      "Demo notification resend simulated. Nothing was sent.",
+                      "Notification delivery is unavailable.",
                     )
                   }
                 >
@@ -414,7 +421,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
               />
             </label>
             <div className="actions">
-              {data.delivery && (
+              {demoView && data.delivery && (
                 <button
                   disabled={busy || reason.trim().length < 5}
                   onClick={() =>
@@ -429,7 +436,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                   Escalate to dispatch
                 </button>
               )}
-              {canCancel && (
+              {demoView && canCancel && (
                 <button
                   disabled={busy || reason.trim().length < 5}
                   onClick={() =>
@@ -488,7 +495,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
                           reasonCode: refundReason,
                           amount: Number(refundAmount),
                         }),
-                      "Demo refund request recorded locally.",
+                      "Refund approval request recorded.",
                     )
                   }
                 >
@@ -497,6 +504,7 @@ export function OrderInvestigationPage({ initialData }: { initialData?: OrderInv
               </fieldset>
             )}
           </section>
+          {!demoView && !initialData && <InvestigationPanel orderId={orderId} />}
         </div>
       )}
     </>

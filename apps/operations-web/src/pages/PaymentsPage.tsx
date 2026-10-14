@@ -1,3 +1,6 @@
+import { ApiError, apiErrorMessage } from "@sokoni-digital/api-client";
+import { PaymentRecordsPanel } from "../operations/RecordPanels";
+import { frontendConfig } from "../lib/api";
 import { useEffect, useRef, useState } from "react";
 import {
   DemoError,
@@ -6,7 +9,7 @@ import {
   fetchPaymentFinanceQueue,
   recheckPayment,
   reconcilePendingPayments,
-} from "../demo/service";
+} from "../operations/service";
 import {
   paymentInvestigationReasons,
   refundRequestReasons,
@@ -137,9 +140,11 @@ export function PaymentsPage() {
         return;
       }
       setError(
-        e instanceof Error
-          ? e.message
-          : "The operation could not be completed. Retry uses the same operation key.",
+        e instanceof ApiError
+          ? apiErrorMessage(e)
+          : e instanceof Error
+            ? e.message
+            : "The operation could not be completed. Retry uses the same operation key.",
       );
     } finally {
       inflight.current = false;
@@ -163,12 +168,16 @@ export function PaymentsPage() {
           >
             Refresh
           </button>
-          <button disabled={busy || reason.trim().length < 5} onClick={() => void execute("batch")}>
+          <button
+            disabled
+            title="UNAVAILABLE: Provider execution is not enabled"
+            onClick={() => void execute("batch")}
+          >
             Recheck pending batch
           </button>
         </div>
       </div>
-      <p>Rechecks simulate provider responses locally. No provider is contacted.</p>
+      <p>Provider rechecks are unavailable. No provider is contacted.</p>
       {error && (
         <p role="alert" className="message">
           {error}
@@ -263,10 +272,11 @@ export function PaymentsPage() {
               </p>
               {detail.provider === "pesapal" && (
                 <button
-                  disabled={busy || reason.trim().length < 5}
+                  disabled
+                  title="UNAVAILABLE: Provider execution is not enabled"
                   onClick={() => void execute("reconcile")}
                 >
-                  Simulate provider recheck
+                  Provider recheck unavailable
                 </button>
               )}
               <label>
@@ -339,7 +349,7 @@ export function PaymentsPage() {
                 </fieldset>
               )}
               <h3>Reconciliation history</h3>
-              <p>Local demo reconciliation history.</p>
+              {!frontendConfig.demoEnabled && <PaymentRecordsPanel paymentId={detail.id} />}
               {!detail.reconciliations.length && <p>No rechecks yet.</p>}
               <ol className="delivery-timeline">
                 {detail.reconciliations.map((r) => (

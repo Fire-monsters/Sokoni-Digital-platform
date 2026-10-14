@@ -1,3 +1,5 @@
+import { unavailable } from "@sokoni-digital/api-client";
+import { frontendConfig } from "../lib/api";
 import type * as Api from "@sokoni-digital/api-client";
 import type {
   AuditEventDetail,
@@ -60,7 +62,7 @@ function page<T>(items: T[], number = 1, size = 25) {
     },
   });
 }
-export const fetchApplicationQueue: Local<typeof Api.fetchApplicationQueue> = async (query) =>
+const fetchApplicationQueue: Local<typeof Api.fetchApplicationQueue> = async (query) =>
   page(
     store.applications
       .filter((a) => a.type === query.type && (!query.status || a.status === query.status))
@@ -76,9 +78,9 @@ export const fetchApplicationQueue: Local<typeof Api.fetchApplicationQueue> = as
       })),
     query.page,
   );
-export const fetchApplicationReview: Local<typeof Api.fetchApplicationReview> = async (id) =>
+const fetchApplicationReview: Local<typeof Api.fetchApplicationReview> = async (id) =>
   copy(find(store.applications, id));
-export const reviewApplication: Local<typeof Api.reviewApplication> = async (id, action, input) => {
+const reviewApplication: Local<typeof Api.reviewApplication> = async (id, action, input) => {
   const a = find(store.applications, id);
   check(a, input.expectedVersion);
   const previous = copy(a);
@@ -120,9 +122,9 @@ export const reviewApplication: Local<typeof Api.reviewApplication> = async (id,
     duplicate: false,
   };
 };
-export const fetchAdminListingQueue: Local<typeof Api.fetchAdminListingQueue> = async () =>
+const fetchAdminListingQueue: Local<typeof Api.fetchAdminListingQueue> = async () =>
   copy({ listings: store.listings });
-export const fetchAdminPriceQueue: Local<typeof Api.fetchAdminPriceQueue> = async () =>
+const fetchAdminPriceQueue: Local<typeof Api.fetchAdminPriceQueue> = async () =>
   copy({ requests: store.prices });
 function listingDecision(
   id: string,
@@ -154,19 +156,19 @@ function listingDecision(
     version: item.version,
   };
 }
-export const approveAdminListing: Local<typeof Api.approveAdminListing> = async (
+const approveAdminListing: Local<typeof Api.approveAdminListing> = async (
   id,
   version,
   operationId,
   reason,
 ) => listingDecision(id, version, operationId, reason, "active");
-export const requestAdminListingChanges: Local<typeof Api.requestAdminListingChanges> = async (
+const requestAdminListingChanges: Local<typeof Api.requestAdminListingChanges> = async (
   id,
   version,
   operationId,
   reason,
 ) => listingDecision(id, version, operationId, reason, "changes_requested");
-export const reviewAdminPrice: Local<typeof Api.reviewAdminPrice> = async (
+const reviewAdminPrice: Local<typeof Api.reviewAdminPrice> = async (
   id,
   decision,
   operationId,
@@ -201,7 +203,7 @@ export const reviewAdminPrice: Local<typeof Api.reviewAdminPrice> = async (
     version: listing.version,
   };
 };
-export const fetchPaymentFinanceQueue: Local<typeof Api.fetchPaymentFinanceQueue> = async (query) =>
+const fetchPaymentFinanceQueue: Local<typeof Api.fetchPaymentFinanceQueue> = async (query) =>
   page(
     store.payments
       .map((p) => ({
@@ -230,58 +232,12 @@ export const fetchPaymentFinanceQueue: Local<typeof Api.fetchPaymentFinanceQueue
       ),
     query.page,
   );
-export const fetchPaymentFinanceDetail: Local<typeof Api.fetchPaymentFinanceDetail> = async (id) =>
+const fetchPaymentFinanceDetail: Local<typeof Api.fetchPaymentFinanceDetail> = async (id) =>
   copy(find(store.payments, id));
-export const recheckPayment: Local<typeof Api.recheckPayment> = async (
-  id,
-  operationId,
-  version,
-  reason,
-) => {
-  const p = find(store.payments, id);
-  check(p, version);
-  const previous = copy(p);
-  p.status = "successful";
-  p.version++;
-  const reconciliationId = crypto.randomUUID();
-  p.reconciliations.unshift({
-    id: reconciliationId,
-    previous_status: previous.status,
-    local_status_after: p.status,
-    provider_status: "simulated_successful",
-    result: "simulated",
-    error_code: null,
-    requested_by: operator.name,
-    run_source: "demo",
-    request_reference: operationId,
-    provider_amount_ugx: p.amount,
-    provider_currency: p.currency,
-    created_at: now(),
-  });
-  audit("payment.simulated_recheck", "payment", id, reason, previous, p);
-  return {
-    paymentAttemptId: id,
-    status: p.status,
-    outcome: "simulated_successful",
-    reconciliationId,
-    duplicate: false,
-  };
-};
-export const reconcilePendingPayments: Local<typeof Api.reconcilePendingPayments> = async (
-  operationId,
-  reason,
-) => {
-  const pending = store.payments.filter((p) => p.status === "pending");
-  for (const p of pending) await recheckPayment(p.id, operationId, p.version, reason);
-  return {
-    claimed: pending.length,
-    resolved: pending.length,
-    pending: 0,
-    needsReview: 0,
-    failed: 0,
-  };
-};
-export const commandPaymentFinance: Local<typeof Api.commandPaymentFinance> = async (
+const recheckPayment: Local<typeof Api.recheckPayment> = async () => unavailable();
+const reconcilePendingPayments: Local<typeof Api.reconcilePendingPayments> = async () =>
+  unavailable();
+const commandPaymentFinance: Local<typeof Api.commandPaymentFinance> = async (
   id,
   action,
   input,
@@ -320,9 +276,7 @@ export const commandPaymentFinance: Local<typeof Api.commandPaymentFinance> = as
     version: p.version,
   };
 };
-export const fetchDispatcherDeliveryBoard: Local<
-  typeof Api.fetchDispatcherDeliveryBoard
-> = async () => {
+const fetchDispatcherDeliveryBoard: Local<typeof Api.fetchDispatcherDeliveryBoard> = async () => {
   const board: DispatcherDeliveryBoard = {
     deliveries: store.deliveries.map((d) => ({
       ...d.delivery,
@@ -345,18 +299,18 @@ function delivery(id: string) {
   if (!d) throw new DemoError("Delivery not found.", "NOT_FOUND");
   return d;
 }
-export const fetchDispatcherDelivery: Local<typeof Api.fetchDispatcherDelivery> = async (id) =>
+const fetchDispatcherDelivery: Local<typeof Api.fetchDispatcherDelivery> = async (id) =>
   copy(delivery(id));
-export const fetchDispatcherRiders: Local<typeof Api.fetchDispatcherRiders> = async () =>
+const fetchDispatcherRiders: Local<typeof Api.fetchDispatcherRiders> = async () =>
   copy(store.riders);
-export const fetchDispatcherNearbyRiders: Local<typeof Api.fetchDispatcherNearbyRiders> = async (
+const fetchDispatcherNearbyRiders: Local<typeof Api.fetchDispatcherNearbyRiders> = async (
   id,
   radius = 10,
 ) => {
   delivery(id);
   return copy(store.riders.filter((r) => (r.distanceKm ?? 0) <= radius));
 };
-export const assignDispatcherDelivery: Local<typeof Api.assignDispatcherDelivery> = async (
+const assignDispatcherDelivery: Local<typeof Api.assignDispatcherDelivery> = async (
   id,
   reassign,
   input,
@@ -391,9 +345,10 @@ export const assignDispatcherDelivery: Local<typeof Api.assignDispatcherDelivery
     duplicate: false,
   };
 };
-export const performDispatcherDeliveryAction: Local<
-  typeof Api.performDispatcherDeliveryAction
-> = async (id, input) => {
+const performDispatcherDeliveryAction: Local<typeof Api.performDispatcherDeliveryAction> = async (
+  id,
+  input,
+) => {
   const d = delivery(id);
   check(d.delivery, input.expectedVersion);
   const previous = copy(d);
@@ -426,9 +381,10 @@ export const performDispatcherDeliveryAction: Local<
     duplicate: false,
   };
 };
-export const resolveDispatcherDeliveryIssue: Local<
-  typeof Api.resolveDispatcherDeliveryIssue
-> = async (id, input) => {
+const resolveDispatcherDeliveryIssue: Local<typeof Api.resolveDispatcherDeliveryIssue> = async (
+  id,
+  input,
+) => {
   const d = store.deliveries.find((d) => d.issues.some((i) => i.id === id));
   if (!d) throw new DemoError("Issue not found.", "NOT_FOUND");
   check(d.delivery, input.expectedVersion);
@@ -442,7 +398,7 @@ export const resolveDispatcherDeliveryIssue: Local<
   audit("delivery.issue_resolved", "delivery_issue", id, input.reason, previous, issue);
   return { issueId: id, deliveryId: d.delivery.id, status: "resolved", duplicate: false };
 };
-export const fetchOrderInvestigation: Local<typeof Api.fetchOrderInvestigation> = async (id) => {
+const fetchOrderInvestigation: Local<typeof Api.fetchOrderInvestigation> = async (id) => {
   const o = store.orders.find((o) => o.order.id === id);
   if (!o) throw new DemoError("Demo order not found.", "NOT_FOUND");
   const p = o.payment && find(store.payments, String(o.payment.id));
@@ -488,7 +444,7 @@ function order(id: string) {
 function orderResult(id: string, status: string): OrderInvestigationCommandResult {
   return { orderId: id, status, duplicate: false };
 }
-export const addOrderSupportNote: Local<typeof Api.addOrderSupportNote> = async (
+const addOrderSupportNote: Local<typeof Api.addOrderSupportNote> = async (
   id,
   operationId,
   note,
@@ -498,7 +454,7 @@ export const addOrderSupportNote: Local<typeof Api.addOrderSupportNote> = async 
   audit("order.notes", "order", id, note, null, { note });
   return orderResult(id, "recorded");
 };
-export const revealOrderContact: Local<typeof Api.revealOrderContact> = async (
+const revealOrderContact: Local<typeof Api.revealOrderContact> = async (
   id,
   target,
   operationId,
@@ -508,21 +464,9 @@ export const revealOrderContact: Local<typeof Api.revealOrderContact> = async (
   audit("order.reveal_contact", "order", id, reason, null, { target, operationId });
   return { ...orderResult(id, "simulated"), phoneNumber: "Demo contact (no real number)" };
 };
-export const resendOrderNotification: Local<typeof Api.resendOrderNotification> = async (
-  id,
-  notificationId,
-  operationId,
-  reason,
-) => {
-  const n = find(order(id).notifications, notificationId);
-  n.deliveries.forEach((d) => {
-    d.status = "simulated";
-    d.attemptCount++;
-  });
-  audit("order.simulated_notification", "order", id, reason, null, { notificationId, operationId });
-  return orderResult(id, "simulated");
-};
-export const escalateOrderToDispatch: Local<typeof Api.escalateOrderToDispatch> = async (
+const resendOrderNotification: Local<typeof Api.resendOrderNotification> = async () =>
+  unavailable();
+const escalateOrderToDispatch: Local<typeof Api.escalateOrderToDispatch> = async (
   id,
   operationId,
   reason,
@@ -549,11 +493,7 @@ export const escalateOrderToDispatch: Local<typeof Api.escalateOrderToDispatch> 
   audit("order.escalated", "order", id, reason, null, { issueId, operationId });
   return { ...orderResult(id, "open"), issueId, deliveryId: d.delivery.id };
 };
-export const cancelUnpaidOrder: Local<typeof Api.cancelUnpaidOrder> = async (
-  id,
-  operationId,
-  reason,
-) => {
+const cancelUnpaidOrder: Local<typeof Api.cancelUnpaidOrder> = async (id, operationId, reason) => {
   const o = order(id);
   const previous = copy(o.order);
   o.order.status = "cancelled";
@@ -570,7 +510,7 @@ export const cancelUnpaidOrder: Local<typeof Api.cancelUnpaidOrder> = async (
   audit("order.cancelled", "order", id, reason, previous, o.order);
   return orderResult(id, "cancelled");
 };
-export const fetchAuditEvents: Local<typeof Api.fetchAuditEvents> = async (query = {}) => {
+const fetchAuditEvents: Local<typeof Api.fetchAuditEvents> = async (query = {}) => {
   const data = store.audit.filter(
     (a) =>
       (!query.q || JSON.stringify(a).toLowerCase().includes(query.q.toLowerCase())) &&
@@ -590,5 +530,71 @@ export const fetchAuditEvents: Local<typeof Api.fetchAuditEvents> = async (query
   data.sort((a, b) => key(a).localeCompare(key(b)) * (query.sortOrder === "asc" ? 1 : -1));
   return page(data, query.page, query.pageSize);
 };
-export const fetchAuditEvent: Local<typeof Api.fetchAuditEvent> = async (id) =>
+const fetchAuditEvent: Local<typeof Api.fetchAuditEvent> = async (id) =>
   copy(find(store.audit, id));
+
+// Demo services require explicit opt-in and can never run in production builds.
+function demoOnly<Args extends unknown[], Result>(fn: (...args: Args) => Promise<Result>) {
+  return async (...args: Args): Promise<Result> => {
+    if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+    return fn(...args);
+  };
+}
+const fetchApplicationQueueDemoGuard = demoOnly(fetchApplicationQueue);
+const fetchApplicationReviewDemoGuard = demoOnly(fetchApplicationReview);
+const reviewApplicationDemoGuard = demoOnly(reviewApplication);
+const fetchAdminListingQueueDemoGuard = demoOnly(fetchAdminListingQueue);
+const fetchAdminPriceQueueDemoGuard = demoOnly(fetchAdminPriceQueue);
+const approveAdminListingDemoGuard = demoOnly(approveAdminListing);
+const requestAdminListingChangesDemoGuard = demoOnly(requestAdminListingChanges);
+const reviewAdminPriceDemoGuard = demoOnly(reviewAdminPrice);
+const fetchPaymentFinanceQueueDemoGuard = demoOnly(fetchPaymentFinanceQueue);
+const fetchPaymentFinanceDetailDemoGuard = demoOnly(fetchPaymentFinanceDetail);
+const recheckPaymentDemoGuard = demoOnly(recheckPayment);
+const reconcilePendingPaymentsDemoGuard = demoOnly(reconcilePendingPayments);
+const commandPaymentFinanceDemoGuard = demoOnly(commandPaymentFinance);
+const fetchDispatcherDeliveryBoardDemoGuard = demoOnly(fetchDispatcherDeliveryBoard);
+const fetchDispatcherDeliveryDemoGuard = demoOnly(fetchDispatcherDelivery);
+const fetchDispatcherRidersDemoGuard = demoOnly(fetchDispatcherRiders);
+const fetchDispatcherNearbyRidersDemoGuard = demoOnly(fetchDispatcherNearbyRiders);
+const assignDispatcherDeliveryDemoGuard = demoOnly(assignDispatcherDelivery);
+const performDispatcherDeliveryActionDemoGuard = demoOnly(performDispatcherDeliveryAction);
+const resolveDispatcherDeliveryIssueDemoGuard = demoOnly(resolveDispatcherDeliveryIssue);
+const fetchOrderInvestigationDemoGuard = demoOnly(fetchOrderInvestigation);
+const addOrderSupportNoteDemoGuard = demoOnly(addOrderSupportNote);
+const revealOrderContactDemoGuard = demoOnly(revealOrderContact);
+const resendOrderNotificationDemoGuard = demoOnly(resendOrderNotification);
+const escalateOrderToDispatchDemoGuard = demoOnly(escalateOrderToDispatch);
+const cancelUnpaidOrderDemoGuard = demoOnly(cancelUnpaidOrder);
+const fetchAuditEventsDemoGuard = demoOnly(fetchAuditEvents);
+const fetchAuditEventDemoGuard = demoOnly(fetchAuditEvent);
+export {
+  fetchApplicationQueueDemoGuard as fetchApplicationQueue,
+  fetchApplicationReviewDemoGuard as fetchApplicationReview,
+  reviewApplicationDemoGuard as reviewApplication,
+  fetchAdminListingQueueDemoGuard as fetchAdminListingQueue,
+  fetchAdminPriceQueueDemoGuard as fetchAdminPriceQueue,
+  approveAdminListingDemoGuard as approveAdminListing,
+  requestAdminListingChangesDemoGuard as requestAdminListingChanges,
+  reviewAdminPriceDemoGuard as reviewAdminPrice,
+  fetchPaymentFinanceQueueDemoGuard as fetchPaymentFinanceQueue,
+  fetchPaymentFinanceDetailDemoGuard as fetchPaymentFinanceDetail,
+  recheckPaymentDemoGuard as recheckPayment,
+  reconcilePendingPaymentsDemoGuard as reconcilePendingPayments,
+  commandPaymentFinanceDemoGuard as commandPaymentFinance,
+  fetchDispatcherDeliveryBoardDemoGuard as fetchDispatcherDeliveryBoard,
+  fetchDispatcherDeliveryDemoGuard as fetchDispatcherDelivery,
+  fetchDispatcherRidersDemoGuard as fetchDispatcherRiders,
+  fetchDispatcherNearbyRidersDemoGuard as fetchDispatcherNearbyRiders,
+  assignDispatcherDeliveryDemoGuard as assignDispatcherDelivery,
+  performDispatcherDeliveryActionDemoGuard as performDispatcherDeliveryAction,
+  resolveDispatcherDeliveryIssueDemoGuard as resolveDispatcherDeliveryIssue,
+  fetchOrderInvestigationDemoGuard as fetchOrderInvestigation,
+  addOrderSupportNoteDemoGuard as addOrderSupportNote,
+  revealOrderContactDemoGuard as revealOrderContact,
+  resendOrderNotificationDemoGuard as resendOrderNotification,
+  escalateOrderToDispatchDemoGuard as escalateOrderToDispatch,
+  cancelUnpaidOrderDemoGuard as cancelUnpaidOrder,
+  fetchAuditEventsDemoGuard as fetchAuditEvents,
+  fetchAuditEventDemoGuard as fetchAuditEvent,
+};

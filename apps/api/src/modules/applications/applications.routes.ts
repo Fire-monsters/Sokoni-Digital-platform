@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requirePermission } from "../../middleware/require-permission.js";
@@ -9,9 +9,10 @@ import { applicationParams, reviewInput, reasonInput, noteInput } from "./applic
 
 export function createApplicationReviewRouter(
   service = new ApplicationReviewService(new SupabaseApplicationRepository()),
+  boundary: RequestHandler = authenticate,
 ) {
   const router = Router();
-  router.use(authenticate);
+  router.use(boundary);
   router.use((_request, response, next) => {
     response.setHeader("Cache-Control", "no-store");
     next();

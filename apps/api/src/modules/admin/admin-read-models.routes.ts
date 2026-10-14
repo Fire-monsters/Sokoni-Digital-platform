@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 
 import { sendSuccess, sendZodValidationError } from "../../http/responses.js";
@@ -208,9 +208,10 @@ function adminReadPermission(path: string): string {
 
 export function createAdminReadModelsRouter(
   reader: AdminReadModelReader = new AdminReadModelsRepository(),
+  boundary: RequestHandler = authenticate,
 ): Router {
   const router = Router();
-  router.use(authenticate);
+  router.use(boundary);
   router.use((request, response, next) => {
     const startedAt = performance.now();
     response.on("finish", () => {

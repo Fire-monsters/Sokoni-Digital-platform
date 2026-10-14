@@ -85,3 +85,5 @@ it("keeps a local support note across navigation without sending a request", asy
   });
   expect(host.textContent).toContain("Demo note from mounted UI");
 });
+
+vi.mock("../lib/api", () => ({ frontendConfig: { apiUrl: "", demoEnabled: true } }));

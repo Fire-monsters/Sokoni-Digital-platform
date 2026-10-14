@@ -1,11 +1,32 @@
 import { z } from "zod";
 
+const booleanEnvSchema = z
+  .union([z.boolean(), z.string()])
+  .default(false)
+  .transform((value, ctx) => {
+    if (typeof value === "boolean") return value;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true" || normalized === "1") return true;
+    if (normalized === "false" || normalized === "0" || normalized === "") return false;
+    ctx.addIssue({
+      code: "custom",
+      message: `Expected boolean ('true' or 'false'), received '${value}'`,
+    });
+    return false;
+  });
+
 const serverEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     PORT: z.coerce.number().int().positive().default(4000),
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(1).default(0),
     APP_MODE: z.enum(["full", "wholesale"]).default("full"),
+
+    PUBLIC_OPERATIONS_ENABLED: booleanEnvSchema,
+    PUBLIC_WAREHOUSE_ENABLED: booleanEnvSchema,
+    OPERATIONS_WORKSPACE_ACTOR_ID: z.string().uuid().optional(),
+    WAREHOUSE_WORKSPACE_ACTOR_ID: z.string().uuid().optional(),
+    WAREHOUSE_ID: z.string().uuid().optional(),
 
     SUPABASE_URL: z.url(),
     SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
@@ -114,6 +135,20 @@ export function parseServerEnvironment(source: NodeJS.ProcessEnv = process.env):
         : source.SUPABASE_URL
           ? `${source.SUPABASE_URL}/auth/v1/.well-known/jwks.json`
           : undefined,
+    PUBLIC_OPERATIONS_ENABLED: source.PUBLIC_OPERATIONS_ENABLED ?? undefined,
+    PUBLIC_WAREHOUSE_ENABLED: source.PUBLIC_WAREHOUSE_ENABLED ?? undefined,
+    OPERATIONS_WORKSPACE_ACTOR_ID:
+      source.OPERATIONS_WORKSPACE_ACTOR_ID && source.OPERATIONS_WORKSPACE_ACTOR_ID.trim() !== ""
+        ? source.OPERATIONS_WORKSPACE_ACTOR_ID.trim()
+        : undefined,
+    WAREHOUSE_WORKSPACE_ACTOR_ID:
+      source.WAREHOUSE_WORKSPACE_ACTOR_ID && source.WAREHOUSE_WORKSPACE_ACTOR_ID.trim() !== ""
+        ? source.WAREHOUSE_WORKSPACE_ACTOR_ID.trim()
+        : undefined,
+    WAREHOUSE_ID:
+      source.WAREHOUSE_ID && source.WAREHOUSE_ID.trim() !== ""
+        ? source.WAREHOUSE_ID.trim()
+        : undefined,
   };
 
   const result = serverEnvSchema.safeParse(normalizedSource);
@@ -124,4 +159,22 @@ export function parseServerEnvironment(source: NodeJS.ProcessEnv = process.env):
   }
 
   return result.data;
+}
+
+export type PublicWorkspaceConfig = {
+  operationsEnabled: boolean;
+  warehouseEnabled: boolean;
+  operationsActorId: string | null;
+  warehouseActorId: string | null;
+  warehouseId: string | null;
+};
+
+export function getPublicWorkspaceConfig(environment: ServerEnvironment): PublicWorkspaceConfig {
+  return {
+    operationsEnabled: environment.PUBLIC_OPERATIONS_ENABLED,
+    warehouseEnabled: environment.PUBLIC_WAREHOUSE_ENABLED,
+    operationsActorId: environment.OPERATIONS_WORKSPACE_ACTOR_ID ?? null,
+    warehouseActorId: environment.WAREHOUSE_WORKSPACE_ACTOR_ID ?? null,
+    warehouseId: environment.WAREHOUSE_ID ?? null,
+  };
 }

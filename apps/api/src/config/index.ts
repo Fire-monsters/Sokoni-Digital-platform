@@ -1,1 +1,5 @@
-export { parseServerEnvironment } from "@sokoni-digital/config";
+export {
+  parseServerEnvironment,
+  getPublicWorkspaceConfig,
+  type PublicWorkspaceConfig,
+} from "@sokoni-digital/config";

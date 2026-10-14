@@ -96,7 +96,9 @@ describe("local operations workflows", () => {
   });
   it("simulates reconciliation, refund requests, notes, notifications and cancellation", async () => {
     const s = await import("./service");
-    expect((await s.reconcilePendingPayments("batch", "Demo batch")).resolved).toBe(1);
+    await expect(s.reconcilePendingPayments("batch", "Demo batch")).rejects.toMatchObject({
+      code: "UNAVAILABLE",
+    });
     const p = await s.fetchPaymentFinanceDetail("demo-payment-1");
     await s.commandPaymentFinance(p.id, "request-refund", {
       operationId: "refund",
@@ -107,32 +109,32 @@ describe("local operations workflows", () => {
     });
     expect((await s.fetchOrderInvestigation("demo-order-1")).refunds[0].requestedAmount).toBe(1000);
     await s.addOrderSupportNote("demo-order-1", "note", "Demo support note", 0);
-    await s.resendOrderNotification(
-      "demo-order-1",
-      "demo-notification-1",
-      "notify",
-      "Demo resend",
-      0,
-    );
+    await expect(
+      s.resendOrderNotification("demo-order-1", "demo-notification-1", "notify", "Demo resend", 0),
+    ).rejects.toMatchObject({ code: "UNAVAILABLE" });
     const order = await s.fetchOrderInvestigation("demo-order-1");
     expect(order.supportNotes[0].author.name).toBe("Demo operator");
     expect(order.notifications[0].deliveries[0]).toMatchObject({
       status: "simulated",
-      attemptCount: 2,
+      attemptCount: 1,
     });
     await s.cancelUnpaidOrder("demo-order-0", "cancel", "Demo cancellation", 0);
     expect((await s.fetchOrderInvestigation("demo-order-0")).order.status).toBe("cancelled");
-    expect((await s.fetchAuditEvents({ q: "simulated_notification" })).data).toHaveLength(1);
+    expect((await s.fetchAuditEvents({ q: "simulated_notification" })).data).toHaveLength(0);
   });
   it("isolates returned snapshots and resets fixtures on a fresh module load", async () => {
     let s = await import("./service");
     const p = await s.fetchPaymentFinanceDetail("demo-payment-0");
     p.status = "tampered";
     expect((await s.fetchPaymentFinanceDetail(p.id)).status).toBe("failed");
-    await s.recheckPayment(p.id, "check", p.version, "Demo recheck");
-    expect((await s.fetchPaymentFinanceDetail(p.id)).status).toBe("successful");
+    await expect(s.recheckPayment(p.id, "check", p.version, "Demo recheck")).rejects.toMatchObject({
+      code: "UNAVAILABLE",
+    });
+    expect((await s.fetchPaymentFinanceDetail(p.id)).status).toBe("failed");
     vi.resetModules();
     s = await import("./service");
     expect((await s.fetchPaymentFinanceDetail(p.id)).status).toBe("failed");
   });
 });
+
+vi.mock("../lib/api", () => ({ frontendConfig: { apiUrl: "", demoEnabled: true } }));

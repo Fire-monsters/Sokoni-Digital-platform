@@ -1,3 +1,6 @@
+/** Legacy development fixtures. No production screen imports this module. */
+import { unavailable } from "@sokoni-digital/api-client";
+import { frontendConfig } from "./api";
 export type StockItem = { commodity: string; grade: 'A' | 'B' | 'C'; quantity: number; zone: string; days: number; reorder: number; value: number }
 export type FarmerListing = { id: string; farmer: string; crop: string; quantity: number; location: string; price: number; score: number; date: string }
 
@@ -14,12 +17,17 @@ const listings: FarmerListing[] = [
   { id: 'FL-1039', farmer: 'Amina Nankya', crop: 'Beans', quantity: 950, location: 'Masaka', price: 2200, score: 91, date: 'Yesterday' },
   { id: 'FL-1038', farmer: 'Moses Kato', crop: 'Tomatoes', quantity: 680, location: 'Wakiso', price: 2500, score: 76, date: 'Yesterday' },
 ]
-export async function getWarehouseSnapshot() { await new Promise(r => setTimeout(r, 180)); return { stock, listings } }
-export async function resetDemoData() { await new Promise(r => setTimeout(r, 100)); return true }
+export async function getWarehouseSnapshot() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { stock, listings } }
+export async function resetDemoData() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return true }
 export function formatUGX(value: number) { return `UGX ${value.toLocaleString('en-UG')}` }
 export function formatKg(value: number) { return `${value.toLocaleString('en-UG')} kg` }
 export function getTotalStockValue(items: StockItem[]) { return items.reduce((sum, item) => sum + item.value, 0) }
-export function acceptListing(id: string) { return { id, status: 'accepted' as const } }
+export function acceptListing(id: string) { if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { id, status: 'accepted' as const } }
 export function canAllocate(available: number, requested: number) { return requested > 0 && requested <= available }
 export function canDispatch(allocated: number, picked: number) { return picked > 0 && picked <= allocated }
 const weeklyDemand = [
@@ -47,11 +55,14 @@ export function getPendingOutbound() { return outboundOrders.filter(o => o.statu
 export function getPendingFarmerOrders() { return 7 }
 export function getOccupancy() { return 68 }
 export function getAvailableStatus() { return 'Demo mode' }
-export function createPurchaseOrder(crop: string, quantity: number) { return { id: `PO-${Date.now().toString().slice(-4)}`, crop, quantity, status: 'Awaiting delivery' } }
-export function receiveProduce(expected: number, actual: number, grade: 'A' | 'B' | 'C') { return { accepted: grade !== 'C' ? actual : 0, quarantined: grade === 'C' ? actual : 0, variance: actual - expected } }
-export function publishAvailability(item: StockItem) { return { ...item, published: true } }
-export function reserveStock(available: number, requested: number) { if (!canAllocate(available, requested)) throw new Error('Requested quantity exceeds available stock.'); return { reserved: requested, remaining: available - requested } }
-export function dispatchOrder(allocated: number, picked: number) { if (!canDispatch(allocated, picked)) throw new Error('Dispatch quantity exceeds allocated stock.'); return { dispatched: picked, status: 'Dispatched' } }
+export function createPurchaseOrder(crop: string, quantity: number) { if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { id: `PO-${Date.now().toString().slice(-4)}`, crop, quantity, status: 'Awaiting delivery' } }
+export function receiveProduce(expected: number, actual: number, grade: 'A' | 'B' | 'C') { if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { accepted: grade !== 'C' ? actual : 0, quarantined: grade === 'C' ? actual : 0, variance: actual - expected } }
+export function publishAvailability(item: StockItem) { if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { ...item, published: true } }
+export function reserveStock(available: number, requested: number) { if (!frontendConfig.demoEnabled) unavailable("Workspace not connected."); if (!canAllocate(available, requested)) throw new Error('Requested quantity exceeds available stock.'); return { reserved: requested, remaining: available - requested } }
+export function dispatchOrder(allocated: number, picked: number) { if (!frontendConfig.demoEnabled) unavailable("Workspace not connected."); if (!canDispatch(allocated, picked)) throw new Error('Dispatch quantity exceeds allocated stock.'); return { dispatched: picked, status: 'Dispatched' } }
 export function getTimeLabel() { return 'EAT · 01 Oct 2026' }
 export function getStorageLabel() { return '3 zones · 68% occupied' }
 export function getCompanyLabel() { return 'Kampala Central Warehouse' }
@@ -117,7 +128,15 @@ export function getSupport() { return 'Support centre' }
 export function getFooter() { return 'Built for better trade across Uganda' }
 export function getNavGroup() { return { operations: ['Overview', 'Farmer listings', 'Intake & quality', 'Inventory & lots'], trade: ['Wholesale sales', 'Procurement'], fulfilment: ['Dispatch', 'Finance'] } }
 export function getKpis() { return [{ label: 'Today\'s intake', value: '42.8 t', change: '+12.4%', icon: 'in' }, { label: 'Today\'s dispatch', value: '31.6 t', change: '+8.1%', icon: 'out' }, { label: 'Current stock value', value: 'UGX 57.4M', change: '+4.6%', icon: 'value' }, { label: 'Pending farmer orders', value: '07', change: '3 new today', icon: 'farmers' }, { label: 'Pending outbound', value: '04', change: '2 need picking', icon: 'orders' }, { label: 'Revenue today', value: 'UGX 18.4M', change: '+16.2%', icon: 'revenue' }] }
-export async function loadDashboard() { return getSnapshotFromData() }
-export async function updateListingStatus(id: string, status: string) { return { id, status } }
-export async function createDemoOrder() { return { id: 'SO-2282', status: 'Allocated' } }
-export async function resetDemo() { return resetDemoData() }
+export async function loadDashboard() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return getSnapshotFromData() }
+export async function updateListingStatus(id: string, status: string) {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { id, status } }
+export async function createDemoOrder() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return { id: 'SO-2282', status: 'Allocated' } }
+export async function resetDemo() {
+  if (!frontendConfig.demoEnabled) unavailable("Workspace not connected.");
+  return resetDemoData() }

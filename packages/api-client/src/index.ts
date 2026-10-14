@@ -29,8 +29,6 @@ import type {
   ApplicationQueue,
   ApplicationReviewInput,
   ApplicationReviewResult,
-  ApiErrorResponse,
-  ApiSuccessResponse,
   AuthenticatedProfile,
   CatalogueCategory,
   CatalogueHome,
@@ -113,10 +111,8 @@ export const apiQueryKeys = {
   adminAuditEvent: (eventId: string) => ["admin", "audit-events", eventId] as const,
 };
 
-export interface ApiClientOptions {
-  baseUrl: string;
-  accessToken?: string;
-}
+import { requestApi, type ApiClientOptions } from "./transport";
+export * from "./transport";
 
 export function fetchAuditEvents(
   options: ApiClientOptions,
@@ -273,58 +269,6 @@ export function reviewApplication(
     `/v1/admin/applications/${encodeURIComponent(id)}/${action}`,
     { method: "POST", body: JSON.stringify(input) },
   );
-}
-
-export class ApiClientError extends Error {
-  readonly statusCode: number;
-  readonly code: string;
-  readonly details?: ApiErrorResponse["error"]["details"];
-  readonly operationId: string | undefined;
-  readonly currentVersion: number | undefined;
-  readonly retryable: boolean | undefined;
-
-  constructor(statusCode: number, error: ApiErrorResponse["error"]) {
-    super(error.message);
-    this.name = "ApiClientError";
-    this.statusCode = statusCode;
-    this.code = error.code;
-    this.details = error.details;
-    this.operationId = error.operationId;
-    this.currentVersion = error.currentVersion;
-    this.retryable = error.retryable;
-  }
-}
-
-export async function requestApi<T>(
-  options: ApiClientOptions,
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
-  const headers = new Headers(init.headers);
-  headers.set("accept", "application/json");
-
-  if (!headers.has("content-type") && init.body) {
-    headers.set("content-type", "application/json");
-  }
-
-  if (options.accessToken) {
-    headers.set("authorization", `Bearer ${options.accessToken}`);
-  }
-
-  const response = await fetch(`${options.baseUrl}${path}`, {
-    ...init,
-    headers,
-  });
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  const payload = (await response.json()) as ApiSuccessResponse<T> | ApiErrorResponse;
-
-  if (!payload.success) {
-    throw new ApiClientError(response.status, payload.error);
-  }
-
-  return payload.data;
 }
 
 function catalogueSearchParams(query: CatalogueQuery): string {

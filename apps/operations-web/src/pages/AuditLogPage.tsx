@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { fetchAuditEvent, fetchAuditEvents } from "../demo/service";
+import { fetchAuditEvent, fetchAuditEvents } from "../operations/service";
 import type { AuditEventDetail, AuditEventPage, AuditEventQuery } from "@sokoni-digital/domain";
 
 const label = (value: string) => value.replaceAll("_", " ").replaceAll(".", " · ");

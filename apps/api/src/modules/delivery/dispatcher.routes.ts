@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import {
   deliveryIssueParamsSchema,
   deliveryIssueResolutionSchema,
@@ -14,9 +14,9 @@ import { requirePermission } from "../../middleware/require-permission.js";
 import { createAdminWorkflowRoute } from "../admin/workflows/index.js";
 import { DispatcherService } from "./dispatcher.service.js";
 
-export function createDispatcherRouter(service = new DispatcherService()): Router {
+export function createDispatcherRouter(service = new DispatcherService(), boundary: RequestHandler = authenticate): Router {
   const router = Router();
-  router.use(authenticate);
+  router.use(boundary);
 
   router.get(
     "/deliveries",

@@ -7,6 +7,7 @@ import { DashboardLayout } from "../components/DashboardLayout";
 import { CatalogueListingsPage, PriceChangesPage } from "../pages/CataloguePages";
 import { DeliveriesPage } from "../pages/DeliveriesPage";
 import { NotFoundPage, PlaceholderPage } from "../pages/PlaceholderPage";
+import { OperationalQueuesPage } from "../pages/OperationalQueuesPage";
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -18,7 +19,7 @@ export function AppRouter() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Navigate replace to="overview" />} />
             <Route path="overview" element={<PlaceholderPage title="Overview" />} />
-            <Route path="orders" element={<PlaceholderPage title="Orders" />} />
+            <Route path="orders" element={<OperationalQueuesPage kind="orders" />} />
             <Route path="orders/:orderId" element={<OrderInvestigationPage />} />
             <Route path="deliveries" element={<DeliveriesPage />} />
             <Route path="approvals" element={<ApprovalIndex />} />
@@ -33,7 +34,7 @@ export function AppRouter() {
             <Route path="approvals/listings" element={<CatalogueListingsPage />} />
             <Route path="approvals/price-changes" element={<PriceChangesPage />} />
             <Route path="payments" element={<PaymentsPage />} />
-            <Route path="refunds" element={<PlaceholderPage title="Refunds" />} />
+            <Route path="refunds" element={<OperationalQueuesPage kind="refunds" />} />
             <Route path="settlements" element={<PlaceholderPage title="Settlements" />} />
             <Route path="users" element={<PlaceholderPage title="Users & Devices" />} />
             <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />

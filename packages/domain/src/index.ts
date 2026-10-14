@@ -136,3 +136,4 @@ export * from "./payments/finance-review.js";
 export * from "./order-investigation.js";
 export * from "./audit.js";
 export * from "./business.js";
+export * from "./public-workspace.js";

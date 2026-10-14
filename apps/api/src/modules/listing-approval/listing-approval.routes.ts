@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import {
   priceRequestParamsSchema,
   rejectPriceSchema,
@@ -20,10 +20,11 @@ import { ListingApprovalService } from "./listing-approval.service.js";
 
 export function createListingApprovalRouter(
   repository: CatalogueReviewRepository = new SupabaseCatalogueReviewRepository(),
+  boundary: RequestHandler = authenticate,
 ): Router {
   const router = Router();
   const service = new ListingApprovalService(repository);
-  router.use(authenticate);
+  router.use(boundary);
 
   router.get("/listings", requirePermission("catalogue.read"), async (request, response, next) => {
     try {

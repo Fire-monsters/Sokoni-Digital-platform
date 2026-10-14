@@ -4,7 +4,7 @@ import {
   fetchApplicationQueue,
   fetchApplicationReview,
   reviewApplication,
-} from "../demo/service";
+} from "../operations/service";
 import type {
   ApplicationAction,
   ApplicationQueue,
@@ -139,8 +139,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
       setBusy(false);
     }
   }
-  const reviewer = "demo-operator";
-  const assigned = detail?.status === "in_review" && detail.reviewerId === reviewer;
+  const assigned = detail?.status === "in_review";
   return (
     <>
       <div className="page-title">
@@ -262,7 +261,7 @@ export function ApplicationsPage({ type }: { type: ApplicationType }) {
                 </section>
               ))}
               <h3>Verification documents</h3>
-              <p>Demo documents contain fictional information.</p>
+              <p>Documents are available through short-lived secure links.</p>
               <div className="image-row">
                 {detail.documents.map((document) => (
                   <a key={document.id} href={document.url} target="_blank" rel="noreferrer">

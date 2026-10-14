@@ -60,6 +60,7 @@ describe("wholesale production API", () => {
     });
     const failed = await request(app).get("/readyz");
     expect(failed.status).toBe(503);
-    expect(failed.body).toEqual({ ready: false });
+    expect(failed.body).toMatchObject({ ready: false, status: "not_ready", checks: { database: "failed" } });
+    expect(JSON.stringify(failed.body)).not.toContain("private detail");
   });
 });

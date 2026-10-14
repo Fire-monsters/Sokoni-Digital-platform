@@ -3,10 +3,12 @@ import {
   approveAdminListing,
   requestAdminListingChanges,
   reviewAdminPrice,
-} from "../demo/service";
+} from "../operations/service";
 import type { AdminListingReview, AdminPriceReview } from "@sokoni-digital/domain";
 import { useEffect, useRef, useState } from "react";
 import { useOperations } from "../operations/OperationsContext";
+import { ReviewNotesPanel } from "../operations/RecordPanels";
+import { frontendConfig } from "../lib/api";
 
 export function CatalogueListingsPage() {
   const operations = useOperations();
@@ -109,6 +111,7 @@ export function CatalogueListingsPage() {
                 </dd>
               </dl>
               <ReviewHistory listing={listing} />
+              {!frontendConfig.demoEnabled && <ReviewNotesPanel kind="listings" entityId={listing.id} version={listing.version} />}
               <>
                 <textarea
                   aria-label="Review note"
@@ -128,7 +131,7 @@ export function CatalogueListingsPage() {
                     disabled={operations.loading || note.trim().length < 5}
                     onClick={() => void decide("changes")}
                   >
-                    Request changes
+                    Reject / request changes
                   </button>
                 </div>
               </>
@@ -245,6 +248,7 @@ export function PriceChangesPage() {
                 <dd>{new Date(price.createdAt).toLocaleString()}</dd>
               </dl>
               <AuditHistory entries={price.auditHistory} />
+              {!frontendConfig.demoEnabled && <ReviewNotesPanel kind="price-requests" entityId={price.requestId} />}
               <>
                 <textarea
                   aria-label="Review note"
@@ -333,7 +337,7 @@ function Empty({ load }: { load: () => Promise<void> }) {
   return (
     <div className="empty-state">
       <strong>No queue data</strong>
-      <p>No pending sample records.</p>
+      <p>No pending records.</p>
       <button onClick={() => void load()}>Refresh queue</button>
     </div>
   );

@@ -39,6 +39,12 @@ import {
 
 import { supabase } from "./infrastructure/supabase/client.js";
 import { parseServerEnvironment } from "./config/index.js";
+import { createReadinessRouter } from "./modules/readiness/readiness.routes.js";
+import {
+  createPublicOperationsRouter,
+  createPublicWarehouseRouter,
+} from "./modules/public-workspace/public-workspace.routes.js";
+
 
 export function createApp(): express.Express {
   const env = parseServerEnvironment();
@@ -87,6 +93,8 @@ export function createApp(): express.Express {
     });
   });
 
+  app.use(createReadinessRouter());
+
   app.get("/readyz", async (_request, response) => {
     try {
       const { error } = await supabase
@@ -97,6 +105,9 @@ export function createApp(): express.Express {
       response.status(503).json({ ready: false });
     }
   });
+
+  if (env.APP_MODE === "full") app.use("/v1/public/operations", createPublicOperationsRouter());
+  app.use("/v1/public/warehouse", createPublicWarehouseRouter());
 
   app.use("/v1/business-auth", createBusinessAuthRouter());
   app.use("/v1", createBusinessRouter());

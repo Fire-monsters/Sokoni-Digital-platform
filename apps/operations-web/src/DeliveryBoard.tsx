@@ -5,7 +5,7 @@ import {
   fetchDispatcherNearbyRiders,
   performDispatcherDeliveryAction,
   resolveDispatcherDeliveryIssue,
-} from "./demo/service";
+} from "./operations/service";
 import {
   deliveryIssueResolutionCodes,
   type DeliveryIssueResolutionCode,
@@ -17,6 +17,8 @@ import {
 } from "@sokoni-digital/domain";
 import { useMemo, useRef, useState } from "react";
 import { deliveryBoardColumn } from "./delivery-board-policy";
+import { ReviewNotesPanel } from "./operations/RecordPanels";
+import { frontendConfig } from "./lib/api";
 
 const columns = [
   { id: "waiting", label: "Waiting for rider" },
@@ -110,7 +112,7 @@ export function DeliveryBoard({
       await onReload();
       if (selected) await loadDetail(selected.id);
     } catch (error) {
-      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && (error.code === "VERSION_CONFLICT" || error.status === 409)) {
         pendingOperations.current.delete(operationKey);
         onMessage(`${error.message} The latest delivery has been loaded for review.`);
         await onReload();
@@ -158,12 +160,12 @@ export function DeliveryBoard({
         operationId,
       });
       pendingOperations.current.delete(operationKey);
-      onMessage(result.contactPhoneNumber ?? "Demo delivery action completed.");
+      onMessage(result.contactPhoneNumber ?? "Delivery action completed.");
       setReason("");
       await onReload();
       await loadDetail(selected.id);
     } catch (error) {
-      if (error instanceof DemoError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof DemoError && (error.code === "VERSION_CONFLICT" || error.status === 409)) {
         pendingOperations.current.delete(operationKey);
         onMessage(`${error.message} The latest delivery has been loaded for review.`);
         await onReload();
@@ -385,7 +387,7 @@ export function DeliveryBoard({
                     ))}
                   </select>
                   <button
-                    disabled={busy}
+                    disabled={busy || !frontendConfig.demoEnabled}
                     onClick={() =>
                       void fetchDispatcherNearbyRiders(selected.id)
                         .then(setNearby)
@@ -431,7 +433,7 @@ export function DeliveryBoard({
                     Customer unavailable
                   </button>
                 ) : null}
-                {(
+                {frontendConfig.demoEnabled && (
                   [
                     "picked_up",
                     "in_transit",
@@ -446,7 +448,7 @@ export function DeliveryBoard({
                     Return to market
                   </button>
                 ) : null}
-                {selected.transporter ? (
+                {frontendConfig.demoEnabled && selected.transporter ? (
                   <button
                     disabled={busy || reason.trim().length < 5}
                     onClick={() => void deliveryAction("CONTACT_RIDER")}
@@ -454,13 +456,14 @@ export function DeliveryBoard({
                     Contact rider
                   </button>
                 ) : null}
-                <button
+                {frontendConfig.demoEnabled && <button
                   disabled={busy || reason.trim().length < 5}
                   onClick={() => void deliveryAction("CONTACT_CONSUMER")}
                 >
                   Contact consumer
-                </button>
+                </button>}
               </div>
+              {!frontendConfig.demoEnabled && <ReviewNotesPanel kind="deliveries" entityId={selected.id} version={selected.version} />}
             </>
           }
           {detail?.evidence.images.length ? (

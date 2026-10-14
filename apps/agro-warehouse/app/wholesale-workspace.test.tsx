@@ -56,3 +56,5 @@ describe("open wholesale demo", () => {
     ).toBe(false);
   });
 });
+
+vi.mock("../lib/api", () => ({ frontendConfig: { apiUrl: "", demoEnabled: true } }));

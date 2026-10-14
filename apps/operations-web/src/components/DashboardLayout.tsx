@@ -1,3 +1,4 @@
+import { frontendConfig } from "../lib/api";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { navigation, routeTitles } from "../app/navigation";
@@ -50,7 +51,7 @@ export function DashboardLayout() {
         <div className="sidebar-footer">
           <span className="avatar">SO</span>
           <span>
-            <strong>Demo operator</strong>
+            <strong>{frontendConfig.demoEnabled ? "Demo operator" : "Operations workspace"}</strong>
             <small>Local workspace</small>
           </span>
         </div>
@@ -76,7 +77,11 @@ export function DashboardLayout() {
             <strong>{title}</strong>
           </div>
           <div className="topbar-actions">
-            <span className="environment">Demo mode — changes reset on reload.</span>
+            <span className="environment">
+              {frontendConfig.demoEnabled
+                ? "Demo mode — changes reset on reload."
+                : "Operations workspace"}
+            </span>
           </div>
         </header>
         <main className="page-content">

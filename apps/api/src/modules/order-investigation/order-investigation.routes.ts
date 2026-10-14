@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import { createAdminWorkflowRoute } from "../admin/workflows/index.js";
 import {
@@ -17,10 +17,11 @@ import {
 
 export function createOrderInvestigationRouter(
   repository: OrderInvestigationWriter = new SupabaseOrderInvestigationRepository(),
+  boundary: RequestHandler = authenticate,
 ) {
   const router = Router();
   const service = new OrderInvestigationService(repository);
-  router.use(authenticate);
+  router.use(boundary);
   router.use((_request, response, next) => {
     response.setHeader("Cache-Control", "no-store");
     next();
